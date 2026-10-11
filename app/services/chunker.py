@@ -1,7 +1,10 @@
 from typing import List
 
+
 class TextChunker:
     def __init__(self, chunk_size: int = 500, chunk_overlap: int = 50):
+        if chunk_overlap >= chunk_size:
+            raise ValueError("chunk_overlap must be smaller than chunk_size")
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
 
@@ -12,10 +15,9 @@ class TextChunker:
             return []
 
         chunks = []
-        i = 0
-        while i < len(words):
-            chunk = " ".join(words[i:i + self.chunk_size])
-            chunks.append(chunk)
-            i += self.chunk_size - self.chunk_overlap
-
+        step = self.chunk_size - self.chunk_overlap
+        for i in range(0, len(words), step):
+            chunks.append(" ".join(words[i:i + self.chunk_size]))
+            if i + self.chunk_size >= len(words):
+                break
         return chunks
