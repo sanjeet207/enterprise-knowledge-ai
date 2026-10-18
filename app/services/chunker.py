@@ -1,23 +1,26 @@
-from typing import List
+from typing import List, Dict, Any
 
+class HierarchicalChunker:
+    def __init__(self, parent_size: int = 200, child_size: int = 50):
+        self.parent_size = parent_size
+        self.child_size = child_size
 
-class TextChunker:
-    def __init__(self, chunk_size: int = 500, chunk_overlap: int = 50):
-        if chunk_overlap >= chunk_size:
-            raise ValueError("chunk_overlap must be smaller than chunk_size")
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-
-    def chunk_text(self, text: str) -> List[str]:
-        """Split text into overlapping chunks by words."""
+    def chunk_document(self, text: str) -> List[Dict[str, Any]]:
         words = text.split()
         if not words:
             return []
-
+        
         chunks = []
-        step = self.chunk_size - self.chunk_overlap
-        for i in range(0, len(words), step):
-            chunks.append(" ".join(words[i:i + self.chunk_size]))
-            if i + self.chunk_size >= len(words):
-                break
+        for i in range(0, len(words), self.parent_size):
+            parent_words = words[i:i + self.parent_size]
+            parent_content = " ".join(parent_words)
+            
+            child_chunks = [
+                " ".join(parent_words[j:j + self.child_size])
+                for j in range(0, len(parent_words), self.child_size)
+            ]
+            chunks.append({
+                "parent_content": parent_content,
+                "child_chunks": child_chunks
+            })
         return chunks
