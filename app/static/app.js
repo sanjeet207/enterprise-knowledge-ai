@@ -174,6 +174,7 @@
       } else {
         const data = await res.json();
         bot.append(tag(data.outcome));
+        if (data.corrected_query) bot.append(el("span", "note", "Searched for: " + data.corrected_query));
         const b = el("span", "body");
         if (data.outcome === "answered") renderAnswerText(b, data.answer, msgId, data.sources);
         else b.textContent = data.answer;
@@ -209,7 +210,8 @@
       const q = el("td", "q", r.query || "");
       const oc = el("td"); oc.append(tag(r.outcome));
       tr.append(el("td", null, when), el("td", null, r.user_email || ""), el("td", null, r.role_level != null ? "L" + r.role_level : ""),
-        q, oc, el("td", null, score), el("td", null, r.latency_ms != null ? String(r.latency_ms) : ""), el("td", "q", r.rewritten_query || ""));
+        q, oc, el("td", null, score), el("td", null, r.latency_ms != null ? String(r.latency_ms) : ""), el("td", "q", r.rewritten_query || ""),
+        el("td", "q", (r.trace || []).map((x) => x.agent + " " + x.ms + "ms" + (x.detail ? " (" + x.detail + ")" : "")).join(" > ")));
       tbody.append(tr);
     });
   }

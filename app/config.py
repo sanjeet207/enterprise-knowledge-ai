@@ -28,8 +28,14 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 LLM_MODEL = os.getenv("LLM_MODEL", "qwen2.5:7b")
 # Below this top rerank score the question is refused without calling the model.
+LLM_NUM_CTX = int(os.getenv("LLM_NUM_CTX", "4096"))
 REFUSAL_THRESHOLD = float(os.getenv("REFUSAL_THRESHOLD", "0.1"))
 
 # Second-pass check: a separate model call confirms every claim is supported by the sources.
 VALIDATOR_ENABLED = os.getenv("VALIDATOR_ENABLED", "true").lower() in ("1", "true", "yes")
 VALIDATOR_MAX_RETRIES = int(os.getenv("VALIDATOR_MAX_RETRIES", "2"))
+
+
+def agent_model(name: str) -> str:
+    """Model for one agent. Set e.g. VALIDATOR_MODEL=qwen2.5:3b to use a different model for that agent."""
+    return os.getenv(f"{name.upper()}_MODEL") or LLM_MODEL

@@ -21,6 +21,7 @@ STATEMENTS = [
     )
     """,
     "ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS rewritten_query TEXT",
+    "ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS trace JSONB",
     "CREATE INDEX IF NOT EXISTS audit_log_tenant_time_idx ON audit_log (tenant_id, created_at DESC)",
 ]
 

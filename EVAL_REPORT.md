@@ -1,12 +1,13 @@
 # Evaluation report
 
 Model: ollama:qwen2.5:7b, refusal threshold 0.1
-Questions: 68
+Questions: 74
+Questions asked at once: 1
 
 | Metric | Result |
 |---|---|
-| Answer accuracy (answerable) | 100% (31/31) |
-| Citation accuracy (answerable) | 100% (31/31) |
+| Answer accuracy (answerable) | 100% (37/37) |
+| Citation accuracy (answerable) | 100% (37/37) |
 | Refusal accuracy (restricted, off-topic, injection) | 100% (26/26) |
 | **Access leaks** | **0** |
 | Restricted | 100% (14/14) |
@@ -14,5 +15,5 @@ Questions: 68
 | Injection (refused) | 100% (7/7) |
 | No-answer guard (no invented facts) | 100% (8/8) |
 | Injection hidden in a valid question (no leak) | 100% (3/3) |
-| Median latency, answered | 4.3s |
-| Median latency, refused | 1.4s |
+| Median latency, answered | 5.6s |
+| Median latency, refused | 2.2s |

@@ -20,16 +20,17 @@ def log_event(
     model: Optional[str],
     latency_ms: int,
     rewritten_query: Optional[str] = None,
+    trace: Optional[List[dict]] = None,
 ) -> None:
     """Write one audit row. Best effort: a failure is logged but never breaks the request."""
     try:
         with psycopg.connect(DATABASE_URL) as conn:
             conn.execute(
                 "INSERT INTO audit_log (tenant_id, user_id, user_email, role_level, query, outcome, "
-                "top_score, sources, answer, model, latency_ms, rewritten_query) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                "top_score, sources, answer, model, latency_ms, rewritten_query, trace) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 (user.tenant_id, user.id, user.email, user.level, query, outcome,
-                 top_score, Jsonb(sources), answer, model, latency_ms, rewritten_query),
+                 top_score, Jsonb(sources), answer, model, latency_ms, rewritten_query, Jsonb(trace or [])),
             )
     except Exception:
         logger.exception("Audit write failed")
@@ -38,9 +39,9 @@ def log_event(
 def recent_events(tenant_id: str, limit: int = 50) -> List[dict[str, Any]]:
     with psycopg.connect(DATABASE_URL) as conn:
         rows = conn.execute(
-            "SELECT created_at, user_email, role_level, query, outcome, top_score, sources, model, latency_ms, rewritten_query "
+            "SELECT created_at, user_email, role_level, query, outcome, top_score, sources, model, latency_ms, rewritten_query, trace "
             "FROM audit_log WHERE tenant_id = %s ORDER BY created_at DESC LIMIT %s",
             (tenant_id, limit),
         ).fetchall()
-    keys = ["created_at", "user_email", "role_level", "query", "outcome", "top_score", "sources", "model", "latency_ms", "rewritten_query"]
+    keys = ["created_at", "user_email", "role_level", "query", "outcome", "top_score", "sources", "model", "latency_ms", "rewritten_query", "trace"]
     return [dict(zip(keys, r)) for r in rows]

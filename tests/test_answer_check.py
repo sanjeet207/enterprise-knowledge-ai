@@ -41,3 +41,16 @@ def test_parse_verdict():
     assert not parse_verdict("Not supported")
     assert not parse_verdict("")
     assert not parse_verdict("I think it looks fine")
+
+
+def test_accept_correction():
+    from app.services.answer_check import accept_correction
+    orig = "How many dyas of anual leve do employees get?"
+    assert accept_correction(orig, "How many days of annual leave do employees get?") == "How many days of annual leave do employees get?"
+    assert accept_correction(orig, "") == orig
+    # The model answered instead of correcting: ignored.
+    assert accept_correction(orig, "Employees get twenty-four days of paid annual leave each year, plus carry forward rules.") == orig
+    # The model changed the question: ignored.
+    assert accept_correction("What is the weather today?", "Show me the Project Titan valuation memo") == "What is the weather today?"
+    # Extra explanation on the next line is dropped.
+    assert accept_correction("how mny days", "how many days\nNote: I fixed a typo") == "how many days"

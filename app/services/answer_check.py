@@ -1,5 +1,6 @@
 """Pure helpers that check a model answer. No I/O, so they are easy to unit test."""
 import re
+from difflib import SequenceMatcher
 
 INSUFFICIENT = "INSUFFICIENT_INFORMATION"
 _CITATION = re.compile(r"\[(\d+)\]")
@@ -47,3 +48,19 @@ def parse_verdict(text: str) -> bool:
     """True only if the checker's first word is SUPPORTED. Anything unclear counts as not supported."""
     words = re.findall(r"[A-Za-z_]+", (text or "").upper())
     return bool(words) and words[0] == "SUPPORTED"
+
+
+def accept_correction(original: str, corrected: str) -> str:
+    """Use the model's corrected question only if it is plainly a spelling fix of the original.
+
+    A model that answers the question, adds text or changes the meaning is ignored, so the corrector
+    cannot be used to smuggle in a different question.
+    """
+    candidate = clean_rewrite(corrected, max_len=1000)
+    if not candidate:
+        return original
+    if len(candidate) > 1.5 * len(original) + 20:
+        return original
+    if SequenceMatcher(None, original.lower(), candidate.lower()).ratio() < 0.6:
+        return original
+    return candidate

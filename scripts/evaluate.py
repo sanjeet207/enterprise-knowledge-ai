@@ -1,6 +1,8 @@
 """Evaluate the running API against tests/eval_set.json and write EVAL_REPORT.md.
 
 Usage (server running):  python -m scripts.evaluate [--base-url http://127.0.0.1:8000]
+  --workers 3                    ask 3 questions at a time (faster; latencies then include waiting in line)
+  --only answerable,restricted   run only these categories (a partial run does not overwrite EVAL_REPORT.md)
 
 Metrics
   answer accuracy    answerable questions answered, with an expected phrase in the answer
@@ -13,6 +15,7 @@ import json
 import statistics
 import time
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import httpx
@@ -53,25 +56,38 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--eval-set", default="tests/eval_set.json")
+    parser.add_argument("--workers", type=int, default=1, help="questions asked at the same time")
+    parser.add_argument("--only", default="", help="comma-separated categories to run")
     args = parser.parse_args()
 
     cases = json.loads(Path(args.eval_set).read_text())
+    only = {c.strip() for c in args.only.split(",") if c.strip()}
+    partial = bool(only)
+    if only:
+        cases = [c for c in cases if c["category"] in only]
+    workers = max(1, args.workers)
+
     tokens: dict[str, str] = {}
-    results = []
     with httpx.Client(base_url=args.base_url, timeout=300.0) as client:
-        for i, case in enumerate(cases, start=1):
-            if case["user"] not in tokens:
-                tokens[case["user"]] = login(client, case["user"])
+        for user in sorted({c["user"] for c in cases}):
+            tokens[user] = login(client, user)
+
+    def ask(item):
+        i, case = item
+        with httpx.Client(base_url=args.base_url, timeout=300.0) as client:
             started = time.perf_counter()
             r = client.post("/chat/query", json={"query": case["question"]},
                             headers={"Authorization": f"Bearer {tokens[case['user']]}"})
             latency = time.perf_counter() - started
-            response = r.json() if r.status_code == 200 else {"outcome": "error", "answer": r.text, "sources": []}
-            flags = score_case(case, response)
-            results.append({**case, "outcome": response.get("outcome"), "answer": response.get("answer"),
-                            "latency_s": round(latency, 2), **flags})
-            print(f"[{i:>2}/{len(cases)}] {'PASS' if flags['passed'] else 'FAIL'} {case['category']:<10} "
-                  f"{case['user'].split('@')[0]:<16} {case['question'][:55]}")
+        response = r.json() if r.status_code == 200 else {"outcome": "error", "answer": r.text, "sources": []}
+        flags = score_case(case, response)
+        print(f"[{i:>2}/{len(cases)}] {'PASS' if flags['passed'] else 'FAIL'} {case['category']:<10} "
+              f"{case['user'].split('@')[0]:<16} {case['question'][:55]}", flush=True)
+        return {**case, "outcome": response.get("outcome"), "answer": response.get("answer"),
+                "latency_s": round(latency, 2), **flags}
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        results = list(pool.map(ask, enumerate(cases, start=1)))
 
     by_cat = defaultdict(list)
     for r in results:
@@ -98,7 +114,8 @@ def main() -> int:
 
     lines = [
         "# Evaluation report", "",
-        f"Model: {model}", f"Questions: {len(results)}", "",
+        f"Model: {model}", f"Questions: {len(results)}" + (f" (partial run: {args.only})" if partial else ""),
+        f"Questions asked at once: {workers}" + (" (latencies include waiting in line)" if workers > 1 else ""), "",
         "| Metric | Result |", "|---|---|",
         f"| Answer accuracy (answerable) | {pct(sum(r['answered_ok'] for r in ans), len(ans))} ({sum(r['answered_ok'] for r in ans)}/{len(ans)}) |",
         f"| Citation accuracy (answerable) | {pct(sum(r['cited_ok'] for r in ans), len(ans))} ({sum(r['cited_ok'] for r in ans)}/{len(ans)}) |",
@@ -121,8 +138,10 @@ def main() -> int:
         lines += ["", "## Failures", ""]
         for r in failures:
             lines.append(f"- [{r['category']}] {r['user']}: {r['question']} -> outcome={r['outcome']}, leaked={r['leaked']}")
-    Path("EVAL_REPORT.md").write_text("\n".join(lines) + "\n")
-    Path("eval_results.json").write_text(json.dumps(results, indent=1))
+    # A partial or parallel run is for quick checks; only a full single-worker run is the published report.
+    publish = not partial and workers == 1
+    Path("EVAL_REPORT.md" if publish else "EVAL_REPORT_quick.md").write_text("\n".join(lines) + "\n")
+    Path("eval_results.json" if publish else "eval_results_quick.json").write_text(json.dumps(results, indent=1))
     print("\n" + "\n".join(lines))
     return 1 if leaks else 0
 
