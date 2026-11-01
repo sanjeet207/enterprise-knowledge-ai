@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'self'">
+<title>Enterprise Knowledge AI</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<section id="login-view" class="login" hidden>
+  <form id="login-form" class="card login-card" autocomplete="on">
+    <h1>Enterprise Knowledge AI</h1>
+    <p class="muted">Ask questions about company documents. You only see answers from documents you are authorized to access.</p>
+    <label for="email">Work email</label>
+    <input id="email" name="username" type="email" required autocomplete="username">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" required autocomplete="current-password">
+    <p id="login-error" class="error" role="alert" hidden></p>
+    <button type="submit" class="primary" id="login-button">Sign in</button>
+    <details class="demo">
+      <summary>Demo accounts</summary>
+      <p class="muted small">Fictional company "Acme Financial Services". Pick a role to see how answers and refusals change.</p>
+      <div id="demo-list" class="demo-list"></div>
+    </details>
+  </form>
+</section>
+
+<div id="app-view" hidden>
+  <header class="topbar">
+    <div class="brand">Enterprise Knowledge AI</div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button role="tab" id="tab-chat" aria-selected="true" aria-controls="chat-panel" class="tab active">Chat</button>
+      <button role="tab" id="tab-audit" aria-selected="false" aria-controls="audit-panel" class="tab" hidden>Audit log</button>
+    </nav>
+    <div class="who">
+      <span id="who-email" class="who-email"></span>
+      <span id="who-role" class="badge"></span>
+      <button id="logout" class="link">Sign out</button>
+    </div>
+  </header>
+
+  <main id="chat-panel" class="layout" role="tabpanel" aria-labelledby="tab-chat">
+    <section class="chat">
+      <div id="messages" class="messages" aria-live="polite">
+        <div class="empty" id="empty">
+          <h2>What would you like to know?</h2>
+          <p class="muted">Answers come only from documents your role may read, with citations.</p>
+          <div id="suggestions" class="suggestions"></div>
+        </div>
+      </div>
+      <form id="chat-form" class="composer">
+        <label for="question" class="sr-only">Your question</label>
+        <textarea id="question" rows="1" maxlength="1000" placeholder="Ask about a company policy or report..." required></textarea>
+        <button type="submit" class="primary" id="send">Ask</button>
+      </form>
+    </section>
+    <aside class="sources card" aria-labelledby="sources-title">
+      <h2 id="sources-title">Sources</h2>
+      <p class="muted small" id="sources-hint">Documents cited by the latest answer appear here.</p>
+      <ol id="sources-list" class="sources-list"></ol>
+    </aside>
+  </main>
+
+  <main id="audit-panel" class="audit" role="tabpanel" aria-labelledby="tab-audit" hidden>
+    <div class="card">
+      <div class="audit-head">
+        <h2>Recent questions in your organization</h2>
+        <button id="audit-refresh" class="secondary">Refresh</button>
+      </div>
+      <p class="muted small">Every question is recorded with the asker, outcome and sources. Visible to partners only.</p>
+      <div class="table-wrap">
+        <table id="audit-table">
+          <thead><tr><th>Time</th><th>User</th><th>Role</th><th>Question</th><th>Outcome</th><th>Score</th><th>ms</th><th>Rewritten search</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="audit-empty" class="muted" hidden>No events yet.</p>
+    </div>
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
