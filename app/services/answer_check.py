@@ -1,0 +1,43 @@
+"""Pure helpers that check a model answer. No I/O, so they are easy to unit test."""
+import re
+
+INSUFFICIENT = "INSUFFICIENT_INFORMATION"
+_CITATION = re.compile(r"\[(\d+)\]")
+
+
+def is_insufficient(answer: str) -> bool:
+    return not answer.strip() or INSUFFICIENT in answer
+
+
+def cited_numbers(answer: str, source_count: int) -> list[int]:
+    """Valid citation numbers (1..source_count) used in the answer, sorted."""
+    found = {int(m) for m in _CITATION.findall(answer)}
+    return sorted(n for n in found if 1 <= n <= source_count)
+
+
+def strip_invalid_citations(answer: str, source_count: int) -> str:
+    """Remove citation markers that point to a source that does not exist."""
+
+    def keep(match: re.Match) -> str:
+        return match.group(0) if 1 <= int(match.group(1)) <= source_count else ""
+
+    return _CITATION.sub(keep, answer).strip()
+
+
+def clean_rewrite(text: str, max_len: int = 200) -> str:
+    """Make a model-written search query safe to use: first line only, no quotes or markup."""
+    line = (text or "").strip().splitlines()[0] if (text or "").strip() else ""
+    line = line.strip().strip("\"'`*# ").strip()
+    return line[:max_len]
+
+
+def clean_rewrites(text: str, max_queries: int = 3, max_len: int = 200) -> list[str]:
+    """Split a model-written list of search queries into clean, de-duplicated strings."""
+    out: list[str] = []
+    for raw in (text or "").splitlines():
+        line = re.sub(r"^\s*(?:[-*\u2022]|\d+[.)])\s*", "", raw).strip().strip("\"'`*# ").strip()[:max_len]
+        if line and line.lower() not in (q.lower() for q in out):
+            out.append(line)
+        if len(out) == max_queries:
+            break
+    return out
