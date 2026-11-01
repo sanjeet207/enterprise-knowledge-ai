@@ -6,7 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from app import config
 from app.security import get_current_user
 from app.services import audit
-from app.services.answer_check import cited_numbers, clean_rewrites, is_insufficient, strip_invalid_citations
+from app.services.answer_check import (cited_numbers, clean_rewrites, is_insufficient, parse_verdict,
+                                        strip_invalid_citations)
 from app.services.llm import LLMService, LLMUnavailable
 from app.services.reranker import rerank_passages
 from app.services.users import User
@@ -79,10 +80,22 @@ async def rag_query(payload: ChatRequest, user: User = Depends(get_current_user)
     passages = [p["parent_content"] for p in reranked]
 
     # 4. Generate with numbered sources. Retry once if the answer has no valid citation.
+    #    Then a second model call checks that every claim is supported; if not, regenerate (bounded).
     try:
         answer = await LLMService.generate_answer(payload.query, passages)
         if not is_insufficient(answer) and not cited_numbers(answer, len(passages)):
             answer = await LLMService.generate_answer(payload.query, passages, strict=True)
+
+        if config.VALIDATOR_ENABLED:
+            for attempt in range(config.VALIDATOR_MAX_RETRIES + 1):
+                if is_insufficient(answer) or not cited_numbers(answer, len(passages)):
+                    break  # handled below as no_answer / unverified
+                verdict = await LLMService.verify_answer(payload.query, answer, passages)
+                if parse_verdict(verdict):
+                    break
+                if attempt == config.VALIDATOR_MAX_RETRIES:
+                    return finish("unverified", UNVERIFIED, top_score=top_score, model=config.LLM_MODEL)
+                answer = await LLMService.generate_answer(payload.query, passages, strict=True, grounding=True)
     except LLMUnavailable:
         finish("error", None, top_score=top_score, model=config.LLM_MODEL)
         raise HTTPException(status_code=503, detail="The answer service is unavailable. Try again shortly.")

@@ -29,3 +29,7 @@ OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 LLM_MODEL = os.getenv("LLM_MODEL", "qwen2.5:7b")
 # Below this top rerank score the question is refused without calling the model.
 REFUSAL_THRESHOLD = float(os.getenv("REFUSAL_THRESHOLD", "0.1"))
+
+# Second-pass check: a separate model call confirms every claim is supported by the sources.
+VALIDATOR_ENABLED = os.getenv("VALIDATOR_ENABLED", "true").lower() in ("1", "true", "yes")
+VALIDATOR_MAX_RETRIES = int(os.getenv("VALIDATOR_MAX_RETRIES", "2"))

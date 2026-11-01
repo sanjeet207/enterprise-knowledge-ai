@@ -31,3 +31,13 @@ def test_clean_rewrites():
     text = '1. "suspected security incident report time"\n- security incident reporting deadline\n\n* Suspected Security Incident Report Time\nfourth query\nfifth'
     assert clean_rewrites(text) == ["suspected security incident report time", "security incident reporting deadline", "fourth query"]
     assert clean_rewrites("") == []
+
+
+def test_parse_verdict():
+    from app.services.answer_check import parse_verdict
+    assert parse_verdict("SUPPORTED - matches source 1")
+    assert parse_verdict("  supported.")
+    assert not parse_verdict("UNSUPPORTED - the number is wrong")
+    assert not parse_verdict("Not supported")
+    assert not parse_verdict("")
+    assert not parse_verdict("I think it looks fine")

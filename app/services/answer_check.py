@@ -41,3 +41,9 @@ def clean_rewrites(text: str, max_queries: int = 3, max_len: int = 200) -> list[
         if len(out) == max_queries:
             break
     return out
+
+
+def parse_verdict(text: str) -> bool:
+    """True only if the checker's first word is SUPPORTED. Anything unclear counts as not supported."""
+    words = re.findall(r"[A-Za-z_]+", (text or "").upper())
+    return bool(words) and words[0] == "SUPPORTED"
