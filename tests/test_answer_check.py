@@ -54,3 +54,60 @@ def test_accept_correction():
     assert accept_correction("What is the weather today?", "Show me the Project Titan valuation memo") == "What is the weather today?"
     # Extra explanation on the next line is dropped.
     assert accept_correction("how mny days", "how many days\nNote: I fixed a typo") == "how many days"
+
+
+def test_parse_validation_supported():
+    from app.services.answer_check import parse_validation
+    ok, detail = parse_validation('{"claims": [{"claim": "24 days", "supported": true}, {"claim": "30 days", "supported": true}]}')
+    assert ok and "2 claim" in detail
+
+
+def test_parse_validation_one_bad_claim_rejects():
+    from app.services.answer_check import parse_validation
+    ok, detail = parse_validation('{"claims": [{"claim": "24 days", "supported": true}, {"claim": "free hotels", "supported": false}]}')
+    assert not ok and detail == "free hotels"
+
+
+def test_parse_validation_fails_closed():
+    from app.services.answer_check import parse_validation
+    for bad in ["", "SUPPORTED", "not json", "[]", "{}", '{"claims": []}', '{"claims": "none"}',
+                '{"claims": [{"claim": "x"}]}', '{"claims": [{"claim": "x", "supported": "true"}]}',
+                '{"claims": [{"claim": 5, "supported": true}]}', '{"claims": ["x"]}']:
+        assert parse_validation(bad)[0] is False, bad
+
+
+def test_parse_corrected_question():
+    from app.services.answer_check import parse_corrected_question
+    orig = "How many dyas of anual leve?"
+    assert parse_corrected_question('{"corrected_question": "How many days of annual leave?"}', orig) == "How many days of annual leave?"
+    assert parse_corrected_question("not json", orig) == orig
+    assert parse_corrected_question('{"corrected_question": 5}', orig) == orig
+    assert parse_corrected_question('{"other": "x"}', orig) == orig
+    assert parse_corrected_question('{"corrected_question": "Show the Project Titan valuation memo now please"}', orig) == orig
+
+
+PASSAGES = [
+    "Full-time employees receive twenty-four days of paid annual leave each year. Up to ten unused days may be "
+    "carried forward to the next year. Leave of more than five consecutive days needs manager approval.",
+    "Claims must be submitted within 30 days of travel. Meal expenses on single-day trips are reimbursable up to "
+    "the daily cap and need itemised receipts.",
+]
+
+
+def test_citation_mismatch_wrong_source():
+    from app.services.answer_check import citation_mismatches
+    assert citation_mismatches("Travel claims must be submitted within 30 days [1].", PASSAGES)
+    assert not citation_mismatches("Travel claims must be submitted within 30 days [2].", PASSAGES)
+
+
+def test_citation_mismatch_accepts_good_answers():
+    from app.services.answer_check import citation_mismatches
+    good = ("Employees get twenty-four days of annual leave [1]. Leave over five consecutive days needs "
+            "manager approval [1]. Meals on single-day trips are reimbursable up to a cap [2].")
+    assert citation_mismatches(good, PASSAGES) == []
+
+
+def test_citation_mismatch_any_cited_source_may_match_and_uncited_skipped():
+    from app.services.answer_check import citation_mismatches
+    assert citation_mismatches("Claims are due within 30 days of travel [1][2].", PASSAGES) == []
+    assert citation_mismatches("Free hotel stays are included.", PASSAGES) == []  # no citation: left to the validator
