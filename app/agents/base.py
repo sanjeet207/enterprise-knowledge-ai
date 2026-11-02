@@ -12,7 +12,7 @@ class Trace:
 
     def add(self, agent: str, started: float, detail: str = "") -> None:
         self.steps.append({"agent": agent, "ms": int((time.perf_counter() - started) * 1000),
-                           "detail": (detail or "")[:160]})
+                           "detail": (detail or "")[:400]})
 
 
 def documents_block(passages: list[str]) -> str:

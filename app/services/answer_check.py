@@ -92,7 +92,7 @@ def parse_validation(text: str) -> tuple[bool, str]:
         if item["supported"] is not True:
             bad.append(item["claim"].strip())
     if bad:
-        return False, ("; ".join(c for c in bad if c) or "claim not supported")[:140]
+        return False, ("; ".join(c for c in bad if c) or "claim not supported")[:300]
     return True, f"{len(claims)} claim(s) supported"
 
 
@@ -144,4 +144,22 @@ def citation_mismatches(answer: str, passages: list[str], threshold: float = 0.4
         best = max(len(words & _content_words(passages[n - 1])) / len(words) for n in cited)
         if best < threshold:
             bad.append(sentence.strip())
+    return bad
+
+
+def uncited_sentences(answer: str, source_count: int, min_words: int = 3) -> list[str]:
+    """Factual-looking sentences that carry no valid [n] citation. Plain code, no model.
+
+    A sentence counts as factual if it has at least `min_words` content words, so short lead-ins and
+    closers do not trigger it. A citation written after the full stop ("... week. [1]") is moved back
+    onto its sentence first.
+    """
+    text = re.sub(r"([.!?])\s*((?:\[\d+\]\s*)+)(?=\s|$)", r" \2\1", answer)
+    bad = []
+    for sentence in re.split(r"(?<=[.!?])\s+|\n+", text):
+        sentence = sentence.strip()
+        if not sentence or cited_numbers(sentence, source_count):
+            continue
+        if len(_content_words(sentence)) >= min_words:
+            bad.append(sentence)
     return bad

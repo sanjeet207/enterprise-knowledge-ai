@@ -35,7 +35,7 @@ def env(monkeypatch):
     async def fake_corrector(q):
         return q
 
-    async def fake_answerer(q, passages, strict=False, grounding=False):
+    async def fake_answerer(q, passages, strict=False, grounding=False, feedback=None):
         calls["answerer"] += 1
         return "Employees receive twenty-four days [1]."
 
@@ -204,7 +204,7 @@ def test_planner_second_search_merges_both_results(env):
     })
     seen_passages = []
 
-    async def capture(q, passages, strict=False, grounding=False):
+    async def capture(q, passages, strict=False, grounding=False, feedback=None):
         seen_passages.extend(passages)
         return "Both apply [1][2]."
 
@@ -312,3 +312,59 @@ def test_rewriter_still_rescues_when_planner_search_is_also_weak(env):
     out = run(retriever, "what cheks are done")
     assert out["outcome"] == "answered" and out["sources"][0]["title"] == "Onboarding Policy"
     assert calls["rewriter"] == 1
+
+
+def test_uncited_sentence_triggers_regeneration_then_passes(env):
+    events, calls, mp = env
+    drafts = iter(["Remote work is three days a week. Leave is twenty-four days [1].",
+                   "Remote work is three days a week [1]. Leave is twenty-four days [1]."])
+
+    async def writer(q, passages, strict=False, grounding=False, feedback=None):
+        calls["answerer"] += 1
+        return next(drafts)
+
+    mp.setattr(answerer, "run", writer)
+    out = run(FakeRetriever())
+    assert out["outcome"] == "answered" and calls["answerer"] == 2
+    assert calls["validator"] == 1  # the model validator only sees the fixed answer
+    steps = [s["detail"] for s in events[0][0][-1] if s["agent"] == "validator"]
+    assert steps[0].startswith("uncited:")
+
+
+def test_uncited_sentence_every_time_ends_unverified(env):
+    events, calls, mp = env
+
+    async def writer(q, passages, strict=False, grounding=False, feedback=None):
+        calls["answerer"] += 1
+        return "Remote work is three days a week. Leave is twenty-four days [1]."
+
+    mp.setattr(answerer, "run", writer)
+    out = run(FakeRetriever())
+    assert out["outcome"] == "unverified"
+    assert calls["answerer"] == 1 + config.VALIDATOR_MAX_RETRIES and calls["validator"] == 0
+
+
+def test_trace_shows_answer_text_and_titles(env):
+    events, calls, _ = env
+    run(FakeRetriever())
+    trace = events[0][0][-1]
+    assert "Employee Leave Policy" in trace[1]["detail"]
+    assert trace[2]["detail"].startswith("drafted: Employees receive")
+
+
+def test_retry_tells_the_answerer_what_was_rejected(env):
+    events, calls, mp = env
+    seen = []
+    verdicts = iter([(False, "Leave is twenty-four days"), (True, "SUPPORTED")])
+
+    async def writer(q, passages, strict=False, grounding=False, feedback=None):
+        seen.append(feedback)
+        return "Employees receive twenty-four days [1]."
+
+    async def judge(q, a, p):
+        return next(verdicts)
+
+    mp.setattr(answerer, "run", writer)
+    mp.setattr(validator, "run", judge)
+    assert run(FakeRetriever())["outcome"] == "answered"
+    assert seen == [None, "Leave is twenty-four days"]

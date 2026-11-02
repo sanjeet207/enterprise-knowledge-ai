@@ -8,7 +8,7 @@ from app import config
 from app.agents import answerer, corrector, planner, rewriter, validator
 from app.agents.base import Trace
 from app.services import audit
-from app.services.answer_check import cited_numbers, is_insufficient, strip_invalid_citations
+from app.services.answer_check import cited_numbers, is_insufficient, strip_invalid_citations, uncited_sentences
 from app.services.llm import LLMUnavailable
 
 # One message for "nothing found" and "not relevant": a refusal must not reveal whether
@@ -43,7 +43,8 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
         t = _now()
         hits = retriever.run(user, text, top_k)
         score = hits[0]["rerank_score"] if hits else 0.0
-        trace.add("retriever", t, f"score {score:.3f}")
+        titles = ", ".join(str(h["metadata"].get("title")) for h in hits)
+        trace.add("retriever", t, f"score {score:.3f}: {titles}" if titles else f"score {score:.3f}")
         searches.append(hits)
         return hits, score
 
@@ -130,7 +131,7 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
         # 5. Answerer, with one retry if it forgot to cite.
         t = _now()
         answer = await answerer.run(question, passages)
-        trace.add("answerer", t, "insufficient" if is_insufficient(answer) else "drafted")
+        trace.add("answerer", t, "insufficient" if is_insufficient(answer) else f"drafted: {answer}")
         if not is_insufficient(answer) and not cited_numbers(answer, len(passages)):
             t = _now()
             answer = await answerer.run(question, passages, strict=True)
@@ -141,16 +142,27 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
             for attempt in range(config.VALIDATOR_MAX_RETRIES + 1):
                 if is_insufficient(answer) or not cited_numbers(answer, len(passages)):
                     break
+                # Plain-code rule first: every factual sentence must carry a citation.
+                missing = uncited_sentences(answer, len(passages))
+                if missing:
+                    trace.add("validator", _now(), f"uncited: {missing[0][:150]}")
+                    if attempt == config.VALIDATOR_MAX_RETRIES:
+                        return finish("unverified", UNVERIFIED, top_score=top_score, model=model)
+                    t = _now()
+                    answer = await answerer.run(question, passages, strict=True,
+                                                 feedback=f"this sentence has no source number: {missing[0]}")
+                    trace.add("answerer", t, f"retry: citations: {answer}")
+                    continue
                 t = _now()
                 ok, raw = await validator.run(question, answer, passages)
-                trace.add("validator", t, "SUPPORTED" if ok else f"UNSUPPORTED {raw[:100]}")
+                trace.add("validator", t, "SUPPORTED" if ok else f"UNSUPPORTED {raw[:300]}")
                 if ok:
                     break
                 if attempt == config.VALIDATOR_MAX_RETRIES:
                     return finish("unverified", UNVERIFIED, top_score=top_score, model=model)
                 t = _now()
-                answer = await answerer.run(question, passages, strict=True, grounding=True)
-                trace.add("answerer", t, "retry: grounding")
+                answer = await answerer.run(question, passages, strict=True, grounding=True, feedback=raw)
+                trace.add("answerer", t, f"retry: grounding: {answer}")
     except LLMUnavailable:
         finish("error", None, top_score=top_score, model=model)
         raise

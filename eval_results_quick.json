@@ -1,0 +1,152 @@
+[
+ {
+  "category": "multi_part",
+  "user": "analyst@acme.test",
+  "question": "How many days of annual leave do employees get, and within how many days must travel claims be submitted?",
+  "must_contain_groups": [
+   [
+    "twenty-four",
+    "24"
+   ],
+   [
+    "30"
+   ]
+  ],
+  "expect_docs": [
+   "Employee Leave Policy",
+   "Travel and Expense Policy"
+  ],
+  "outcome": "unverified",
+  "answer": "I couldn't produce an answer that is backed by your documents, so I'm not showing one.",
+  "latency_s": 41.34,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "user": "analyst@acme.test",
+  "question": "How quickly must a security incident be reported, and what is the limit for gifts from clients?",
+  "must_contain_groups": [
+   [
+    "one hour",
+    "1 hour"
+   ],
+   [
+    "5000"
+   ]
+  ],
+  "expect_docs": [
+   "Information Security Policy",
+   "Code of Conduct and Whistleblower Policy"
+  ],
+  "outcome": "answered",
+  "answer": "A security incident must be reported to the security team within one hour [2]. The limit for gifts from clients is that those worth more than 5000 rupees must be declined or reported to compliance [1].",
+  "latency_s": 14.39,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "user": "analyst@acme.test",
+  "question": "How many days a week can I work remotely, and how many unused leave days can be carried forward?",
+  "must_contain_groups": [
+   [
+    "three",
+    "3"
+   ],
+   [
+    "ten",
+    "10"
+   ]
+  ],
+  "expect_docs": [
+   "Remote and Hybrid Work Policy",
+   "Employee Leave Policy"
+  ],
+  "outcome": "answered",
+  "answer": "You can work remotely up to three days a week with manager agreement [2]. Up to ten unused days of annual leave may be carried forward to the next year [1].",
+  "latency_s": 13.93,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "user": "manager@acme.test",
+  "question": "How often are performance reviews held, and how many quotations are needed for purchases above five lakh rupees?",
+  "must_contain_groups": [
+   [
+    "twice",
+    "april",
+    "october"
+   ],
+   [
+    "three"
+   ]
+  ],
+  "expect_docs": [
+   "Performance Review and Promotion Process",
+   "Vendor Selection and Procurement Policy"
+  ],
+  "outcome": "answered",
+  "answer": "Performance reviews are held twice a year, in April and October [2]. Purchases above five lakh rupees require at least three written quotations [1].",
+  "latency_s": 10.69,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "user": "manager@acme.test",
+  "question": "How soon must a post-incident review be written, and who receives suspicious activity escalations?",
+  "must_contain_groups": [
+   [
+    "five"
+   ],
+   [
+    "compliance manager"
+   ]
+  ],
+  "expect_docs": [
+   "Incident Response Runbook",
+   "KYC and AML Procedures"
+  ],
+  "outcome": "answered",
+  "answer": "A post-incident review must be written within five working days [1]. Suspicious activity must be escalated to the compliance manager within 24 hours [2].",
+  "latency_s": 12.52,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "user": "director@acme.test",
+  "question": "What was the overall employee attrition for the year, and who sets the executive bonus pool?",
+  "must_contain_groups": [
+   [
+    "14"
+   ],
+   [
+    "compensation committee"
+   ]
+  ],
+  "expect_docs": [
+   "Employee Attrition and Turnover Report",
+   "Executive Compensation Framework"
+  ],
+  "outcome": "answered",
+  "answer": "The overall employee attrition for the year was 14 percent, down from 17 percent the year before [2].\n\nThe executive bonus pool is set annually by the board compensation committee [1].",
+  "latency_s": 11.67,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ }
+]

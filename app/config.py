@@ -36,7 +36,7 @@ VALIDATOR_ENABLED = os.getenv("VALIDATOR_ENABLED", "true").lower() in ("1", "tru
 VALIDATOR_MAX_RETRIES = int(os.getenv("VALIDATOR_MAX_RETRIES", "2"))
 
 # Planner: bounded tool-calling loop (search or finish). Total searches per question, first one included.
-PLANNER_ENABLED = os.getenv("PLANNER_ENABLED", "true").lower() in ("1", "true", "yes")
+PLANNER_ENABLED = os.getenv("PLANNER_ENABLED", "false").lower() in ("1", "true", "yes")
 PLANNER_MAX_SEARCHES = int(os.getenv("PLANNER_MAX_SEARCHES", "3"))
 
 

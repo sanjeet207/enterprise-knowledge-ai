@@ -25,7 +25,16 @@ GROUNDING_REMINDER = (
 )
 
 
-async def run(query: str, passages: list[str], strict: bool = False, grounding: bool = False) -> str:
-    system = SYSTEM_PROMPT + (STRICT_REMINDER if strict else "") + (GROUNDING_REMINDER if grounding else "")
+def feedback_note(feedback: str) -> str:
+    """Tell the model what was rejected, so a retry is not a repeat of the same answer."""
+    return (f"\nYour previous answer was rejected because of this: {feedback.strip()[:300]}\n"
+            "Write a new answer: use only what the sources state, put the right source number after each "
+            "statement, and drop anything you cannot point to in a source.")
+
+
+async def run(query: str, passages: list[str], strict: bool = False, grounding: bool = False,
+              feedback: str | None = None) -> str:
+    system = (SYSTEM_PROMPT + (STRICT_REMINDER if strict else "") + (GROUNDING_REMINDER if grounding else "")
+              + (feedback_note(feedback) if feedback else ""))
     user = f"{documents_block(passages)}\n\nQuestion: {query}"
     return await llm.chat(system, user, model=config.agent_model(NAME))

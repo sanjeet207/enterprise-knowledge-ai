@@ -129,3 +129,25 @@ def test_parse_plan_finish_and_garbage_mean_finish():
 def test_parse_plan_trims_and_limits_the_query():
     action, query = parse_plan('{"action": "search", "query": "' + "word " * 100 + '"}')
     assert action == "search" and len(query) <= 150 and "  " not in query
+
+
+def test_uncited_sentence_is_found():
+    from app.services.answer_check import uncited_sentences
+    answer = "You can work remotely up to three days a week. Up to ten leave days carry forward [1]."
+    assert uncited_sentences(answer, 2) == ["You can work remotely up to three days a week."]
+
+
+def test_fully_cited_answer_has_no_uncited_sentences():
+    from app.services.answer_check import uncited_sentences
+    assert uncited_sentences("Leave is twenty-four days [1]. Claims are due in 30 days [2].", 2) == []
+
+
+def test_citation_after_full_stop_counts():
+    from app.services.answer_check import uncited_sentences
+    assert uncited_sentences("Leave is twenty-four days a year. [1] Claims are due in 30 days. [2]", 2) == []
+
+
+def test_invalid_citation_does_not_count_and_short_lines_are_ignored():
+    from app.services.answer_check import uncited_sentences
+    assert uncited_sentences("Leave is twenty-four days a year [9].", 2) == ["Leave is twenty-four days a year [9]."]
+    assert uncited_sentences("Here you go.", 2) == []
