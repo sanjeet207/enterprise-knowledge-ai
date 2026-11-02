@@ -40,3 +40,19 @@ def test_unsupported_must_not_be_answered():
     case = {"category": "unsupported", "forbidden": []}
     assert not score_case(case, resp("answered", "Employees get 10 sick days [1]."))["passed"]
     assert score_case(case, resp("no_answer", "not enough information"))["passed"]
+
+
+MULTI = {"category": "multi_part", "user": "analyst@acme.test", "question": "q",
+         "must_contain_groups": [["twenty-four", "24"], ["30"]],
+         "expect_docs": ["Employee Leave Policy", "Travel and Expense Policy"]}
+
+
+def test_multi_part_needs_every_part_and_every_source():
+    both = resp("answered", "Twenty-four days [1]. Claims within 30 days [2].",
+                ["Employee Leave Policy", "Travel and Expense Policy"])
+    assert score_case(MULTI, both)["passed"]
+    one_part = resp("answered", "Twenty-four days [1].", ["Employee Leave Policy"])
+    assert not score_case(MULTI, one_part)["passed"]
+    missing_source = resp("answered", "Twenty-four days [1]. Claims within 30 days [1].", ["Employee Leave Policy"])
+    assert not score_case(MULTI, missing_source)["passed"]
+    assert not score_case(MULTI, resp("refused", "I can only answer from company documents"))["passed"]

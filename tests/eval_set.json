@@ -641,5 +641,113 @@
     "must_contain_any": [
       "technology"
     ]
+  },
+  {
+    "category": "multi_part",
+    "user": "analyst@acme.test",
+    "question": "How many days of annual leave do employees get, and within how many days must travel claims be submitted?",
+    "must_contain_groups": [
+      [
+        "twenty-four",
+        "24"
+      ],
+      [
+        "30"
+      ]
+    ],
+    "expect_docs": [
+      "Employee Leave Policy",
+      "Travel and Expense Policy"
+    ]
+  },
+  {
+    "category": "multi_part",
+    "user": "analyst@acme.test",
+    "question": "How quickly must a security incident be reported, and what is the limit for gifts from clients?",
+    "must_contain_groups": [
+      [
+        "one hour",
+        "1 hour"
+      ],
+      [
+        "5000"
+      ]
+    ],
+    "expect_docs": [
+      "Information Security Policy",
+      "Code of Conduct and Whistleblower Policy"
+    ]
+  },
+  {
+    "category": "multi_part",
+    "user": "analyst@acme.test",
+    "question": "How many days a week can I work remotely, and how many unused leave days can be carried forward?",
+    "must_contain_groups": [
+      [
+        "three",
+        "3"
+      ],
+      [
+        "ten",
+        "10"
+      ]
+    ],
+    "expect_docs": [
+      "Remote and Hybrid Work Policy",
+      "Employee Leave Policy"
+    ]
+  },
+  {
+    "category": "multi_part",
+    "user": "manager@acme.test",
+    "question": "How often are performance reviews held, and how many quotations are needed for purchases above five lakh rupees?",
+    "must_contain_groups": [
+      [
+        "twice",
+        "april",
+        "october"
+      ],
+      [
+        "three"
+      ]
+    ],
+    "expect_docs": [
+      "Performance Review and Promotion Process",
+      "Vendor Selection and Procurement Policy"
+    ]
+  },
+  {
+    "category": "multi_part",
+    "user": "manager@acme.test",
+    "question": "How soon must a post-incident review be written, and who receives suspicious activity escalations?",
+    "must_contain_groups": [
+      [
+        "five"
+      ],
+      [
+        "compliance manager"
+      ]
+    ],
+    "expect_docs": [
+      "Incident Response Runbook",
+      "KYC and AML Procedures"
+    ]
+  },
+  {
+    "category": "multi_part",
+    "user": "director@acme.test",
+    "question": "What was the overall employee attrition for the year, and who sets the executive bonus pool?",
+    "must_contain_groups": [
+      [
+        "14"
+      ],
+      [
+        "compensation committee"
+      ]
+    ],
+    "expect_docs": [
+      "Employee Attrition and Turnover Report",
+      "Executive Compensation Framework"
+    ]
   }
 ]

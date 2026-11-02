@@ -5,7 +5,7 @@ Plain code, not a model. Access control is decided by the retriever's SQL filter
 import time
 
 from app import config
-from app.agents import answerer, corrector, rewriter, validator
+from app.agents import answerer, corrector, planner, rewriter, validator
 from app.agents.base import Trace
 from app.services import audit
 from app.services.answer_check import cited_numbers, is_insufficient, strip_invalid_citations
@@ -37,12 +37,22 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
         return {"query": query, "corrected_query": corrected, "outcome": outcome,
                 "answer": answer, "sources": sources}
 
+    searches: list[list[dict]] = []  # every result list, in order
+
     def search(text: str) -> tuple[list[dict], float]:
         t = _now()
         hits = retriever.run(user, text, top_k)
         score = hits[0]["rerank_score"] if hits else 0.0
         trace.add("retriever", t, f"score {score:.3f}")
+        searches.append(hits)
         return hits, score
+
+    def observe(text: str, hits: list[dict], score: float) -> dict:
+        """What the planner is told about a search: titles and short snippets of allowed results only."""
+        strong = score >= config.REFUSAL_THRESHOLD
+        return {"query": text, "verdict": "strong match" if strong else "weak match",
+                "results": [(h["metadata"].get("title") or "untitled",
+                             " ".join(h["parent_content"].split())[:110]) for h in hits[:3]]}
 
     # 1. Corrector: fix typos. Cosmetic, so a model failure must not block the question.
     t = _now()
@@ -57,21 +67,57 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
 
     # 2. Retriever (access filtered in SQL).
     reranked, top_score = search(question)
+    tried = {question.lower()}
+    extra_searches = 0
 
-    # 3. Weak result: the rewriter proposes formal-wording queries; keep the best result.
+    # 3. Planner: a bounded loop that either finishes or asks for one more search. It can only call
+    #    the same access-filtered retriever, at most PLANNER_MAX_SEARCHES searches in total.
+    if config.PLANNER_ENABLED:
+        observations = [observe(question, reranked, top_score)]
+        while len(searches) < config.PLANNER_MAX_SEARCHES:
+            t = _now()
+            try:
+                action, next_query = await planner.run(question, observations,
+                                                       config.PLANNER_MAX_SEARCHES - len(searches))
+            except LLMUnavailable:
+                action, next_query = "finish", ""
+            if action != "search" or next_query.lower() in tried:
+                trace.add("planner", t, "finish")
+                break
+            trace.add("planner", t, f"search: {next_query}")
+            tried.add(next_query.lower())
+            notes.append(next_query)
+            extra_searches += 1
+            alt, alt_score = search(next_query)
+            observations.append(observe(next_query, alt, alt_score))
+            if alt_score > top_score:
+                top_score = alt_score
+                reranked = alt
+    # Safety net: still weak after the planner (or planner off), so try the plain rewriter once.
     if top_score < config.REFUSAL_THRESHOLD:
         t = _now()
         try:
             variants = await rewriter.run(question)
         except LLMUnavailable:
             variants = []
-        variants = [v for v in variants if v.lower() != question.lower()]
+        variants = [v for v in variants if v.lower() not in tried]
         trace.add("rewriter", t, f"{len(variants)} queries")
         notes.extend(variants)  # recorded even when they do not help
         for variant in variants:
             alt, alt_score = search(variant)
             if alt_score > top_score:
                 reranked, top_score = alt, alt_score
+
+    # When several searches ran, combine them: keep relevant passages only, best first, no duplicates.
+    if len(searches) > 1 and top_score >= config.REFUSAL_THRESHOLD:
+        pool: dict[str, dict] = {}
+        for hits in searches:
+            for h in hits:
+                if h["rerank_score"] >= config.REFUSAL_THRESHOLD:
+                    key = h["parent_content"]
+                    if key not in pool or h["rerank_score"] > pool[key]["rerank_score"]:
+                        pool[key] = h
+        reranked = sorted(pool.values(), key=lambda h: h["rerank_score"], reverse=True)[:min(5, top_k + 1)]
 
     # 4. Still not relevant: refuse without calling the answering agents.
     if not reranked or top_score < config.REFUSAL_THRESHOLD:

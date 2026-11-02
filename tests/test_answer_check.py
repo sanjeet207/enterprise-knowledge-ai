@@ -1,4 +1,4 @@
-from app.services.answer_check import cited_numbers, is_insufficient, strip_invalid_citations
+from app.services.answer_check import parse_plan, cited_numbers, is_insufficient, strip_invalid_citations
 
 
 def test_valid_citations_only():
@@ -111,3 +111,21 @@ def test_citation_mismatch_any_cited_source_may_match_and_uncited_skipped():
     from app.services.answer_check import citation_mismatches
     assert citation_mismatches("Claims are due within 30 days of travel [1][2].", PASSAGES) == []
     assert citation_mismatches("Free hotel stays are included.", PASSAGES) == []  # no citation: left to the validator
+
+
+def test_parse_plan_search():
+    assert parse_plan('{"action": "search", "query": "travel claim deadline"}') == ("search", "travel claim deadline")
+
+
+def test_parse_plan_finish_and_garbage_mean_finish():
+    assert parse_plan('{"action": "finish", "query": ""}') == ("finish", "")
+    assert parse_plan("not json") == ("finish", "")
+    assert parse_plan('{"action": "delete_everything", "query": "x y z"}') == ("finish", "")
+    assert parse_plan('{"action": "search", "query": 5}') == ("finish", "")
+    assert parse_plan('{"action": "search", "query": "  "}') == ("finish", "")
+    assert parse_plan("") == ("finish", "")
+
+
+def test_parse_plan_trims_and_limits_the_query():
+    action, query = parse_plan('{"action": "search", "query": "' + "word " * 100 + '"}')
+    assert action == "search" and len(query) <= 150 and "  " not in query

@@ -103,6 +103,18 @@ def parse_corrected_question(text: str, original: str) -> str:
     return accept_correction(original, value) if isinstance(value, str) else original
 
 
+def parse_plan(text: str, max_len: int = 150) -> tuple[str, str]:
+    """Read the planner's JSON reply. Anything invalid, or a search with no usable query, means finish."""
+    data = _load_json_object(text)
+    if not data or data.get("action") != "search":
+        return "finish", ""
+    query = data.get("query")
+    if not isinstance(query, str):
+        return "finish", ""
+    query = " ".join(query.split())[:max_len].strip()
+    return ("search", query) if len(query) >= 3 else ("finish", "")
+
+
 _STOPWORDS = frozenset(
     "a an and are as at be been by can do does for from has have how i if in into is it its may more must no not "
     "of on or our per than that the their them then there these they this to up was we were what when which who "

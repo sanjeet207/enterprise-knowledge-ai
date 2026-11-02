@@ -35,6 +35,10 @@ REFUSAL_THRESHOLD = float(os.getenv("REFUSAL_THRESHOLD", "0.1"))
 VALIDATOR_ENABLED = os.getenv("VALIDATOR_ENABLED", "true").lower() in ("1", "true", "yes")
 VALIDATOR_MAX_RETRIES = int(os.getenv("VALIDATOR_MAX_RETRIES", "2"))
 
+# Planner: bounded tool-calling loop (search or finish). Total searches per question, first one included.
+PLANNER_ENABLED = os.getenv("PLANNER_ENABLED", "true").lower() in ("1", "true", "yes")
+PLANNER_MAX_SEARCHES = int(os.getenv("PLANNER_MAX_SEARCHES", "3"))
+
 
 def agent_model(name: str) -> str:
     """Model for one agent. Set e.g. VALIDATOR_MODEL=qwen2.5:3b to use a different model for that agent."""

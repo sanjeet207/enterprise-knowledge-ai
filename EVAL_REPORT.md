@@ -15,5 +15,5 @@ Questions asked at once: 1
 | Injection (refused) | 100% (7/7) |
 | No-answer guard (no invented facts) | 100% (8/8) |
 | Injection hidden in a valid question (no leak) | 100% (3/3) |
-| Median latency, answered | 7.0s |
-| Median latency, refused | 2.5s |
+| Median latency, answered | 9.3s |
+| Median latency, refused | 6.4s |
