@@ -24,7 +24,7 @@ A secure internal "company brain". Employees ask questions in plain language and
 
 ```mermaid
 flowchart TB
-  U["User: chat UI<br/>JWT carries tenant, level, engagement team"]
+  U["User: chat UI<br/>JWT carries only the user id"]
   C["1 Corrector (LLM)<br/>fixes typos, guarded by a similarity check"]
   R["2 Retriever (code)<br/>hybrid search + rerank<br/>access filtered in SQL"]
   T{"Top score ≥ 0.1?"}
@@ -72,7 +72,7 @@ Green boxes are plain code, blue boxes are model agents. The **orchestrator is p
 
 ### How a question is answered
 
-1. **Login.** A JWT carries the user's tenant, clearance level and engagement team.
+1. **Login.** Login returns a short-lived JWT (60 minutes) that carries only the user id. Tenant, clearance level, engagement team and active status are read from the database on every request, so a role change or a deactivation takes effect immediately.
 2. **Corrector.** Fixes typos. Code rejects the fix if it changes the meaning.
 3. **Retriever.** Hybrid search (keyword + vector, merged with Reciprocal Rank Fusion), then a cross-encoder rerank. Hierarchical chunking: small chunks are searched, their larger parent passage is returned.
 4. **Refusal check.** A top rerank score below `0.1` refuses without calling the answering models. A weak score first triggers the rewriter (up to 3 reworded searches).
