@@ -1,0 +1,14 @@
+venv/
+.git/
+.github/
+.env
+.env.*
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+tests/
+EVAL_REPORT*.md
+eval_results*.json
+docker-compose.yml
+README.md

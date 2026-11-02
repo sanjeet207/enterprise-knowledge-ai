@@ -9,5 +9,26 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d knowledge"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # The API in a container. Only starts with the "app" profile, so a plain `docker compose up -d`
+  # still starts just the database, as before:  docker compose --profile app up -d --build
+  app:
+    profiles: ["app"]
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://app:app_dev_password@db:5432/knowledge
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      OLLAMA_URL: ${OLLAMA_URL_FOR_DOCKER:-http://host.docker.internal:11434}
+    ports:
+      - "8000:8000"
+
 volumes:
   pgdata:

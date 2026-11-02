@@ -1,0 +1,3 @@
+# Everything the app needs, plus the test runner. Used locally and by the CI access-check job.
+-r requirements.txt
+pytest>=8,<9
