@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/sanjeet207/enterprise-knowledge-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/sanjeet207/enterprise-knowledge-ai/actions/workflows/ci.yml)
 
-A secure internal "company brain". Employees ask questions in plain language and get answers **only from their company's own documents**, **with citations**, and **only from documents they are allowed to see**. Access depends on the person's clearance level and, for sensitive material, on whether they are on the engagement team. Off-topic questions are refused, answers are verified before they are shown, and every question is written to an audit log.
+A secure internal "company brain". Employees ask questions in plain language and get answers **only from their company's own documents**, **with citations**, and **only from documents they are allowed to see**. Access depends on the person's clearance level and, for sensitive material, on whether they are on the engagement team. A question that is plainly not about the company ("What is GST?") is answered from general knowledge and clearly labelled as such; company-specific questions are never answered that way. Answers are verified before they are shown, and every question is written to an audit log.
 
 > **About the data.** Everything in this repository is fictional. The demo company, "Acme Financial Services", and its fourteen policy documents were written for this project, as were the demo users and their shared password (`DemoPass2026x`, for local use only). A second tenant, "Globex" (two documents), exists to test tenant isolation.
 
@@ -17,7 +17,8 @@ A secure internal "company brain". Employees ask questions in plain language and
 | **Answers are grounded** | Every factual sentence must carry a `[n]` citation (checked in plain code). A validator then checks each claim against its sources. |
 | **Failing safe** | If an answer cannot be verified after bounded retries, nothing is shown (`unverified`) rather than a guess. |
 | **Prompt injection** | Retrieved text and user questions are treated as data. Injection attempts are part of the evaluation set. |
-| **Auditability** | Every question is logged with its outcome, sources, timings and a step-by-step agent trace, viewable by a Director. |
+| **Auditability** | Every question is logged with its outcome, sources, timings and a step-by-step agent trace, viewable by a Partner (level 4). |
+| **Beyond the documents** | A router decides whether a question the documents cannot answer is general knowledge. Plain code blocks company words and override attempts first; the answer is labelled "General knowledge", has no sources, and must pass its own checker. Anything else gets the same refusal as before. |
 | **No vendor lock-in** | Runs entirely on a local model (Ollama, `qwen2.5:7b`). No API key is needed. |
 
 ## Architecture
@@ -32,24 +33,36 @@ flowchart TB
   A["3 Answerer (LLM)<br/>cited answer from passages only"]
   CR["4 Citation rule (code)<br/>every factual sentence needs [n]"]
   V["5 Validator (LLM + code)<br/>per-claim check + citation overlap"]
+  RT{"6 Router (code guard + LLM)<br/>general knowledge?"}
+  G["General answerer (LLM)<br/>no documents, labelled, no sources"]
+  GC["General checker (LLM)<br/>on topic, no company claims,<br/>no uncertain specifics"]
+  GEN["General knowledge<br/>labelled, no sources"]
   REF["Refused<br/>identical text, reveals nothing"]
   UNV["Unverified<br/>fail closed, nothing shown"]
   OK["Answered<br/>with citations and sources"]
+  PRO["Question analysis (code)<br/>depth and answer format"]
   LOG[("audit_log<br/>outcome, sources, agent trace")]
   DB[("Postgres + pgvector<br/>documents, chunks, users")]
   LLM["Ollama qwen2.5:7b<br/>local, JSON-schema output"]
 
   U --> C --> R --> T
-  T -- yes --> A
   T -- no --> W
+  W -- "still weak" --> RT
   W -- "retry search" --> R
-  W -- "still weak" --> REF
   A --> CR
   CR -- "missing citation: retry" --> A
   CR --> V
   V -- "rejected: reason sent back, max 2 retries" --> A
   V -- "retries used up" --> UNV
   V -- supported --> OK
+  RT -- "company, live data or override" --> REF
+  RT -- general --> G --> GC
+  GC -- "rejected: reason sent back, max 2 retries" --> G
+  GC -- accepted --> GEN
+  GC -- "retries used up" --> UNV
+  A -. "documents silent, general question" .-> RT
+  GEN --> LOG
+  T -- yes --> PRO --> A
   OK --> LOG
   REF --> LOG
   UNV --> LOG
@@ -63,9 +76,9 @@ flowchart TB
   classDef code fill:#e6f4ea,stroke:#2e7d32
   classDef llm fill:#e8eaf6,stroke:#3949ab
   classDef out fill:#fff3e0,stroke:#ef6c00
-  class R,CR code
-  class C,W,A,V,P llm
-  class REF,UNV,OK out
+  class R,CR,PRO,RT code
+  class C,W,A,V,P,G,GC llm
+  class REF,UNV,OK,GEN out
 ```
 
 Green boxes are plain code, blue boxes are model agents. The **orchestrator is plain code, not a model**: permissions, retry limits and the audit record are never delegated to an LLM. Agents may only choose within fixed tools and limits ("bounded agency").
@@ -75,11 +88,13 @@ Green boxes are plain code, blue boxes are model agents. The **orchestrator is p
 1. **Login.** Login returns a short-lived JWT (60 minutes) that carries only the user id. Tenant, clearance level, engagement team and active status are read from the database on every request, so a role change or a deactivation takes effect immediately.
 2. **Corrector.** Fixes typos. Code rejects the fix if it changes the meaning.
 3. **Retriever.** Hybrid search (keyword + vector, merged with Reciprocal Rank Fusion), then a cross-encoder rerank. Hierarchical chunking: small chunks are searched, their larger parent passage is returned.
-4. **Refusal check.** A top rerank score below `0.1` refuses without calling the answering models. A weak score first triggers the rewriter (up to 3 reworded searches).
-5. **Answerer.** Writes an answer from the retrieved passages only, citing `[n]`.
-6. **Citation rule.** Code requires a citation on every factual sentence.
-7. **Validator.** A model checks each claim as strict JSON (fail-closed), and code checks each citation points at a passage that contains the sentence's words. A rejection sends the reason back to the answerer; at most 2 retries.
-8. **Outcome and audit.** `answered`, `refused`, `no_answer`, `unverified` or `error`, written to `audit_log` with the full agent trace.
+4. **Question analysis (plain code).** Decides how deep the question is (quick, standard, deep) and what shape the answer should take (short, list, steps, comparison). It is instant and needs no model.
+5. **Relevance check.** A top rerank score below `0.1` means no document the user may see matches. A weak score first triggers the rewriter (up to 3 reworded searches).
+6. **Answerer.** Writes an answer from the retrieved passages only, citing `[n]`, in the shape chosen in step 4.
+7. **Citation rule.** Code requires a citation on every factual sentence.
+8. **Validator.** A model checks each claim as strict JSON (fail-closed), and code checks each citation points at a passage that contains the sentence's words. A rejection sends the reason back to the answerer; at most 2 retries.
+9. **Router, only when the documents cannot answer.** Plain code first: a question that mentions company terms (people, pay, limits, policies, projects) or tries to override the rules is refused. Otherwise a router model decides `general`, `company` or `decline` (live data, creative writing), failing closed to `company`. Only `general` goes on: an answerer with no documents writes a short answer in the chosen shape, and a checker must confirm it addresses the question, makes no claim about a specific company and states no precise fact it cannot be sure of (rejections go back with the reason, at most 2 retries). The result is labelled **General knowledge**, with no sources. Everything else gets the same refusal text as before.
+10. **Outcome and audit.** `answered`, `general`, `refused`, `no_answer`, `unverified` or `error`, written to `audit_log` with the full agent trace.
 
 ## Access model
 
@@ -96,23 +111,25 @@ Plus **tenant isolation** (a Globex user never sees Acme documents) and **engage
 
 ## Evaluation
 
-`python -m scripts.evaluate` asks the running API 80 questions as real demo users and scores the responses.
+`python -m scripts.evaluate` asks the running API 86 questions as real demo users and scores the responses.
 
 | Metric | Result |
 |---|---|
 | Answer accuracy (37 answerable questions, incl. 6 with typos) | **100%** (37/37) |
 | Citation accuracy (answer cites the expected document) | **100%** (37/37) |
-| Refusal accuracy (14 restricted, 5 off-topic, 7 injection) | **100%** (26/26) |
+| Refusal accuracy (14 restricted, 3 off-topic, 7 injection) | **100%** (24/24) |
 | **Access leaks** (a forbidden fact appears in an answer) | **0** |
 | Multi-part questions (every part answered and cited) | **100%** (6/6) |
+| General knowledge (answered by the model, labelled, no sources) | **100%** (8/8) |
 | No-answer guard (8 questions the documents cannot answer, no invented facts) | **100%** (8/8) |
 | Injection hidden in a valid question (no leak) | **100%** (3/3) |
-| Median latency, answered / refused | 6.8 s / 2.4 s |
+| Median latency, answered / refused | 6.6 s / 2.3 s |
 
 Measured on a MacBook Pro (M3, 16 GB) with `qwen2.5:7b` via Ollama.
 
 **What the evaluation found along the way** (each fix was driven by a failing case):
 
+- Company and live-information questions ("our policy", "today's weather", "top enterprise risks") were wrongly answered as general knowledge until a plain-code guard was added that runs before any model sees the question.
 - Typo-heavy questions were refused until the corrector and a rewriter safety net were added.
 - A validator that judged all claims in one free-text reply produced false rejections; per-claim JSON verdicts plus a deterministic citation check fixed it (7/7 planted-error cases).
 - Multi-part questions went **4/6 → 6/6** after two changes found by reading the audit trace: a plain-code rule that every sentence needs a citation, and sending the validator's objection back to the answerer on retry (at temperature 0, an unchanged retry just repeats the same answer).
@@ -120,14 +137,24 @@ Measured on a MacBook Pro (M3, 16 GB) with `qwen2.5:7b` via Ollama.
 
 ### Honest limitations
 
-- The 80 questions were written by the author against the same 16 documents (14 Acme, 2 Globex), so 100% means "no regressions on this suite", not "perfect in general". An independently written question set is the next improvement to the evaluation.
+- The 86 questions were written by the author against the same demo documents, so 100% means "no regressions on this suite", not "perfect in general". An independently written question set is the next improvement to the evaluation.
 - The corpus is small and fictional. No claim is made about scale.
 - Latency is that of a local 7B model on a laptop. A hosted model would be faster; the agents are model-agnostic through a per-agent model setting (`<AGENT>_MODEL`).
 - The model-based evaluation is **not** run in CI (the 7B model is too slow on hosted runners). CI runs the unit tests, the access-control sweep and the image build; the evaluation is run locally before a release.
 
 ## Quick start (local)
 
-Requirements: Python 3.12, Docker, [Ollama](https://ollama.com).
+Requirements: Python 3.12, Docker (running), [Ollama](https://ollama.com) (running).
+
+**One command** from a fresh clone: it creates the environment and `.env`, starts the database, downloads the model if needed, seeds the demo company, runs the unit tests and access checks, starts the server and runs an end-to-end smoke test.
+
+```bash
+git clone https://github.com/sanjeet207/enterprise-knowledge-ai.git
+cd enterprise-knowledge-ai
+bash scripts/quickstart.sh
+```
+
+Or step by step:
 
 ```bash
 git clone https://github.com/sanjeet207/enterprise-knowledge-ai.git
@@ -156,9 +183,9 @@ Password for all: `DemoPass2026x` (local demo data only).
 |---|---|---|
 | `analyst@acme.test` | 1 | company-wide policies only |
 | `manager@acme.test` | 2 | |
-| `director@acme.test` | 3 | can open the audit view |
+| `director@acme.test` | 3 | compensation, attrition and risk documents |
 | `director_titan@acme.test` | 3 | on the Project Titan deal team |
-| `partner_titan@acme.test` | 4 | on the deal team |
+| `partner_titan@acme.test` | 4 | on the deal team; can open the audit view (partners only) |
 | `partner_outsider@acme.test` | 4 | level 4 but **not** on the deal team |
 | `globex_analyst@globex.test` | 1 | other tenant |
 
@@ -167,10 +194,11 @@ Try the same question as different users: for example *"What is the indicative v
 ### Tests and checks
 
 ```bash
-python -m pytest -q tests             # 54 unit tests, no database or model needed
+python -m pytest -q tests             # 114 unit tests, no database or model needed
 python -m scripts.verify_access       # 160 access-control checks (needs the database)
 python -m scripts.check_validator     # planted-error check for the validator (needs Ollama)
-python -m scripts.evaluate            # the 80-question evaluation (needs the server and Ollama)
+python -m scripts.smoke_test          # end-to-end check of every path against the running server (needs Ollama)
+python -m scripts.evaluate            # the 86-question evaluation (needs the server and Ollama)
 python -m scripts.evaluate --only multi_part --workers 3   # a category, in parallel
 ```
 
@@ -191,14 +219,14 @@ app/
   services/      vector store (SQL access control), embedder, reranker, LLM client, audit, answer checks
   static/        chat UI (login, sources panel, outcome states, audit view)
 scripts/         init_db, seed_demo, verify_access, check_validator, evaluate
-tests/           unit tests and the 80-question evaluation set
+tests/           unit tests and the 86-question evaluation set
 ```
 
 ## Roadmap
 
 - [x] Hybrid retrieval with reranking, access control in SQL, JWT login
 - [x] Grounded answers, citation rule, claim validator, refusal threshold, audit log with agent trace
-- [x] Evaluation suite (80 questions) and CI
+- [x] Evaluation suite (86 questions) and CI
 - [ ] Azure deployment with a spending cap
 - [ ] Tracing dashboard (OpenTelemetry / Langfuse) and a model router
 - [ ] Document upload (private per user, injection-hardened) and an admin page

@@ -5,10 +5,11 @@ Plain code, not a model. Access control is decided by the retriever's SQL filter
 import time
 
 from app import config
-from app.agents import answerer, corrector, planner, rewriter, validator
+from app.agents import answerer, corrector, general, general_checker, planner, rewriter, router, validator
 from app.agents.base import Trace
 from app.services import audit
 from app.services.answer_check import cited_numbers, is_insufficient, strip_invalid_citations, uncited_sentences
+from app.services import question_profile
 from app.services.llm import LLMUnavailable
 
 # One message for "nothing found" and "not relevant": a refusal must not reveal whether
@@ -17,10 +18,52 @@ REFUSAL = ("I can only answer from company documents you are authorized to acces
            "and I couldn't find a reliable answer to this question.")
 NO_ANSWER = "The documents available to you don't contain enough information to answer this."
 UNVERIFIED = "I couldn't produce an answer that is backed by your documents, so I'm not showing one."
+GENERAL_UNVERIFIED = "I couldn't produce a reliable general answer to this question, so I'm not showing one."
 
 
 def _now() -> float:
     return time.perf_counter()
+
+
+async def general_path(question: str, prof: dict, trace: Trace, finish, top_score: float):
+    """Answer a non-company question from general knowledge, or return None so the caller refuses.
+
+    Order matters: plain-code guard first (company words, override attempts), then the router, then a
+    labelled answer that a checker must accept. Every "no" ends in the same refusal as before.
+    """
+    if not config.GENERAL_ENABLED:
+        return None
+    if question_profile.blocked_for_general(question):
+        trace.add("router", _now(), "company-specific or override: not answered from general knowledge")
+        return None
+    t = _now()
+    try:
+        route = await router.run(question)
+    except LLMUnavailable:
+        route = "company"
+    trace.add("router", t, f"route: {route}")
+    if route != "general":
+        return None
+    model = general.model_for(prof["depth"])
+    feedback = None
+    try:
+        for attempt in range(config.VALIDATOR_MAX_RETRIES + 1):
+            t = _now()
+            answer = await general.run(question, prof, feedback=feedback)
+            if general.is_declined(answer):
+                trace.add("general", t, "declined: needs company or live information")
+                return None
+            trace.add("general", t, f"{prof['depth']}/{prof['format']}: {answer}")
+            t = _now()
+            ok, reason = await general_checker.run(question, answer)
+            trace.add("validator", t, "general answer accepted" if ok else f"rejected: {reason}")
+            if ok:
+                return finish("general", answer, [], top_score, model)
+            feedback = reason
+    except LLMUnavailable:
+        finish("error", None, top_score=top_score, model=model)
+        raise
+    return finish("unverified", GENERAL_UNVERIFIED, top_score=top_score, model=model)
 
 
 async def answer_question(user, query: str, top_k: int, retriever) -> dict:
@@ -120,9 +163,17 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
                         pool[key] = h
         reranked = sorted(pool.values(), key=lambda h: h["rerank_score"], reverse=True)[:min(5, top_k + 1)]
 
-    # 4. Still not relevant: refuse without calling the answering agents.
+    # 4. Still not relevant to any document this user may see. A question that is plainly not about the
+    #    company may be answered from general knowledge, labelled as such; everything else is refused.
+    prof = question_profile.profile(question)
     if not reranked or top_score < config.REFUSAL_THRESHOLD:
+        general_result = await general_path(question, prof, trace, finish, top_score)
+        if general_result is not None:
+            return general_result
         return finish("refused", REFUSAL, top_score=top_score)
+    trace.add("analysis", _now(), f"depth {prof['depth']}, format {prof['format']}")
+    style = question_profile.style_for(prof["format"])
+    style_kw = {"style": style} if style else {}
 
     passages = [p["parent_content"] for p in reranked]
     model = config.agent_model(answerer.NAME)
@@ -130,11 +181,11 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
     try:
         # 5. Answerer, with one retry if it forgot to cite.
         t = _now()
-        answer = await answerer.run(question, passages)
+        answer = await answerer.run(question, passages, **style_kw)
         trace.add("answerer", t, "insufficient" if is_insufficient(answer) else f"drafted: {answer}")
         if not is_insufficient(answer) and not cited_numbers(answer, len(passages)):
             t = _now()
-            answer = await answerer.run(question, passages, strict=True)
+            answer = await answerer.run(question, passages, strict=True, **style_kw)
             trace.add("answerer", t, "retry: citations")
 
         # 6. Validator: every claim must be supported; regenerate a bounded number of times.
@@ -149,7 +200,7 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
                     if attempt == config.VALIDATOR_MAX_RETRIES:
                         return finish("unverified", UNVERIFIED, top_score=top_score, model=model)
                     t = _now()
-                    answer = await answerer.run(question, passages, strict=True,
+                    answer = await answerer.run(question, passages, strict=True, **style_kw,
                                                  feedback=f"this sentence has no source number: {missing[0]}")
                     trace.add("answerer", t, f"retry: citations: {answer}")
                     continue
@@ -161,13 +212,17 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
                 if attempt == config.VALIDATOR_MAX_RETRIES:
                     return finish("unverified", UNVERIFIED, top_score=top_score, model=model)
                 t = _now()
-                answer = await answerer.run(question, passages, strict=True, grounding=True, feedback=raw)
+                answer = await answerer.run(question, passages, strict=True, grounding=True, feedback=raw, **style_kw)
                 trace.add("answerer", t, f"retry: grounding: {answer}")
     except LLMUnavailable:
         finish("error", None, top_score=top_score, model=model)
         raise
 
     if is_insufficient(answer):
+        # The documents were close but silent. A plainly general question may still be answered, labelled.
+        general_result = await general_path(question, prof, trace, finish, top_score)
+        if general_result is not None:
+            return general_result
         return finish("no_answer", NO_ANSWER, top_score=top_score, model=model)
 
     cited = cited_numbers(answer, len(passages))

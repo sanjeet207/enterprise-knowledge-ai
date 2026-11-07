@@ -61,6 +61,7 @@ label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
 .msg.bot { align-self: flex-start; background: var(--bg); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
 .msg .tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 99px; margin-bottom: 6px; }
 .tag.answered { background: var(--ok-bg); color: var(--ok); }
+.tag.general { background: var(--accent-soft); color: var(--accent); }
 .tag.refused, .tag.no_answer { background: var(--warn-bg); color: var(--warn); }
 .tag.unverified, .tag.error { background: var(--bad-bg); color: var(--bad); }
 .msg .body { display: block; }

@@ -56,3 +56,19 @@ def test_multi_part_needs_every_part_and_every_source():
     missing_source = resp("answered", "Twenty-four days [1]. Claims within 30 days [1].", ["Employee Leave Policy"])
     assert not score_case(MULTI, missing_source)["passed"]
     assert not score_case(MULTI, resp("refused", "I can only answer from company documents"))["passed"]
+
+
+GENERAL = {"category": "general", "must_contain_any": ["paris"], "forbidden": []}
+
+
+def test_general_needs_the_label_the_phrase_and_no_sources():
+    assert score_case(GENERAL, resp("general", "Paris is the capital of France."))["passed"]
+    assert not score_case(GENERAL, resp("general", "Lyon is a big city."))["passed"]
+    assert not score_case(GENERAL, resp("answered", "Paris [1].", ["Employee Leave Policy"]))["passed"]
+    assert not score_case(GENERAL, resp("refused", "I can only answer from company documents"))["passed"]
+
+
+def test_a_general_answer_to_a_restricted_question_counts_as_not_refused():
+    # A restricted question answered "generally" is a failure: it was not refused.
+    r = score_case(DENY, resp("general", "Valuation is a process of estimating worth."))
+    assert not r["passed"] and not r["refused"]

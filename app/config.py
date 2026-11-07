@@ -39,6 +39,11 @@ PLANNER_ENABLED = os.getenv("PLANNER_ENABLED", "false").lower() in ("1", "true",
 PLANNER_MAX_SEARCHES = int(os.getenv("PLANNER_MAX_SEARCHES", "3"))
 
 
+# General-knowledge path: questions the documents cannot answer, answered by the model alone and labelled as such.
+# Company-specific questions are never answered this way (see app/services/question_profile.py).
+GENERAL_ENABLED = os.getenv("GENERAL_ENABLED", "true").lower() in ("1", "true", "yes")
+
+
 def agent_model(name: str) -> str:
     """Model for one agent. Set e.g. VALIDATOR_MODEL=qwen2.5:3b to use a different model for that agent."""
     return os.getenv(f"{name.upper()}_MODEL") or LLM_MODEL

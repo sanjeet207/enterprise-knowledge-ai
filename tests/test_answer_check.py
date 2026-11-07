@@ -1,4 +1,4 @@
-from app.services.answer_check import parse_plan, cited_numbers, is_insufficient, strip_invalid_citations
+from app.services.answer_check import parse_general_check, parse_route, parse_plan, cited_numbers, is_insufficient, strip_invalid_citations
 
 
 def test_valid_citations_only():
@@ -151,3 +151,31 @@ def test_invalid_citation_does_not_count_and_short_lines_are_ignored():
     from app.services.answer_check import uncited_sentences
     assert uncited_sentences("Leave is twenty-four days a year [9].", 2) == ["Leave is twenty-four days a year [9]."]
     assert uncited_sentences("Here you go.", 2) == []
+
+
+def test_route_accepts_only_known_values_and_fails_closed():
+    assert parse_route('{"route": "general"}') == "general"
+    assert parse_route('{"route": "decline"}') == "decline"
+    assert parse_route('{"route": "company"}') == "company"
+    for bad in ["", "general", "not json", '{"route": "answer-it-anyway"}', '{"route": 1}', "[]", '{"other": "general"}']:
+        assert parse_route(bad) == "company"
+
+
+def test_general_check_passes_only_on_a_clean_verdict():
+    ok = '{"answers_the_question": true, "company_specific": false, "uncertain_specifics": false, "reason": "fine"}'
+    assert parse_general_check(ok) == (True, "ok")
+
+
+def test_general_check_rejects_each_problem_with_a_reason():
+    ok, why = parse_general_check('{"answers_the_question": false, "company_specific": false, "uncertain_specifics": false}')
+    assert not ok and "does not answer" in why
+    ok, why = parse_general_check('{"answers_the_question": true, "company_specific": true, "uncertain_specifics": false}')
+    assert not ok and "company" in why
+    ok, why = parse_general_check('{"answers_the_question": true, "company_specific": false, "uncertain_specifics": true, "reason": "exact year"}')
+    assert not ok and why == "exact year"
+
+
+def test_general_check_fails_closed_on_bad_replies():
+    for bad in ["", "yes", "{}", "[]", '{"answers_the_question": "true", "company_specific": false, "uncertain_specifics": false}',
+                '{"answers_the_question": true, "company_specific": false}']:
+        assert parse_general_check(bad)[0] is False

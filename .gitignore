@@ -5,3 +5,4 @@ __pycache__/
 .DS_Store
 EVAL_REPORT_quick.md
 eval_results_quick.json
+server_error.log

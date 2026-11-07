@@ -33,8 +33,8 @@ def feedback_note(feedback: str) -> str:
 
 
 async def run(query: str, passages: list[str], strict: bool = False, grounding: bool = False,
-              feedback: str | None = None) -> str:
-    system = (SYSTEM_PROMPT + (STRICT_REMINDER if strict else "") + (GROUNDING_REMINDER if grounding else "")
-              + (feedback_note(feedback) if feedback else ""))
+              feedback: str | None = None, style: str | None = None) -> str:
+    system = (SYSTEM_PROMPT + (("\n" + style) if style else "") + (STRICT_REMINDER if strict else "")
+              + (GROUNDING_REMINDER if grounding else "") + (feedback_note(feedback) if feedback else ""))
     user = f"{documents_block(passages)}\n\nQuestion: {query}"
     return await llm.chat(system, user, model=config.agent_model(NAME))

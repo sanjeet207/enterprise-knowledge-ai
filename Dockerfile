@@ -5,7 +5,8 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    HF_HOME=/opt/hf-cache
+    HF_HOME=/opt/hf-cache \
+    FLASHRANK_CACHE_DIR=/opt/flashrank-cache
 
 WORKDIR /srv
 
@@ -15,7 +16,7 @@ COPY requirements.txt .
 RUN pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
 
 # Bake the embedding and reranker models into the image so the first question is not slowed by downloads.
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2'); from flashrank import Ranker; Ranker(model_name='ms-marco-MiniLM-L-12-v2', cache_dir='/tmp/flashrank_cache')"
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2'); from flashrank import Ranker; Ranker(model_name='ms-marco-MiniLM-L-12-v2', cache_dir='/opt/flashrank-cache')"
 
 COPY app ./app
 COPY scripts ./scripts

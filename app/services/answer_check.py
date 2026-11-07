@@ -96,6 +96,38 @@ def parse_validation(text: str) -> tuple[bool, str]:
     return True, f"{len(claims)} claim(s) supported"
 
 
+def parse_route(text: str) -> str:
+    """Read the router's JSON reply {"route": "general" | "company" | "decline"}.
+
+    Fails closed: anything else counts as "company", which is refused.
+    """
+    data = _load_json_object(text)
+    route = data.get("route") if data else None
+    return route if route in ("general", "decline") else "company"
+
+
+def parse_general_check(text: str) -> tuple[bool, str]:
+    """Read the general-answer checker's JSON reply. Fails closed: the answer passes only when it answers the
+    question (true), makes no company-specific claim (false) and states no uncertain specifics (false)."""
+    data = _load_json_object(text)
+    if not data:
+        return False, "invalid reply"
+    answers, company, uncertain = (data.get("answers_the_question"), data.get("company_specific"),
+                                   data.get("uncertain_specifics"))
+    if not all(isinstance(v, bool) for v in (answers, company, uncertain)):
+        return False, "invalid reply"
+    if answers and not company and not uncertain:
+        return True, "ok"
+    reason = data.get("reason") if isinstance(data.get("reason"), str) else ""
+    if not answers:
+        reason = reason or "does not answer the question"
+    elif company:
+        reason = reason or "makes claims about a specific company"
+    else:
+        reason = reason or "states a precise fact it cannot be sure of"
+    return False, reason.strip()[:300]
+
+
 def parse_corrected_question(text: str, original: str) -> str:
     """Read the corrector's JSON reply {"corrected_question": "..."}; anything invalid keeps the original."""
     data = _load_json_object(text)

@@ -22,7 +22,7 @@
     "What is the weather in Delhi today?"
   ];
   const OUTCOME_LABEL = {
-    answered: "Answered", refused: "Not available", no_answer: "Not in documents",
+    answered: "Answered", general: "General knowledge", refused: "Not available", no_answer: "Not in documents",
     unverified: "Could not verify", error: "Error"
   };
 
@@ -179,6 +179,7 @@
         if (data.outcome === "answered") renderAnswerText(b, data.answer, msgId, data.sources);
         else b.textContent = data.answer;
         bot.append(b);
+        if (data.outcome === "general") bot.append(el("span", "note", "General knowledge, not from company documents. Check it before relying on it."));
         if (data.outcome === "answered") renderSources(data.sources, msgId); else clearSources();
       }
     } catch (e) {
