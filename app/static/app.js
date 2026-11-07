@@ -326,6 +326,9 @@
     const res = await api("/documents");
     if (!res.ok) { $("docs-empty").textContent = "Could not load documents."; $("docs-empty").hidden = false; return; }
     const rows = (await res.json()).documents;
+    fillSelect($("up-version"), [["", "No, a new document"]].concat(rows.filter((d) => d.status === "published")
+      .map((d) => [d.document_id, "Yes, replaces: " + d.title + " (v" + d.version + ")"])));
+    syncVersionChoice();
     if (!rows.length) { $("docs-empty").hidden = false; return; }
     rows.forEach((d) => {
       const tr = el("tr");
@@ -348,11 +351,43 @@
         del.textContent = "Reject";
       }
       last.append(del);
-      const st = el("td"); st.append(el("span", "tag " + (d.status === "pending" ? "pending" : "published"), d.status === "pending" ? "Waiting for approval" : "Live"));
-      tr.append(el("td", "q", d.title || ""), st, el("td", null, "L" + d.level), el("td", null, d.team || "Company-wide"), reviewCell(d.review_by),
+      if (d.supersedes) {
+        const cmp = el("button", "secondary", "What changed?"); cmp.type = "button";
+        cmp.addEventListener("click", () => compareDocs(d.supersedes, d.document_id));
+        last.append(document.createTextNode(" "), cmp);
+      }
+      const st = el("td"); st.append(el("span", "tag " + d.status, d.status === "pending" ? "Waiting for approval" : d.status === "archived" ? "Replaced" : "Live"));
+      tr.append(el("td", "q", (d.title || "") + (d.version > 1 ? "  (v" + d.version + ")" : "")), st, el("td", null, "L" + d.level), el("td", null, d.team || "Company-wide"), reviewCell(d.review_by),
         el("td", null, String(d.sections)), el("td", null, d.uploaded_by || "(seeded)"),
         el("td", null, d.created_at ? new Date(d.created_at).toLocaleDateString() : ""), last);
       tbody.append(tr);
+    });
+  }
+
+  function syncVersionChoice() {
+    const replacing = $("up-version").value !== "";
+    $("up-level").disabled = replacing; $("up-team").disabled = replacing;
+  }
+
+  async function compareDocs(oldId, newId) {
+    const box = $("compare-box");
+    box.hidden = false;
+    $("compare-title").textContent = "Comparing...";
+    $("compare-changes").replaceChildren(); $("compare-summary").hidden = true; $("compare-note").hidden = true;
+    box.scrollIntoView({ block: "nearest" });
+    const r = await adminCall("/documents/compare", "POST", { document_a: oldId, document_b: newId });
+    if (!r.ok) { $("compare-title").textContent = "Could not compare"; $("compare-meta").textContent = await errText(r); return; }
+    const d = await r.json();
+    $("compare-title").textContent = d.old.title + ": v" + d.old.version + " to v" + d.new.version;
+    $("compare-meta").textContent = d.total_changes + " change(s), " + d.unchanged + " sentence(s) unchanged." + (d.total_changes > d.changes.length ? " Showing the first " + d.changes.length + "." : "");
+    if (d.summary) { $("compare-summary").textContent = d.summary; $("compare-summary").hidden = false; }
+    if (d.note) { $("compare-note").textContent = d.note; $("compare-note").hidden = false; }
+    d.changes.forEach((c) => {
+      const box2 = el("div", "change " + c.type);
+      box2.append(el("b", null, c.type));
+      if (c.before) box2.append(el("div", c.type === "changed" ? "before" : null, c.before));
+      if (c.after) box2.append(el("div", null, c.after));
+      $("compare-changes").append(box2);
     });
   }
 
@@ -374,6 +409,7 @@
     form.append("classification_level", $("up-level").value);
     form.append("engagement_id", $("up-team").value);
     form.append("review_by", $("up-review").value);
+    form.append("new_version_of", $("up-version").value);
     $("up-button").disabled = true;
     note("upload-msg", "Reading and indexing " + f.name + "...", true);
     try {
@@ -549,6 +585,8 @@
   $("tab-admin").addEventListener("click", () => selectTab("admin"));
   $("upload-form").addEventListener("submit", upload);
   $("docs-refresh").addEventListener("click", () => loadDocs());
+  $("up-version").addEventListener("change", syncVersionChoice);
+  $("compare-close").addEventListener("click", () => { $("compare-box").hidden = true; });
   $("user-form").addEventListener("submit", addUser);
   $("team-form").addEventListener("submit", addTeam);
   fillSelect($("nu-level"), [1, 2, 3, 4].map((l) => [String(l), "L" + l + " " + LEVELS[l]]));

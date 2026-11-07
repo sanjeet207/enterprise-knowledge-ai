@@ -157,6 +157,44 @@ def conversation_checks(client, tokens, record) -> None:
     record("The owner can delete it", client.delete(f"/chat/conversations/{conv}", headers=h).status_code == 200)
 
 
+def version_checks(client, tokens, record) -> None:
+    """A new version replaces the old one in search, keeps its protection, and can be compared."""
+    admin_h = tokens["admin"]
+    v1_text = "The Quokka travel allowance is 40 euros a day for meals. Claims are due within 30 days. Taxis need a receipt."
+    v2_text = "The Quokka travel allowance is 55 euros a day for meals. Claims are due within 30 days. Taxis need a receipt. Hotels need approval."
+    r1 = upload(client, admin_h, v1_text, "Quokka Travel Allowance", 2)
+    record("Version 1 is published", r1.status_code == 200 and r1.json().get("version") == 1)
+    if r1.status_code != 200:
+        return
+    v1 = r1.json()["document_id"]
+    r2 = client.post("/documents/upload", headers=admin_h, files={"file": ("v2.txt", v2_text.encode(), "text/plain")},
+                     data={"new_version_of": v1, "classification_level": "1"})
+    record("Version 2 is published", r2.status_code == 200 and r2.json().get("version") == 2, r2.text[:80] if r2.status_code != 200 else "")
+    if r2.status_code != 200:
+        client.delete(f"/documents/{v1}", headers=admin_h)
+        return
+    v2 = r2.json()["document_id"]
+    docs = {d["document_id"]: d for d in client.get("/documents", headers=admin_h).json()["documents"]}
+    record("The old version is archived", docs.get(v1, {}).get("status") == "archived")
+    record("The new version keeps the old level", docs.get(v2, {}).get("level") == 2, "asked for level 1, kept level 2")
+    again = client.post("/documents/upload", headers=admin_h, files={"file": ("v3.txt", b"Another text that is different enough. Really.", "text/plain")},
+                        data={"new_version_of": v1})
+    record("An old version cannot be replaced twice", again.status_code == 409)
+    ans = ask(client, tokens["manager"], "What is the Quokka travel allowance for meals per day?")
+    record("Search finds only the new figure", ans["outcome"] == "answered" and "55" in (ans.get("answer") or "") and "40 euros" not in (ans.get("answer") or ""))
+    started = time.perf_counter()
+    cmp = client.post("/documents/compare", headers=tokens["manager"], json={"document_a": v1, "document_b": v2})
+    body = cmp.json() if cmp.status_code == 200 else {}
+    types = sorted(c["type"] for c in body.get("changes", []))
+    record("A manager can compare the versions", cmp.status_code == 200 and "changed" in types and "added" in types,
+           f"{time.perf_counter() - started:.1f}s, {types}")
+    record("The summary uses only figures from the changes", body.get("summary") is None or "60" not in body["summary"])
+    record("An analyst cannot compare them", client.post("/documents/compare", headers=tokens["analyst"],
+           json={"document_a": v1, "document_b": v2}).status_code == 404)
+    for doc in (v1, v2):
+        client.delete(f"/documents/{doc}", headers=admin_h)
+
+
 def lockout_checks(client, tokens, record) -> None:
     email, good = "lockout.test@acme.test", "Correct-Horse-1"
     created = client.post("/admin/users", headers=tokens["admin"], json={"email": email, "password": good, "level": 1})
@@ -220,6 +258,7 @@ def main() -> int:
         platform_checks(client, tokens, record)
         conversation_checks(client, tokens, record)
         publishing_checks(client, tokens, record)
+        version_checks(client, tokens, record)
 
     failed = [label for label, ok, _ in results if not ok]
     print(f"\n{len(results) - len(failed)}/{len(results)} checks passed")

@@ -2,10 +2,13 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel, ConfigDict
 
 from app.schemas import IngestRequest
 from app.security import get_current_user
-from app.services import admin, extract, ingest, upload_policy, users, validation
+from app.agents import comparer
+from app.services import admin, compare, extract, ingest, upload_policy, users, validation, versions
+from app.services.llm import LLMUnavailable
 from app.services.users import User
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
@@ -20,10 +23,10 @@ def _authorize(user: User, level: int, engagement_id: Optional[str]) -> None:
 
 
 def _add(user: User, title: str, content: str, level: int, engagement_id: Optional[str], filename: Optional[str],
-         review_by: Optional[str] = None) -> dict:
+         review_by: Optional[str] = None, previous: Optional[dict] = None) -> dict:
     _authorize(user, level, engagement_id)
     try:
-        result = ingest.ingest_document(user, title, content, level, engagement_id, filename, review_by)
+        result = ingest.ingest_document(user, title, content, level, engagement_id, filename, review_by, previous)
     except ingest.IngestError as exc:
         raise HTTPException(status_code=exc.status, detail=exc.message)
     return {"status": "success", **result}
@@ -48,6 +51,7 @@ def upload_document(
     classification_level: int = Form(default=1, ge=1, le=4),
     engagement_id: str = Form(default=""),
     review_by: str = Form(default=""),
+    new_version_of: str = Form(default=""),
     user: User = Depends(get_current_user),
 ):
     try:
@@ -60,14 +64,31 @@ def upload_document(
             team = str(UUID(engagement_id))
         except ValueError:
             raise HTTPException(status_code=422, detail="Invalid team")
-    _authorize(user, classification_level, team)
+    previous = None
+    level = classification_level
+    if new_version_of:
+        try:
+            previous_id = str(UUID(new_version_of))
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Invalid document")
+        found = versions.info(user.tenant_id, previous_id)
+        # Same rule as managing a document: an administrator, or the person who uploaded it.
+        if found is None or not upload_policy.can_delete(user.is_admin, user.id, found["uploaded_by_id"]):
+            raise HTTPException(status_code=404, detail="Document not found")
+        if found["status"] != "published":
+            raise HTTPException(status_code=409, detail="Only a live document can get a new version")
+        # A new version keeps the old version's level and team: versioning can never lower the protection.
+        level, team = found["level"], found["engagement_id"]
+        previous = {**found, "document_id": previous_id}
+        title = title or found["title"]
+    _authorize(user, level, team)
     data = file.file.read(extract.MAX_BYTES + 1)
     try:
         text = extract.extract_text(file.filename or "", data)
     except extract.ExtractError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     name = (title.strip() or (file.filename or "Untitled").rsplit(".", 1)[0])[:300]
-    return _add(user, name, text, classification_level, team, file.filename, review)
+    return _add(user, name, text, level, team, file.filename, review, previous)
 
 
 @router.post("/ingest")
@@ -96,3 +117,47 @@ def delete_document(document_id: UUID, user: User = Depends(get_current_user)):
     removed = admin.delete_document(user.tenant_id, str(document_id))
     admin.record(user, "document.delete", info["title"] or str(document_id), {"document_id": str(document_id), "sections": removed})
     return {"status": "deleted", "sections": removed}
+
+
+class CompareRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    document_a: UUID
+    document_b: UUID
+
+
+@router.get("/{document_id}/versions")
+def document_versions(document_id: UUID, user: User = Depends(get_current_user)):
+    """Every version of this document that you may read."""
+    found = versions.info(user.tenant_id, str(document_id))
+    if found is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    history = versions.history(user, found["doc_key"])
+    if not any(v["document_id"] == str(document_id) for v in history):
+        raise HTTPException(status_code=404, detail="Document not found")
+    return {"versions": history}
+
+
+@router.post("/compare")
+async def compare_documents(body: CompareRequest, user: User = Depends(get_current_user)):
+    """Compare two documents you may read. The changes are found by code; the summary is checked against them."""
+    from app.routers.chat import limiter
+    if not limiter.allow(user.id):
+        raise HTTPException(status_code=429, detail="Too many requests. Please wait a moment.", headers={"Retry-After": "60"})
+    a = versions.readable_text(user, str(body.document_a))
+    b = versions.readable_text(user, str(body.document_b))
+    if a is None or b is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    result = compare.diff(a["text"], b["text"])
+    summary, note = None, None
+    if result["changes"]:
+        try:
+            summary = await comparer.run(result["changes"])
+        except LLMUnavailable:
+            note = "The summary is unavailable right now. The list of changes below is complete."
+        if summary is None and note is None:
+            note = "A reliable summary could not be produced. The list of changes below is complete."
+    else:
+        note = "The two documents have the same sentences."
+    return {"old": {"title": a["title"], "version": a["version"]}, "new": {"title": b["title"], "version": b["version"]},
+            **result, "summary": summary, "note": note}

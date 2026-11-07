@@ -127,6 +127,10 @@ Every upload, deletion, approval and account change is written to an administrat
 
 Each person has their own saved conversations (pick one from the list above the chat, or start a new one). A follow-up such as "How many of them can be carried forward?" is rewritten into a standalone question by a small condenser agent before the normal pipeline runs. It sees **only the person's own earlier questions, never earlier answers**, so context cannot smuggle restricted text into a later search, and the rewritten question passes every normal check again (access control, citations, validation). The rewrite is shown to the user ("Searched for: ..."). Conversations are private to their owner: another person's conversation id is simply "not found". Each answer has *Helpful / Not helpful* buttons with an optional comment; administrators see the ratings and the questions rated not helpful as counts, never who asked.
 
+### Document versions and comparison
+
+Upload a file as **a new version** of a live document: the new version keeps the old one's reading level and team (versioning can never lower the protection), and the old version is archived, so search only ever finds the current text. If a manager uploads the new version, the old one is replaced only when an administrator approves it. **"What changed?"** compares two versions: the added, removed and changed sentences are found by plain code, then a model summarises them, and code rejects any summary that contains a figure not present in the changes. Anyone can compare documents they are allowed to read; an analyst cannot compare a level-3 document, and the comparison runs under the asker's own access rules.
+
 ### Single sign-on
 
 Optional OpenID Connect login (authorization code flow with PKCE, state and nonce; verified RS256 ID tokens) for Microsoft Entra ID or any compliant provider; see [docs/SSO.md](docs/SSO.md). The identity provider proves who someone is; the portal's database still decides what they may read, and only accounts an administrator created can sign in. The first sign-in locks the account to the provider's stable subject id, which avoids the email-claim takeover ("nOAuth"). `PASSWORD_LOGIN_ENABLED=false` requires SSO for everyone. The sign-in flow is unit-tested against locally signed tokens (forged signatures, unsigned tokens, wrong nonce, wrong audience); it has **not** yet been run against a live Entra tenant, which is part of the Azure step.
@@ -152,7 +156,7 @@ Optional OpenID Connect login (authorization code flow with PKCE, state and nonc
 | General knowledge (answered by the model, labelled, no sources) | **100%** (8/8) |
 | No-answer guard (8 questions the documents cannot answer, no invented facts) | **100%** (8/8) |
 | Injection hidden in a valid question (no leak) | **100%** (3/3) |
-| Median latency, answered / refused | 6.6 s / 2.3 s |
+| Median latency, answered / refused | 7.2 s / 2.5 s |
 
 Measured on a MacBook Pro (M3, 16 GB) with `qwen2.5:7b` via Ollama.
 
@@ -226,7 +230,7 @@ Try the same question as different users: for example *"What is the indicative v
 ### Tests and checks
 
 ```bash
-python -m pytest -q tests             # 180 unit tests, no database or model needed
+python -m pytest -q tests             # 189 unit tests, no database or model needed
 python -m scripts.verify_access       # 160 access-control checks (needs the database)
 python -m scripts.check_validator     # planted-error check for the validator (needs Ollama)
 python -m scripts.smoke_test          # end-to-end check of every path against the running server (needs Ollama)
@@ -247,7 +251,7 @@ GitHub Actions runs on every push: **unit tests**, **access-control checks again
 ```
 app/
   agents/        corrector, retriever, rewriter, planner, answerer, validator, orchestrator
-  routers/       auth, sso, chat (conversations, feedback), documents (upload), admin, retrieval, audit (FastAPI)
+  routers/       auth, sso, chat (conversations, feedback), documents (upload, versions, compare), admin, retrieval, audit (FastAPI)
   services/      vector store (SQL access control), embedder, reranker, LLM client, audit, answer checks,
                  file extraction, upload policy, admin, lockout, rate limit
   static/        web UI (login, chat with sources, documents, administration, audit view)
@@ -267,7 +271,8 @@ tests/           unit tests and the 86-question evaluation set
 - [x] Saved multi-turn conversations with follow-up questions, answer feedback
 - [x] Request IDs, JSON logs, readiness and metrics; data export, erase and retention; document review dates
 - [x] SSO (OpenID Connect), unit-tested; live Entra tenant test comes with the Azure deployment
-- [ ] Group-to-level mapping and SCIM, distributed tracing (OpenTelemetry), document versions, OCR for scanned PDFs
+- [x] Document versions and comparison with a checked summary
+- [ ] Agentic research assistant, group-to-level mapping and SCIM, distributed tracing (OpenTelemetry), OCR for scanned PDFs
 - [ ] An independently written evaluation set and broader adversarial security tests
 
 ## Tech

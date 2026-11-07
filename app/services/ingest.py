@@ -5,7 +5,7 @@ from typing import Optional
 import psycopg
 
 from app.config import DATABASE_URL
-from app.services import admin
+from app.services import admin, versions
 from app.services.chunker import HierarchicalChunker
 from app.services.users import User
 from app.services.vector_store import VectorStoreService
@@ -23,7 +23,7 @@ class IngestError(Exception):
 
 def ingest_document(user: User, title: str, content: str, level: int,
                     engagement_id: Optional[str], filename: Optional[str] = None,
-                    review_by: Optional[str] = None) -> dict:
+                    review_by: Optional[str] = None, previous: Optional[dict] = None) -> dict:
     """Add one document to the caller's own company. The caller has already checked upload_policy."""
     if engagement_id and not admin.engagement_exists(user.tenant_id, engagement_id):
         raise IngestError(404, "That team does not exist in your company")
@@ -39,6 +39,8 @@ def ingest_document(user: User, title: str, content: str, level: int,
     status = "published" if user.is_admin else "pending"
     metadata = {"title": title, "uploaded_by": user.email, "uploaded_by_id": user.id,
                 "content_hash": content_hash, "filename": filename, "review_by": review_by}
+    if previous:
+        metadata.update({"doc_key": previous["doc_key"], "version": previous["version"] + 1, "supersedes": previous["document_id"]})
     try:
         for item in chunks:
             vector_store.add_parent_and_children(
@@ -50,6 +52,10 @@ def ingest_document(user: User, title: str, content: str, level: int,
         # Never leave half a document behind: remove what was written and report the failure.
         admin.delete_document(user.tenant_id, document_id)
         raise
+    if previous and status == "published":
+        versions.archive(user.tenant_id, previous["document_id"])
     admin.record(user, "document.upload", title, {"document_id": document_id, "level": level,
-                                                  "engagement_id": engagement_id, "filename": filename, "status": status})
-    return {"document_id": document_id, "title": title, "parents_created": len(chunks), "status": status}
+                                                  "engagement_id": engagement_id, "filename": filename, "status": status,
+                                                  "supersedes": previous["document_id"] if previous else None})
+    return {"document_id": document_id, "title": title, "parents_created": len(chunks), "status": status,
+            "version": metadata.get("version", 1)}

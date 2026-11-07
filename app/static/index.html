@@ -84,6 +84,7 @@
         <div><label for="up-file">File (PDF, Word, text; up to 5 MB)</label>
           <input id="up-file" type="file" accept=".pdf,.docx,.txt,.md,.csv" required></div>
         <div><label for="up-title">Title (optional)</label><input id="up-title" type="text" maxlength="300" placeholder="Taken from the file name"></div>
+        <div><label for="up-version">Is this a new version?</label><select id="up-version"></select></div>
         <div><label for="up-level">Who may read it</label><select id="up-level"></select></div>
         <div><label for="up-team">Engagement team</label><select id="up-team"></select></div>
         <div><label for="up-review">Review by (optional)</label><input id="up-review" type="date"></div>
@@ -98,6 +99,13 @@
         <thead><tr><th>Title</th><th>Status</th><th>Read level</th><th>Team</th><th>Review by</th><th>Sections</th><th>Added by</th><th>Added</th><th></th></tr></thead>
         <tbody></tbody></table></div>
       <p id="docs-empty" class="muted" hidden>No documents yet.</p>
+    </div>
+    <div class="card gap" id="compare-box" hidden>
+      <div class="audit-head"><h2 id="compare-title">Changes</h2><button id="compare-close" class="secondary" type="button">Close</button></div>
+      <p class="muted small" id="compare-meta"></p>
+      <div id="compare-summary" class="compare-summary" hidden></div>
+      <p id="compare-note" class="muted small" hidden></p>
+      <div id="compare-changes" class="changes"></div>
     </div>
   </main>
 

@@ -17,5 +17,5 @@ Questions asked at once: 1
 | General knowledge (answered, labelled, no sources) | 100% (8/8) |
 | No-answer guard (no invented facts) | 100% (8/8) |
 | Injection hidden in a valid question (no leak) | 100% (3/3) |
-| Median latency, answered | 6.6s |
-| Median latency, refused | 2.3s |
+| Median latency, answered | 7.2s |
+| Median latency, refused | 2.5s |

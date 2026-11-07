@@ -36,12 +36,15 @@ def list_documents(tenant_id: str, uploaded_by_id: Optional[str] = None) -> List
     with _connect() as conn:
         rows = conn.execute(
             "SELECT p.document_id, MAX(p.metadata->>'title'), MAX(p.classification_level), MAX(e.name), "
-            "COUNT(*), MAX(p.metadata->>'uploaded_by'), MIN(p.created_at), MAX(p.metadata->>'filename'), MAX(p.status), MAX(p.metadata->>'review_by') "
+            "COUNT(*), MAX(p.metadata->>'uploaded_by'), MIN(p.created_at), MAX(p.metadata->>'filename'), MAX(p.status), MAX(p.metadata->>'review_by'), MAX(p.metadata->>'version'), MAX(p.metadata->>'supersedes') "
             "FROM parent_chunks p LEFT JOIN engagements e ON e.id = p.engagement_id "
             "WHERE p.tenant_id = %s AND (%s::text IS NULL OR p.metadata->>'uploaded_by_id' = %s) "
             "GROUP BY p.document_id ORDER BY MIN(p.created_at) DESC", (tenant_id, uploaded_by_id, uploaded_by_id)).fetchall()
-    keys = ("document_id", "title", "level", "team", "sections", "uploaded_by", "created_at", "filename", "status", "review_by")
-    return [dict(zip(keys, (str(r[0]),) + tuple(r[1:]))) for r in rows]
+    keys = ("document_id", "title", "level", "team", "sections", "uploaded_by", "created_at", "filename", "status", "review_by", "version", "supersedes")
+    docs = [dict(zip(keys, (str(r[0]),) + tuple(r[1:]))) for r in rows]
+    for d in docs:
+        d["version"] = int(d["version"] or 1)
+    return docs
 
 
 def find_by_hash(tenant_id: str, content_hash: str) -> Optional[str]:
@@ -64,7 +67,12 @@ def approve_document(tenant_id: str, document_id: str) -> int:
     with _connect() as conn:
         cur = conn.execute("UPDATE parent_chunks SET status = 'published' WHERE tenant_id = %s AND document_id = %s AND status = 'pending'",
                            (tenant_id, document_id))
-        return cur.rowcount
+        approved = cur.rowcount
+        if approved:  # a new version replaces the one it supersedes
+            conn.execute("UPDATE parent_chunks SET status = 'archived' WHERE tenant_id = %s AND status = 'published' "
+                         "AND document_id::text = (SELECT MAX(metadata->>'supersedes') FROM parent_chunks WHERE tenant_id = %s AND document_id = %s)",
+                         (tenant_id, tenant_id, document_id))
+        return approved
 
 
 def delete_document(tenant_id: str, document_id: str) -> int:

@@ -132,3 +132,10 @@ td select, td input { min-width: 110px; padding: 5px 8px; }
 .sso-button { display: block; text-align: center; text-decoration: none; padding: 10px; border-radius: 8px; background: var(--accent); color: var(--accent-text); font-weight: 600; margin-top: 16px; }
 .sso-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .center { text-align: center; }
+.tag.archived { background: var(--neutral-bg); color: var(--muted); }
+.compare-summary { white-space: pre-wrap; background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; margin: 10px 0; }
+.changes { display: grid; gap: 8px; margin-top: 10px; }
+.change { border: 1px solid var(--border); border-left-width: 4px; border-radius: 6px; padding: 8px 10px; background: var(--bg); font-size: 14px; }
+.change.added { border-left-color: var(--ok); } .change.removed { border-left-color: var(--bad); } .change.changed { border-left-color: var(--warn); }
+.change b { font-size: 12px; text-transform: uppercase; color: var(--muted); }
+.change .before { text-decoration: line-through; color: var(--muted); }
