@@ -566,6 +566,20 @@
     e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
   });
 
-  token = store(true);
-  if (token) enter().catch(() => signOut()); else show("login");
+  async function startup() {
+    // Single sign-on returns here with the session token (or an error flag) in the address fragment.
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const ssoToken = hash.get("sso_token"), ssoError = hash.get("sso_error");
+    if (ssoToken || ssoError) history.replaceState(null, "", window.location.pathname);
+    let cfg = { sso: false, password: true };
+    try { const r = await fetch("/auth/config"); if (r.ok) cfg = await r.json(); } catch (e) { /* keep defaults */ }
+    $("sso-block").hidden = !cfg.sso;
+    $("sso-or").hidden = !cfg.password;
+    if (!cfg.password) { $("email").closest("form").querySelectorAll("label, input, #login-button, .demo").forEach((n) => { n.hidden = true; }); }
+    if (ssoToken) { token = ssoToken; store(false, token); enter().catch(() => signOut()); return; }
+    if (ssoError) { show("login"); $("login-error").textContent = "Single sign-on failed. Ask your administrator to check that your account exists."; $("login-error").hidden = false; return; }
+    token = store(true);
+    if (token) enter().catch(() => signOut()); else show("login");
+  }
+  startup();
 })();

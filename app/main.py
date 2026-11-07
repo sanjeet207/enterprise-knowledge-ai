@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import config, observability
-from app.routers import admin, documents, retrieval, auth, chat, audit, me
+from app.routers import admin, documents, retrieval, auth, chat, audit, me, sso
 from app.services import metrics
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -16,13 +16,14 @@ STATIC_DIR = Path(__file__).parent / "static"
 app = FastAPI(
     title="Enterprise Knowledge AI Platform",
     description="Secure multi-tenant RAG platform with hybrid search, RBAC, and local LLM generation",
-    version="0.7.0",
+    version="0.8.0",
 )
 
 observability.setup_logging()
 app.add_middleware(observability.RequestMiddleware)
 
 app.include_router(auth.router)
+app.include_router(sso.router)
 app.include_router(documents.router)
 app.include_router(retrieval.router)
 app.include_router(chat.router)

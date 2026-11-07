@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Single sign-on (OpenID Connect with PKCE) for Entra ID and compatible providers, account linking by stable subject id, SSO-only accounts, `PASSWORD_LOGIN_ENABLED`. See docs/SSO.md.
 - Observability: request ids, JSON request logs, `/ready`, token-protected `/metrics`.
 - Data governance: personal data download and erase, retention purge script, document review dates with overdue counts.
 - Saved multi-turn conversations with follow-up understanding (the condenser sees only the person's earlier questions) and Helpful / Not helpful feedback on answers, with ratings in administrator insights.
@@ -21,7 +22,7 @@
 ### Changed
 - Evaluation set grew from 80 to 86 questions; result 86/86 with 0 access leaks.
 - Evaluation outputs moved to `evaluation/`.
-- Unit tests: 164.
+- Unit tests: 180.
 - `POST /documents/ingest` now follows the same publishing rules as an upload.
 
 ### Removed

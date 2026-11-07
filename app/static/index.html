@@ -17,6 +17,10 @@
     <label for="password">Password</label>
     <input id="password" name="password" type="password" required autocomplete="current-password">
     <p id="login-error" class="error" role="alert" hidden></p>
+    <div id="sso-block" hidden>
+      <a id="sso-button" class="sso-button" href="/auth/sso/login">Sign in with company SSO</a>
+      <p class="muted small center" id="sso-or">or use a password</p>
+    </div>
     <button type="submit" class="primary" id="login-button">Sign in</button>
     <details class="demo">
       <summary>Demo accounts</summary>

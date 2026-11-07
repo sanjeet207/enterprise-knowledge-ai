@@ -30,7 +30,7 @@ class NewUser(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     email: str = Field(..., max_length=254)
-    password: str = Field(..., max_length=128)
+    password: Optional[str] = Field(default=None, max_length=128, description="Leave empty for a single-sign-on-only account")
     level: int = Field(default=1, ge=1, le=4)
     is_admin: bool = False
 

@@ -76,3 +76,22 @@ def register_failure(email: str) -> None:
 def clear_failures(user_id: str) -> None:
     with _connect() as conn:
         conn.execute("UPDATE users SET failed_logins = 0, locked_until = NULL WHERE id = %s", (user_id,))
+
+
+def get_by_sso(issuer: str, subject: str) -> Optional[User]:
+    with _connect() as conn:
+        row = conn.execute(f"SELECT {_COLUMNS} FROM users WHERE sso_issuer = %s AND sso_sub = %s", (issuer, subject)).fetchone()
+    return _to_user(row) if row else None
+
+
+def get_unlinked_by_email(email: str) -> Optional[User]:
+    """A provisioned person who has not signed in with SSO yet."""
+    with _connect() as conn:
+        row = conn.execute(f"SELECT {_COLUMNS} FROM users WHERE lower(email) = lower(%s) AND sso_sub IS NULL", (email,)).fetchone()
+    return _to_user(row) if row else None
+
+
+def link_sso(user_id: str, issuer: str, subject: str) -> bool:
+    with _connect() as conn:
+        return conn.execute("UPDATE users SET sso_issuer = %s, sso_sub = %s WHERE id = %s AND sso_sub IS NULL",
+                            (issuer, subject, user_id)).rowcount == 1

@@ -112,6 +112,13 @@ def publishing_checks(client, tokens, record) -> None:
 
 def platform_checks(client, tokens, record) -> None:
     """Health probes, request ids, metrics lock-down, and the personal-data rights."""
+    cfg = client.get("/auth/config").json()
+    record("The sign-in page learns what is offered", cfg.get("password") is True and "sso" in cfg, str(cfg))
+    if not cfg.get("sso"):
+        go = client.get("/auth/sso/login", follow_redirects=False)
+        record("SSO is refused cleanly when not configured", go.status_code == 303 and go.headers.get("location", "").endswith("sso_error=1"))
+        back = client.get("/auth/sso/callback?code=x&state=y", follow_redirects=False)
+        record("A forged SSO callback is refused", back.status_code == 303 and back.headers.get("location", "").endswith("sso_error=1"))
     r = client.get("/ready")
     record("Readiness probe checks the database", r.status_code == 200 and r.json().get("status") == "ready")
     r = client.get("/health", headers={"X-Request-ID": "smoke-test-request-id"})

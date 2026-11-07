@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from app import config
 from app.schemas import NewTeam, NewUser, TeamMember, UserChange
 from app.security import require_admin
 from app.services import admin, validation
@@ -23,7 +24,10 @@ def users(user: User = Depends(require_admin)):
 def create_user(body: NewUser, user: User = Depends(require_admin)):
     try:
         email = validation.clean_email(body.email)
-        validation.check_password(body.password)
+        if body.password:
+            validation.check_password(body.password)
+        elif not config.OIDC_ENABLED:
+            raise ValueError("Enter a temporary password")
     except ValueError as exc:
         _bad(exc)
     new_id = admin.create_user(user.tenant_id, email, body.password, body.level, body.is_admin)

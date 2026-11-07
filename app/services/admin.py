@@ -137,13 +137,13 @@ def list_users(tenant_id: str) -> List[Dict[str, Any]]:
     return [dict(zip(keys, (str(r[0]),) + tuple(r[1:]))) for r in rows]
 
 
-def create_user(tenant_id: str, email: str, password: str, level: int, is_admin: bool) -> Optional[str]:
+def create_user(tenant_id: str, email: str, password: Optional[str], level: int, is_admin: bool) -> Optional[str]:
     """None when the email is already taken (emails are unique across all companies)."""
     user_id = str(uuid.uuid4())
     try:
         with _connect() as conn:
             conn.execute("INSERT INTO users (id, tenant_id, email, role_level, password_hash, is_admin) VALUES (%s,%s,%s,%s,%s,%s)",
-                         (user_id, tenant_id, email, level, hash_password(password), is_admin))
+                         (user_id, tenant_id, email, level, hash_password(password) if password else None, is_admin))
     except UniqueViolation:
         return None
     return user_id

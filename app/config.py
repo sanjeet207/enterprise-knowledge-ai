@@ -19,6 +19,16 @@ if len(JWT_SECRET) < 32:
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_MINUTES = int(os.getenv("ACCESS_TOKEN_MINUTES", "60"))
 
+# Single sign-on (OpenID Connect, e.g. Microsoft Entra ID). Off unless issuer and client id are set.
+# Use a single-tenant issuer such as https://login.microsoftonline.com/<tenant-id>/v2.0
+OIDC_ISSUER = os.getenv("OIDC_ISSUER", "").strip()
+OIDC_CLIENT_ID = os.getenv("OIDC_CLIENT_ID", "").strip()
+OIDC_CLIENT_SECRET = os.getenv("OIDC_CLIENT_SECRET", "").strip()
+OIDC_REDIRECT_URI = os.getenv("OIDC_REDIRECT_URI", "http://127.0.0.1:8000/auth/sso/callback").strip()
+OIDC_ENABLED = bool(OIDC_ISSUER and OIDC_CLIENT_ID)
+# Turn off to require SSO for everyone (the demo keeps password sign-in on).
+PASSWORD_LOGIN_ENABLED = os.getenv("PASSWORD_LOGIN_ENABLED", "true").lower() in ("1", "true", "yes")
+
 # Prometheus /metrics is off unless a token is set.
 METRICS_TOKEN = os.getenv("METRICS_TOKEN", "")
 # Audit rows and saved conversations older than this are removed by scripts/purge_retention.py.
