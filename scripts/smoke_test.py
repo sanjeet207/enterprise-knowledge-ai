@@ -55,6 +55,78 @@ CASES = [
 ]
 
 
+def upload(client, headers, text, title, level, team=""):
+    return client.post("/documents/upload", headers=headers,
+                       files={"file": ("note.txt", text.encode(), "text/plain")},
+                       data={"title": title, "classification_level": str(level), "engagement_id": team})
+
+
+def publishing_checks(client, tokens, record) -> None:
+    """Who may add documents and manage people, and that an uploaded document obeys the same access rules."""
+    record("Analyst cannot open the admin area", client.get("/admin/users", headers=tokens["analyst"]).status_code == 403)
+    record("Analyst cannot upload", upload(client, tokens["analyst"], "x" * 50, "t", 1).status_code == 403)
+    record("Manager cannot publish company-wide", upload(client, tokens["manager"], "x" * 50, "t", 1).status_code == 403)
+    users = client.get("/admin/users", headers=tokens["admin"]).json().get("users", [])
+    record("Administrator lists the company's people", any(u["email"] == "analyst@acme.test" for u in users)
+           and all(u["email"].endswith("@acme.test") for u in users), f"{len(users)} people")
+    marker = "Zephyr onboarding checklist"
+    text = (f"The {marker} requires laptop collection on the first day and a security briefing within the first week. "
+            "Buddy assignment is done by the hiring manager (demo data).")
+    started = time.perf_counter()
+    r = upload(client, tokens["admin"], text, "Zephyr Onboarding Checklist", 3)
+    record("Administrator publishes a level 3 document", r.status_code == 200, f"{time.perf_counter() - started:.1f}s")
+    doc_id = r.json().get("document_id") if r.status_code == 200 else None
+    record("The same content is not added twice", upload(client, tokens["admin"], text, "Copy", 3).status_code == 409)
+    question = "What does the Zephyr onboarding checklist require on the first day?"
+    record("A director can read it", ask(client, tokens["director"], question)["outcome"] == "answered")
+    record("An analyst cannot", ask(client, tokens["analyst"], question)["outcome"] == "refused")
+    options = client.get("/documents/options", headers=tokens["manager_titan"]).json()
+    team = options["teams"][0]["id"] if options.get("teams") else ""
+    other = upload(client, tokens["manager"], "y" * 60, "Not my team", 1, team)
+    record("A manager cannot add to a team they are not in", other.status_code == 403)
+    mine = upload(client, tokens["manager_titan"], "Titan data room index lists the legal, tax and finance folders (demo data).",
+                  "Titan Data Room Index", 2, team)
+    record("A team manager adds to their own team", mine.status_code == 200)
+    mine_id = mine.json().get("document_id") if mine.status_code == 200 else None
+    record("It waits for approval", mine.status_code == 200 and mine.json().get("status") == "pending")
+    titan_q = "What folders does the Titan data room index list?"
+    record("A pending document is not searchable", ask(client, tokens["director_titan"], titan_q)["outcome"] != "answered")
+    own_approval = client.post(f"/admin/documents/{mine_id}/approve", headers=tokens["manager_titan"])
+    record("A manager cannot approve", own_approval.status_code == 403)
+    approved = client.post(f"/admin/documents/{mine_id}/approve", headers=tokens["admin"]) if mine_id else None
+    record("An administrator approves it", approved is not None and approved.status_code == 200)
+    record("After approval the team can find it", ask(client, tokens["director_titan"], titan_q)["outcome"] == "answered")
+    over = upload(client, tokens["manager_titan"], "z" * 60, "Too high", 4, team)
+    record("A manager cannot classify above their own level", over.status_code == 403)
+    for doc in (doc_id, mine.json().get("document_id") if mine.status_code == 200 else None):
+        if doc:
+            client.delete(f"/documents/{doc}", headers=tokens["admin"])
+    gone = ask(client, tokens["director"], question)
+    record("A deleted document is no longer found", gone["outcome"] != "answered" or not gone["sources"])
+    lockout_checks(client, tokens, record)
+    insights = client.get("/admin/insights", headers=tokens["admin"])
+    record("Usage insights are available to administrators", insights.status_code == 200 and insights.json().get("total", 0) > 0)
+    record("Administrator activity is logged", any(e["action"] == "document.upload"
+           for e in client.get("/admin/events", headers=tokens["admin"]).json().get("events", [])))
+
+
+def lockout_checks(client, tokens, record) -> None:
+    email, good = "lockout.test@acme.test", "Correct-Horse-1"
+    created = client.post("/admin/users", headers=tokens["admin"], json={"email": email, "password": good, "level": 1})
+    record("Administrator creates an account", created.status_code == 201, f"http {created.status_code}")
+    if created.status_code != 201:
+        return
+    user_id = created.json()["id"]
+    for _ in range(5):
+        client.post("/auth/login", data={"username": email, "password": "wrong-password"})
+    locked = client.post("/auth/login", data={"username": email, "password": good})
+    record("Five wrong passwords lock the account", locked.status_code == 401)
+    client.patch(f"/admin/users/{user_id}", headers=tokens["admin"], json={"password": good + "x"})
+    again = client.post("/auth/login", data={"username": email, "password": good + "x"})
+    record("A password reset by an administrator unlocks it", again.status_code == 200)
+    client.patch(f"/admin/users/{user_id}", headers=tokens["admin"], json={"is_active": False})
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
@@ -74,8 +146,10 @@ def main() -> int:
         record("Wrong password is rejected", bad.status_code == 401)
         record("No token is rejected", client.post("/chat/query", json={"query": "hi"}).status_code == 401)
 
-        users = ("analyst", "director", "director_titan", "globex_analyst", "partner_titan")
+        users = ("analyst", "manager", "director", "director_titan", "manager_titan", "globex_analyst", "partner_titan", "admin")
         tokens = {u: login(client, f"{u}@{'globex' if u.startswith('globex') else 'acme'}.test") for u in users}
+        me_admin = client.get("/auth/me", headers=tokens["admin"]).json()
+        record("Administrator account", me_admin.get("is_admin") is True and me_admin.get("level") == 1)
         me = client.get("/auth/me", headers=tokens["analyst"]).json()
         record("Login and identity", me.get("level") == 1 and me.get("tenant_id") == "acme", f"level {me.get('level')}")
 
@@ -95,6 +169,8 @@ def main() -> int:
         logged = {e["query"] for e in events.json().get("events", [])} if events.status_code == 200 else set()
         record("Partner can read the audit log", events.status_code == 200 and CASES[0][2] in logged)
         record("Analyst cannot read the audit log", client.get("/audit/events", headers=tokens["analyst"]).status_code == 403)
+
+        publishing_checks(client, tokens, record)
 
     failed = [label for label, ok, _ in results if not ok]
     print(f"\n{len(results) - len(failed)}/{len(results)} checks passed")

@@ -2,14 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.agents import orchestrator
+from app import config
 from app.agents.retriever import Retriever
 from app.security import get_current_user
 from app.services.llm import LLMUnavailable
+from app.services.ratelimit import SlidingWindow
 from app.services.users import User
 from app.services.vector_store import VectorStoreService
 
 router = APIRouter(prefix="/chat", tags=["RAG Chat"])
 retriever = Retriever(VectorStoreService())
+limiter = SlidingWindow(config.CHAT_RATE_PER_MINUTE)
 
 
 class ChatRequest(BaseModel):
@@ -21,6 +24,8 @@ class ChatRequest(BaseModel):
 
 @router.post("/query")
 async def rag_query(payload: ChatRequest, user: User = Depends(get_current_user)):
+    if not limiter.allow(user.id):
+        raise HTTPException(status_code=429, detail="Too many questions. Please wait a moment.", headers={"Retry-After": "60"})
     try:
         return await orchestrator.answer_question(user, payload.query, payload.top_k, retriever)
     except LLMUnavailable:

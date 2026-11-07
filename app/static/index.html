@@ -31,6 +31,8 @@
     <div class="brand">Enterprise Knowledge AI</div>
     <nav class="tabs" role="tablist" aria-label="Views">
       <button role="tab" id="tab-chat" aria-selected="true" aria-controls="chat-panel" class="tab active">Chat</button>
+      <button role="tab" id="tab-docs" aria-selected="false" aria-controls="docs-panel" class="tab" hidden>Documents</button>
+      <button role="tab" id="tab-admin" aria-selected="false" aria-controls="admin-panel" class="tab" hidden>Administration</button>
       <button role="tab" id="tab-audit" aria-selected="false" aria-controls="audit-panel" class="tab" hidden>Audit log</button>
     </nav>
     <div class="who">
@@ -60,6 +62,71 @@
       <p class="muted small" id="sources-hint">Documents cited by the latest answer appear here.</p>
       <ol id="sources-list" class="sources-list"></ol>
     </aside>
+  </main>
+
+
+  <main id="docs-panel" class="audit" role="tabpanel" aria-labelledby="tab-docs" hidden>
+    <div class="card">
+      <h2>Add a document</h2>
+      <p class="muted small" id="upload-hint"></p>
+      <form id="upload-form" class="grid-form">
+        <div><label for="up-file">File (PDF, Word, text; up to 5 MB)</label>
+          <input id="up-file" type="file" accept=".pdf,.docx,.txt,.md,.csv" required></div>
+        <div><label for="up-title">Title (optional)</label><input id="up-title" type="text" maxlength="300" placeholder="Taken from the file name"></div>
+        <div><label for="up-level">Who may read it</label><select id="up-level"></select></div>
+        <div><label for="up-team">Engagement team</label><select id="up-team"></select></div>
+        <div class="form-actions"><button type="submit" class="primary" id="up-button">Upload</button></div>
+      </form>
+      <p id="upload-msg" class="small" role="status" hidden></p>
+    </div>
+    <div class="card gap">
+      <div class="audit-head"><h2 id="docs-title">Documents</h2><button id="docs-refresh" class="secondary">Refresh</button></div>
+      <p class="muted small" id="docs-hint"></p>
+      <div class="table-wrap"><table id="docs-table">
+        <thead><tr><th>Title</th><th>Status</th><th>Read level</th><th>Team</th><th>Sections</th><th>Added by</th><th>Added</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <p id="docs-empty" class="muted" hidden>No documents yet.</p>
+    </div>
+  </main>
+
+  <main id="admin-panel" class="audit" role="tabpanel" aria-labelledby="tab-admin" hidden>
+    <div class="card">
+      <h2>Usage and content gaps (last 30 days)</h2>
+      <p class="muted small">Counts only: no names and no answers. Questions the documents could not answer show what to publish next.</p>
+      <div id="stats" class="stats"></div>
+      <div class="table-wrap"><table id="gaps-table">
+        <thead><tr><th>Unanswered question</th><th>Times asked</th></tr></thead><tbody></tbody></table></div>
+      <p id="gaps-empty" class="muted small" hidden>No unanswered questions. Nothing to publish.</p>
+    </div>
+    <div class="card gap">
+      <h2>People</h2>
+      <p class="muted small">Add employees, set their reading level, switch accounts off, reset passwords. A level controls what a person may read; administrator access is separate.</p>
+      <form id="user-form" class="grid-form">
+        <div><label for="nu-email">Email</label><input id="nu-email" type="email" required></div>
+        <div><label for="nu-pass">Temporary password (10+ characters)</label><input id="nu-pass" type="password" minlength="10" required autocomplete="new-password"></div>
+        <div><label for="nu-level">Level</label><select id="nu-level"></select></div>
+        <div><label for="nu-admin">Administrator</label><select id="nu-admin"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="form-actions"><button type="submit" class="primary">Add person</button></div>
+      </form>
+      <p id="user-msg" class="small" role="status" hidden></p>
+      <div class="table-wrap"><table id="users-table">
+        <thead><tr><th>Email</th><th>Level</th><th>Administrator</th><th>Active</th><th>New password</th></tr></thead>
+        <tbody></tbody></table></div>
+    </div>
+    <div class="card gap">
+      <h2>Engagement teams</h2>
+      <p class="muted small">Restricted documents are visible only to members of their team, in addition to the level check.</p>
+      <form id="team-form" class="grid-form">
+        <div><label for="nt-name">New team name</label><input id="nt-name" type="text" maxlength="120" required></div>
+        <div class="form-actions"><button type="submit" class="primary">Create team</button></div>
+      </form>
+      <div id="teams-list" class="teams"></div>
+    </div>
+    <div class="card gap">
+      <h2>Administrator activity</h2>
+      <div class="table-wrap"><table id="events-table">
+        <thead><tr><th>Time</th><th>By</th><th>Action</th><th>Target</th></tr></thead><tbody></tbody></table></div>
+    </div>
   </main>
 
   <main id="audit-panel" class="audit" role="tabpanel" aria-labelledby="tab-audit" hidden>

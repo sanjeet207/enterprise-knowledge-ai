@@ -19,6 +19,9 @@ if len(JWT_SECRET) < 32:
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_MINUTES = int(os.getenv("ACCESS_TOKEN_MINUTES", "60"))
 
+# Questions one person may ask per minute (protects the model and the budget).
+CHAT_RATE_PER_MINUTE = int(os.getenv("CHAT_RATE_PER_MINUTE", "20"))
+
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 EMBEDDING_DIM = 384
 

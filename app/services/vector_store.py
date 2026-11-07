@@ -67,6 +67,8 @@ class VectorStoreService:
                 """
             )
             conn.execute("CREATE INDEX IF NOT EXISTS idx_parents_tenant ON parent_chunks (tenant_id)")
+            # A document is searchable only once published. Uploads by engagement managers wait for an administrator.
+            conn.execute("ALTER TABLE parent_chunks ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'published'")
 
             # 5. Child Chunks Table (Vector + BM25 FTS)
             conn.execute(
@@ -101,16 +103,17 @@ class VectorStoreService:
         classification_level: int,
         engagement_id: str | None,
         metadata: Dict[str, Any],
+        status: str = "published",
     ) -> None:
         embeddings = embed_texts(child_chunks)
         with self._connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO parent_chunks (id, tenant_id, document_id, content, classification_level, engagement_id, metadata)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO parent_chunks (id, tenant_id, document_id, content, classification_level, engagement_id, metadata, status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """,
-                    (parent_id, tenant_id, document_id, parent_content, classification_level, engagement_id, Jsonb(metadata)),
+                    (parent_id, tenant_id, document_id, parent_content, classification_level, engagement_id, Jsonb(metadata), status),
                 )
                 child_rows = [
                     (parent_id, tenant_id, document_id, i, child, embeddings[i])
@@ -132,6 +135,7 @@ class VectorStoreService:
         WITH allowed_parents AS (
             SELECT id FROM parent_chunks
             WHERE tenant_id = %s
+              AND status = 'published'
               AND classification_level <= %s
               AND (
                   engagement_id IS NULL

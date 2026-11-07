@@ -22,6 +22,19 @@ STATEMENTS = [
     """,
     "ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS rewritten_query TEXT",
     "ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS trace JSONB",
+    """
+    CREATE TABLE IF NOT EXISTS admin_events (
+        id BIGSERIAL PRIMARY KEY,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        tenant_id TEXT NOT NULL,
+        actor_id UUID NOT NULL,
+        actor_email TEXT NOT NULL,
+        action TEXT NOT NULL,
+        target TEXT NOT NULL,
+        detail JSONB NOT NULL DEFAULT '{}'::jsonb
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS admin_events_tenant_time_idx ON admin_events (tenant_id, created_at DESC)",
     "CREATE INDEX IF NOT EXISTS audit_log_tenant_time_idx ON audit_log (tenant_id, created_at DESC)",
 ]
 

@@ -19,11 +19,13 @@ Please do not open a public issue for a security problem. Use GitHub's private r
   every claim.
 - **Refusals look identical** whether a document is forbidden or does not exist, so refusals reveal nothing.
 - **Audit:** every question is logged with its outcome and trace. Only Partners (level 4) can read the log.
+- **Publishing is separated from reading.** Only administrators publish company-wide documents, and engagement managers only to their own team. An administrator manages documents and people without gaining access to restricted content. All of it is tenant-scoped, and every upload, delete and account change is logged. Uploads by non-administrators stay unsearchable until an administrator approves them. Five wrong passwords lock an account for 15 minutes, and the response is identical to a wrong password. Uploads are limited by type and size, checked by content, de-duplicated and cleaned up if indexing fails.
 - **General-knowledge answers** never use company documents, carry no sources, and are labelled in the UI.
 
 ## Known limits
 
 - This is a portfolio project with fictional demo data and demo passwords. Do not deploy it with the demo
   accounts or the default seed data.
-- No rate limiting, account lockout or password reset yet.
+- Question limit is in memory (one process); behind several instances it moves to Redis. Sign-in lockout is per account, not per address. Administrators reset passwords; there is no self-service reset.
+- Administrators publish without a second approver. Scanned PDFs are not read (no OCR).
 - Answers come from a local 7B model; the validator is a model check, not a proof.

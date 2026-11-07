@@ -11,6 +11,7 @@
     ["director_titan@acme.test", "Director, Project Titan team"],
     ["partner_titan@acme.test", "Partner, Project Titan team"],
     ["partner_outsider@acme.test", "Partner, not on Titan"],
+    ["admin@acme.test", "Administrator (knowledge team), uploads and manages"],
     ["globex_analyst@globex.test", "Other company: Globex analyst"]
   ];
   const DEMO_PASSWORD = "DemoPass2026x";
@@ -66,8 +67,10 @@
     if (!res.ok) throw new Error("Could not load your profile.");
     me = await res.json();
     $("who-email").textContent = me.email;
-    $("who-role").textContent = (LEVELS[me.level] || "Level " + me.level) + " · L" + me.level;
+    $("who-role").textContent = (LEVELS[me.level] || "Level " + me.level) + " · L" + me.level + (me.is_admin ? " · Admin" : "");
     $("tab-audit").hidden = me.level < 4;
+    $("tab-docs").hidden = !(me.is_admin || me.level >= 2);
+    $("tab-admin").hidden = !me.is_admin;
     selectTab("chat");
     show("app");
     $("question").focus();
@@ -217,12 +220,217 @@
     });
   }
 
+  /* ---------- documents ---------- */
+  let upOptions = null;
+  function note(id, text, ok) {
+    const n = $(id);
+    n.textContent = text; n.hidden = !text;
+    n.className = "small " + (ok ? "ok-text" : "bad-text");
+  }
+  async function errText(res) {
+    try { const j = await res.json(); return typeof j.detail === "string" ? j.detail : "Request failed (" + res.status + ")."; }
+    catch (e) { return "Request failed (" + res.status + ")."; }
+  }
+  function fillSelect(sel, items) {
+    sel.replaceChildren();
+    items.forEach(([v, label]) => { const o = el("option", null, label); o.value = v; sel.append(o); });
+  }
+  async function loadDocs() {
+    const optRes = await api("/documents/options");
+    upOptions = optRes.ok ? await optRes.json() : { can_upload: false, teams: [], max_level: 0 };
+    $("upload-form").parentElement.hidden = !upOptions.can_upload;
+    if (upOptions.can_upload) {
+      const levels = [];
+      for (let l = 1; l <= upOptions.max_level; l++) levels.push([String(l), "Level " + l + " and above (" + LEVELS[l] + ")"]);
+      fillSelect($("up-level"), levels);
+      const teams = upOptions.company_wide ? [["", "Company-wide (no team restriction)"]] : [];
+      upOptions.teams.forEach((t) => teams.push([t.id, t.name]));
+      fillSelect($("up-team"), teams);
+      $("upload-hint").textContent = upOptions.company_wide
+        ? "You publish documents for the whole company. Choose who may read the document; a team adds a second restriction."
+        : "You can add documents to the engagement teams you belong to, up to your own level. Company-wide documents are published by the administrators.";
+      $("up-button").disabled = !teams.length;
+      if (!teams.length) note("upload-msg", "You are not a member of any engagement team yet. Ask an administrator to add you.", false);
+    }
+    const isAdmin = me.is_admin;
+    $("docs-title").textContent = isAdmin ? "All company documents" : "Documents you added";
+    $("docs-hint").textContent = isAdmin ? "You see titles and settings, not the content. Reading follows each person's own level." : "";
+    const tbody = $("docs-table").querySelector("tbody");
+    tbody.replaceChildren(); $("docs-empty").hidden = true;
+    const res = await api("/documents");
+    if (!res.ok) { $("docs-empty").textContent = "Could not load documents."; $("docs-empty").hidden = false; return; }
+    const rows = (await res.json()).documents;
+    if (!rows.length) { $("docs-empty").hidden = false; return; }
+    rows.forEach((d) => {
+      const tr = el("tr");
+      const del = el("button", "danger", "Delete");
+      del.type = "button";
+      del.addEventListener("click", async () => {
+        if (!window.confirm('Delete "' + d.title + '" and remove it from search?')) return;
+        const r = await api("/documents/" + d.document_id, { method: "DELETE" });
+        if (!r.ok) note("upload-msg", await errText(r), false); else { note("upload-msg", 'Deleted "' + d.title + '".', true); loadDocs(); }
+      });
+      const last = el("td");
+      if (me.is_admin && d.status === "pending") {
+        const ok = el("button", "primary", "Approve"); ok.type = "button";
+        ok.addEventListener("click", async () => {
+          const r = await api("/admin/documents/" + d.document_id + "/approve", { method: "POST" });
+          note("upload-msg", r.ok ? '"' + d.title + '" is now searchable.' : await errText(r), r.ok);
+          loadDocs();
+        });
+        last.append(ok, document.createTextNode(" "));
+        del.textContent = "Reject";
+      }
+      last.append(del);
+      const st = el("td"); st.append(el("span", "tag " + (d.status === "pending" ? "pending" : "published"), d.status === "pending" ? "Waiting for approval" : "Live"));
+      tr.append(el("td", "q", d.title || ""), st, el("td", null, "L" + d.level), el("td", null, d.team || "Company-wide"),
+        el("td", null, String(d.sections)), el("td", null, d.uploaded_by || "(seeded)"),
+        el("td", null, d.created_at ? new Date(d.created_at).toLocaleDateString() : ""), last);
+      tbody.append(tr);
+    });
+  }
+
+  async function upload(e) {
+    e.preventDefault();
+    const f = $("up-file").files[0];
+    if (!f) return;
+    const form = new FormData();
+    form.append("file", f);
+    form.append("title", $("up-title").value);
+    form.append("classification_level", $("up-level").value);
+    form.append("engagement_id", $("up-team").value);
+    $("up-button").disabled = true;
+    note("upload-msg", "Reading and indexing " + f.name + "...", true);
+    try {
+      const res = await api("/documents/upload", { method: "POST", body: form });
+      if (!res.ok) { note("upload-msg", await errText(res), false); return; }
+      const d = await res.json();
+      note("upload-msg", d.status === "pending"
+        ? '"' + d.title + '" was received and waits for an administrator to approve it before anyone can search it.'
+        : '"' + d.title + '" is now searchable (' + d.parents_created + " sections).", true);
+      $("upload-form").reset();
+      loadDocs();
+    } catch (err) { note("upload-msg", err.message, false); }
+    finally { $("up-button").disabled = false; }
+  }
+
+  /* ---------- administration ---------- */
+  async function adminCall(path, method, payload) {
+    const opts = { method: method };
+    if (payload) { opts.headers = { "Content-Type": "application/json" }; opts.body = JSON.stringify(payload); }
+    return api(path, opts);
+  }
+  function levelSelect(value, onChange) {
+    const sel = el("select");
+    fillSelect(sel, [1, 2, 3, 4].map((l) => [String(l), "L" + l + " " + LEVELS[l]]));
+    sel.value = String(value);
+    sel.addEventListener("change", () => onChange(Number(sel.value)));
+    return sel;
+  }
+  function checkbox(value, disabled, onChange) {
+    const c = el("input"); c.type = "checkbox"; c.checked = value; c.disabled = disabled;
+    c.addEventListener("change", () => onChange(c.checked));
+    return c;
+  }
+  async function patchUser(id, change) {
+    const r = await adminCall("/admin/users/" + id, "PATCH", change);
+    note("user-msg", r.ok ? "Saved." : await errText(r), r.ok);
+    loadAdmin();
+  }
+  async function loadAdmin() {
+    const [uRes, tRes, eRes, iRes] = await Promise.all([api("/admin/users"), api("/admin/teams"), api("/admin/events"), api("/admin/insights")]);
+    if (iRes.ok) {
+      const i = await iRes.json();
+      const box = $("stats"); box.replaceChildren();
+      const stat = (v, label) => { const d = el("div", "stat"); d.append(el("b", null, String(v)), el("span", null, label)); box.append(d); };
+      stat(i.total, "questions");
+      stat(i.answered_rate === null ? "n/a" : Math.round(i.answered_rate * 100) + "%", "answered from documents");
+      stat(i.outcomes.refused || 0, "not available to the asker");
+      stat(i.outcomes.no_answer || 0, "not in the documents");
+      stat(i.median_latency_ms === null ? "n/a" : (i.median_latency_ms / 1000).toFixed(1) + " s", "median answer time");
+      const gb = $("gaps-table").querySelector("tbody"); gb.replaceChildren();
+      i.content_gaps.forEach((g) => { const tr = el("tr"); tr.append(el("td", "q", g.question), el("td", null, String(g.times))); gb.append(tr); });
+      $("gaps-empty").hidden = i.content_gaps.length > 0;
+    }
+    if (!uRes.ok) { note("user-msg", await errText(uRes), false); return; }
+    const users = (await uRes.json()).users;
+    const tbody = $("users-table").querySelector("tbody");
+    tbody.replaceChildren();
+    users.forEach((u) => {
+      const self = u.email.toLowerCase() === me.email.toLowerCase();
+      const lockedMark = u.locked ? " (locked after failed sign-ins: reset the password to unlock)" : "";
+      const pw = el("input"); pw.type = "password"; pw.placeholder = "Set new password"; pw.autocomplete = "new-password";
+      const set = el("button", "secondary", "Reset"); set.type = "button";
+      set.addEventListener("click", () => { if (pw.value) patchUser(u.id, { password: pw.value }); });
+      const pwCell = el("td"); pwCell.append(pw, document.createTextNode(" "), set);
+      const lv = el("td"), ad = el("td"), ac = el("td");
+      if (self) { lv.textContent = "L" + u.level; ad.textContent = u.is_admin ? "Yes" : "No"; ac.textContent = "Yes (you)"; }
+      else {
+        lv.append(levelSelect(u.level, (v) => patchUser(u.id, { level: v })));
+        ad.append(checkbox(u.is_admin, false, (v) => patchUser(u.id, { is_admin: v })));
+        ac.append(checkbox(u.is_active, false, (v) => patchUser(u.id, { is_active: v })));
+      }
+      const tr = el("tr"); tr.append(el("td", null, u.email + lockedMark), lv, ad, ac, pwCell);
+      tbody.append(tr);
+    });
+    // teams
+    const list = $("teams-list");
+    list.replaceChildren();
+    if (tRes.ok) {
+      (await tRes.json()).teams.forEach((t) => {
+        const box = el("div", "team"); box.append(el("h3", null, t.name));
+        const chips = el("div", "chips");
+        t.members.forEach((m) => {
+          const c = el("span", "chip", m.email);
+          const x = el("button", null, "×"); x.type = "button"; x.title = "Remove " + m.email;
+          x.addEventListener("click", async () => { await adminCall("/admin/teams/" + t.id + "/members/" + m.user_id, "DELETE"); loadAdmin(); });
+          c.append(x); chips.append(c);
+        });
+        if (!t.members.length) chips.append(el("span", "muted small", "No members yet."));
+        const add = el("div", "team-add");
+        const sel = el("select");
+        const taken = new Set(t.members.map((m) => m.user_id));
+        fillSelect(sel, users.filter((u) => !taken.has(u.id) && u.is_active).map((u) => [u.id, u.email]));
+        const btn = el("button", "secondary", "Add member"); btn.type = "button";
+        btn.addEventListener("click", async () => { if (sel.value) { await adminCall("/admin/teams/" + t.id + "/members", "POST", { user_id: sel.value }); loadAdmin(); } });
+        add.append(sel, btn);
+        box.append(chips, add); list.append(box);
+      });
+    }
+    const ebody = $("events-table").querySelector("tbody");
+    ebody.replaceChildren();
+    if (eRes.ok) (await eRes.json()).events.forEach((ev) => {
+      const tr = el("tr");
+      tr.append(el("td", null, new Date(ev.created_at).toLocaleString()), el("td", null, ev.actor_email), el("td", null, ev.action), el("td", "q", ev.target));
+      ebody.append(tr);
+    });
+  }
+
+  async function addUser(e) {
+    e.preventDefault();
+    const r = await adminCall("/admin/users", "POST", {
+      email: $("nu-email").value, password: $("nu-pass").value, level: Number($("nu-level").value), is_admin: $("nu-admin").value === "yes"
+    });
+    if (r.ok) { $("user-form").reset(); note("user-msg", "Person added.", true); loadAdmin(); }
+    else note("user-msg", await errText(r), false);
+  }
+  async function addTeam(e) {
+    e.preventDefault();
+    const r = await adminCall("/admin/teams", "POST", { name: $("nt-name").value });
+    if (r.ok) { $("team-form").reset(); loadAdmin(); } else note("user-msg", await errText(r), false);
+  }
+
+  const PANELS = { chat: "chat-panel", docs: "docs-panel", admin: "admin-panel", audit: "audit-panel" };
   function selectTab(name) {
-    const chat = name === "chat";
-    $("chat-panel").hidden = !chat; $("audit-panel").hidden = chat;
-    $("tab-chat").classList.toggle("active", chat); $("tab-audit").classList.toggle("active", !chat);
-    $("tab-chat").setAttribute("aria-selected", String(chat)); $("tab-audit").setAttribute("aria-selected", String(!chat));
-    if (!chat) loadAudit().catch((e) => { $("audit-empty").textContent = e.message; $("audit-empty").hidden = false; });
+    Object.keys(PANELS).forEach((k) => {
+      $(PANELS[k]).hidden = k !== name;
+      $("tab-" + k).classList.toggle("active", k === name);
+      $("tab-" + k).setAttribute("aria-selected", String(k === name));
+    });
+    const fail = (id) => (e) => { $(id).textContent = e.message; $(id).hidden = false; };
+    if (name === "audit") loadAudit().catch(fail("audit-empty"));
+    if (name === "docs") loadDocs().catch(fail("docs-empty"));
+    if (name === "admin") loadAdmin().catch((e) => note("user-msg", e.message, false));
   }
 
   /* ---------- wiring ---------- */
@@ -244,6 +452,13 @@
   $("logout").addEventListener("click", signOut);
   $("tab-chat").addEventListener("click", () => selectTab("chat"));
   $("tab-audit").addEventListener("click", () => selectTab("audit"));
+  $("tab-docs").addEventListener("click", () => selectTab("docs"));
+  $("tab-admin").addEventListener("click", () => selectTab("admin"));
+  $("upload-form").addEventListener("submit", upload);
+  $("docs-refresh").addEventListener("click", () => loadDocs());
+  $("user-form").addEventListener("submit", addUser);
+  $("team-form").addEventListener("submit", addTeam);
+  fillSelect($("nu-level"), [1, 2, 3, 4].map((l) => [String(l), "L" + l + " " + LEVELS[l]]));
   $("audit-refresh").addEventListener("click", () => loadAudit());
   $("chat-form").addEventListener("submit", (e) => {
     e.preventDefault();

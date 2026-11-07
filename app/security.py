@@ -29,13 +29,20 @@ _DUMMY_HASH = hash_password("not-a-real-password")
 
 
 def authenticate(email: str, password: str) -> Optional[User]:
+    """Same answer (None) for an unknown email, a wrong password, a switched-off account and a locked account."""
     found = users.get_with_password_hash(email)
     if found is None or not found[1]:
         verify_password(password, _DUMMY_HASH)
         return None
     user, password_hash = found
-    if not verify_password(password, password_hash) or not user.is_active:
+    locked = users.is_locked(email)
+    correct = verify_password(password, password_hash)
+    if locked or not user.is_active:
         return None
+    if not correct:
+        users.register_failure(email)
+        return None
+    users.clear_failures(user.id)
     return user
 
 
@@ -73,3 +80,11 @@ def require_level(minimum: int):
         return user
 
     return dependency
+
+
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    """Portal administrators (the knowledge-base team) manage documents, people and teams.
+    This is separate from the reading level: an administrator can manage a document without being able to read it."""
+    if not user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Administrators only")
+    return user

@@ -24,3 +24,33 @@ class SearchRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class NewUser(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    email: str = Field(..., max_length=254)
+    password: str = Field(..., max_length=128)
+    level: int = Field(default=1, ge=1, le=4)
+    is_admin: bool = False
+
+
+class UserChange(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    level: Optional[int] = Field(default=None, ge=1, le=4)
+    is_active: Optional[bool] = None
+    is_admin: Optional[bool] = None
+    password: Optional[str] = Field(default=None, max_length=128)
+
+
+class NewTeam(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(..., min_length=1, max_length=120)
+
+
+class TeamMember(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    user_id: UUID

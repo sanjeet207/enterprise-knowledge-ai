@@ -22,4 +22,4 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
 
 @router.get("/me")
 def me(user: User = Depends(get_current_user)):
-    return {"email": user.email, "tenant_id": user.tenant_id, "level": user.level}
+    return {"email": user.email, "tenant_id": user.tenant_id, "level": user.level, "is_admin": user.is_admin}

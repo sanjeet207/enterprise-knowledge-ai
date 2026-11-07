@@ -109,6 +109,20 @@ Plus **tenant isolation** (a Globex user never sees Acme documents) and **engage
 
 `scripts/verify_access.py` checks this independently of the SQL: every demo user searches every document's topic, and must never see a document the rule forbids (**160 checks**, run in CI against a real Postgres).
 
+### Who adds documents and manages people
+
+Modelled on how large firms run an internal knowledge portal: ordinary employees only ask questions, and publishing is a controlled job.
+
+| Role | Can do |
+|---|---|
+| **Administrator** (the knowledge-management team) | Publish company-wide documents at any level (PDF, Word, text, Markdown, CSV up to 5 MB), delete documents, add people and set their level, switch accounts off, reset passwords, create engagement teams and manage their members. Sees document titles and settings, **not** content: administering the portal does not grant the right to read restricted documents. |
+| **Engagement manager** (level 2+) | Add documents only to an engagement team they belong to, not above their own level, and delete only their own uploads. |
+| **Everyone else** | Ask questions. No upload screen. |
+
+**Maker-checker:** an administrator's upload goes live at once, but an engagement manager's upload waits as "pending" (not searchable) until an administrator approves it. **Insights** for administrators show usage and the questions the documents could not answer (content gaps), as counts only, never who asked. **Hardening:** five wrong passwords lock an account for 15 minutes (it looks like a wrong password from outside; an administrator reset unlocks it), and each person is limited to 20 questions a minute.
+
+Every upload, deletion, approval and account change is written to an administrator activity log. An uploaded document is chunked, embedded and searchable at once, and it obeys the same level, team and tenant rules as every other document. Identical content is rejected as a duplicate, files are checked by type and size, and an administrator cannot change their own level, status or administrator access.
+
 ## Evaluation
 
 `python -m scripts.evaluate` (report in [`evaluation/`](evaluation/EVAL_REPORT.md)) asks the running API 86 questions as real demo users and scores the responses.
@@ -187,14 +201,17 @@ Password for all: `DemoPass2026x` (local demo data only).
 | `director_titan@acme.test` | 3 | on the Project Titan deal team |
 | `partner_titan@acme.test` | 4 | on the deal team; can open the audit view (partners only) |
 | `partner_outsider@acme.test` | 4 | level 4 but **not** on the deal team |
+| `admin@acme.test` | 1 | **administrator**: Documents and Administration tabs; cannot read restricted documents |
+| `manager_titan@acme.test` | 2 | can add documents to the Titan team only |
 | `globex_analyst@globex.test` | 1 | other tenant |
+| `admin@globex.test` | 1 | administrator of the other tenant |
 
 Try the same question as different users: for example *"What is the indicative valuation of Project Titan?"* as `director_titan` (answered, cited) versus `director` (refused).
 
 ### Tests and checks
 
 ```bash
-python -m pytest -q tests             # 114 unit tests, no database or model needed
+python -m pytest -q tests             # 147 unit tests, no database or model needed
 python -m scripts.verify_access       # 160 access-control checks (needs the database)
 python -m scripts.check_validator     # planted-error check for the validator (needs Ollama)
 python -m scripts.smoke_test          # end-to-end check of every path against the running server (needs Ollama)
@@ -229,7 +246,9 @@ tests/           unit tests and the 86-question evaluation set
 - [x] Evaluation suite (86 questions) and CI
 - [ ] Azure deployment with a spending cap
 - [ ] Tracing dashboard (OpenTelemetry / Langfuse) and a model router
-- [ ] Document upload (private per user, injection-hardened) and an admin page
+- [x] Document upload and an administration screen (people, teams, documents, activity log)
+- [x] Approval step (maker-checker), sign-in lockout, per-person rate limit, usage insights
+- [ ] Answer feedback (thumbs up/down), document versions and review dates, OCR for scanned PDFs, SSO (OIDC)
 - [ ] An independently written evaluation set and broader adversarial security tests
 
 ## Tech

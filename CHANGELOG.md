@@ -3,6 +3,11 @@
 ## Unreleased
 
 ### Added
+- Document upload (PDF, Word, text, Markdown, CSV) and an administration screen: people, levels, teams, documents, and an administrator activity log. Administrators publish company-wide documents; engagement managers add to their own team only.
+- Administrator flag on users, separate from the reading level (`users.is_admin`, `admin_events` table). Run `python -m scripts.init_db` to upgrade an existing database.
+- Demo accounts `admin@acme.test` and `admin@globex.test`.
+- Maker-checker approval for uploads by engagement managers; sign-in lockout (5 failures, 15 minutes); per-person question limit; administrator insights (usage, content gaps).
+- Smoke test grows to cover publishing rules.
 - Question router: document questions go to retrieval; general questions are answered by the model and
   clearly labelled "General knowledge" with no sources; company, live-information and override questions are refused.
 - Plain-code question analysis: answer depth (quick, standard, deep) and format (short, list, steps, compare).
@@ -13,7 +18,8 @@
 ### Changed
 - Evaluation set grew from 80 to 86 questions; result 86/86 with 0 access leaks.
 - Evaluation outputs moved to `evaluation/`.
-- Unit tests: 114.
+- Unit tests: 147.
+- `POST /documents/ingest` now follows the same publishing rules as an upload.
 
 ### Removed
 - Unused API-key setting. The system runs on a local Ollama model.
