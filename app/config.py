@@ -65,3 +65,8 @@ GENERAL_ENABLED = os.getenv("GENERAL_ENABLED", "true").lower() in ("1", "true", 
 def agent_model(name: str) -> str:
     """Model for one agent. Set e.g. VALIDATOR_MODEL=qwen2.5:3b to use a different model for that agent."""
     return os.getenv(f"{name.upper()}_MODEL") or LLM_MODEL
+
+# Uploads are indexed by a background worker. INGEST_ASYNC=false indexes inside the request (small deployments, tests).
+INGEST_ASYNC = os.getenv("INGEST_ASYNC", "true").lower() in ("1", "true", "yes")
+# true: the web process also runs a worker thread. false: run "python -m scripts.worker" as its own process.
+INGEST_WORKER_ENABLED = os.getenv("INGEST_WORKER_ENABLED", "true").lower() in ("1", "true", "yes")

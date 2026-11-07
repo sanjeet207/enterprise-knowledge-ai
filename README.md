@@ -127,6 +127,10 @@ Every upload, deletion, approval and account change is written to an administrat
 
 Each person has their own saved conversations (pick one from the list above the chat, or start a new one). A follow-up such as "How many of them can be carried forward?" is rewritten into a standalone question by a small condenser agent before the normal pipeline runs. It sees **only the person's own earlier questions, never earlier answers**, so context cannot smuggle restricted text into a later search, and the rewritten question passes every normal check again (access control, citations, validation). The rewrite is shown to the user ("Searched for: ..."). Conversations are private to their owner: another person's conversation id is simply "not found". Each answer has *Helpful / Not helpful* buttons with an optional comment; administrators see the ratings and the questions rated not helpful as counts, never who asked.
 
+### Background document processing
+
+Indexing a large file (chunking, embedding, writing thousands of rows) is slow, so an upload no longer makes the person wait. The request does the quick checks (file type and size, readable text, duplicate content, permission) and returns **202 Accepted** with a job id; a background worker then indexes the document and the screen follows its progress ("waiting in the queue", "being indexed", then searchable). The queue is a PostgreSQL table: a worker takes the oldest due job with `FOR UPDATE SKIP LOCKED`, so several workers never take the same one. A temporary failure is retried up to 3 times with growing waits (2 s, 4 s); a permanent one (duplicate content, no longer allowed, empty file) fails at once with the reason. Jobs left half-done by a crashed worker are found after 10 minutes and retried. Nothing from the queue is trusted: the uploader's account, level, team membership and administrator status are read again when the job runs, a version upload re-checks that the document it replaces is still live, and a retry after a crash never creates a duplicate. Set `INGEST_ASYNC=false` to index inside the request, or `INGEST_WORKER_ENABLED=false` and run `python -m scripts.worker` as a separate process.
+
 ### Research assistant
 
 The **Research** tab turns a broad request ("summarise the leave, travel and remote working rules for new joiners") into a cited draft report. A planner splits it into 2 to 5 questions, and **each question is answered by the same pipeline and the same SQL-filtered retrieval as a normal question, as the person asking**, so the assistant can never read more than they can and every step is validated and audited. Questions that cannot be answered become "evidence gaps" worded identically whether the cause was a refusal or missing content. Citations are renumbered report-wide, one number per document. The executive summary is accepted only if every sentence is cited, every citation exists and it contains no figure that is not in the findings; a consistency check lists possible conflicts only when both quoted statements really appear in the findings. There is a 5-minute budget and a limit of 5 reports per 10 minutes. Reports are private, marked as drafts, and can be marked as reviewed. `python -m scripts.evaluate_research` compares report coverage with a single question and counts leaks.
@@ -234,7 +238,7 @@ Try the same question as different users: for example *"What is the indicative v
 ### Tests and checks
 
 ```bash
-python -m pytest -q tests             # 199 unit tests, no database or model needed
+python -m pytest -q tests             # 204 unit tests, no database or model needed
 python -m scripts.verify_access       # 160 access-control checks (needs the database)
 python -m scripts.check_validator     # planted-error check for the validator (needs Ollama)
 python -m scripts.smoke_test          # end-to-end check of every path against the running server (needs Ollama)
@@ -274,10 +278,10 @@ tests/           unit tests and the 86-question evaluation set
 - Request IDs, JSON logs, readiness and metrics; personal-data export and erase; retention; review dates
 - Single sign-on (OpenID Connect), unit-tested against locally signed tokens
 - Document versions and comparison with a checked summary
-- Agentic research assistant: multi-step, cited reports where every step runs under the asker's own access rules (first measured results pending)
+- Agentic research assistant: multi-step, cited reports where every step runs under the asker's own access rules (on 6 author-written tasks the report cited 4 of 6 expected documents against 2 of 6 for a single question, with 0 leaks; see evaluation/RESEARCH_EVAL.md)
 
 **In progress**
-- Running and publishing the research evaluation
+- Independent evaluation set (questions written by someone else)
 
 **Planned**
 - An independently written evaluation set and broader adversarial security tests

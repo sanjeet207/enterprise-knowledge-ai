@@ -400,6 +400,25 @@
     return td;
   }
 
+  async function watchJob(jobId, title) {
+    for (let i = 0; i < 150; i++) {
+      await new Promise((r) => setTimeout(r, i < 5 ? 800 : 2000));
+      const res = await api("/documents/jobs/" + jobId);
+      if (!res.ok) return;
+      const j = await res.json();
+      if (j.status === "done") {
+        note("upload-msg", j.publish_status === "pending"
+          ? '"' + title + '" was received and waits for an administrator to approve it before anyone can search it.'
+          : '"' + title + '" is now searchable (' + j.parents_created + " sections).", true);
+        loadDocs();
+        return;
+      }
+      if (j.status === "failed") { note("upload-msg", '"' + title + '" could not be added: ' + (j.error || "unknown error"), false); return; }
+      note("upload-msg", '"' + title + '" is ' + (j.status === "processing" ? "being indexed" : "waiting in the queue")
+        + (j.attempts > 1 ? " (try " + j.attempts + ")" : "") + "...", true);
+    }
+  }
+
   async function upload(e) {
     e.preventDefault();
     const f = $("up-file").files[0];
@@ -417,6 +436,12 @@
       const res = await api("/documents/upload", { method: "POST", body: form });
       if (!res.ok) { note("upload-msg", await errText(res), false); return; }
       const d = await res.json();
+      if (d.status === "queued") {
+        note("upload-msg", '"' + d.title + '" was received and is being indexed in the background. You can keep working.', true);
+        $("upload-form").reset();
+        watchJob(d.job_id, d.title);
+        return;
+      }
       note("upload-msg", d.status === "pending"
         ? '"' + d.title + '" was received and waits for an administrator to approve it before anyone can search it.'
         : '"' + d.title + '" is now searchable (' + d.parents_created + " sections).", true);

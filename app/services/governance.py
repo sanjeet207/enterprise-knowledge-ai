@@ -38,6 +38,7 @@ def erase_user_data(user: User) -> Dict[str, int]:
     with psycopg.connect(DATABASE_URL) as conn:
         convs = conn.execute("DELETE FROM conversations WHERE user_id = %s", (user.id,)).rowcount
         conn.execute("DELETE FROM research_reports WHERE user_id = %s", (user.id,))
+        conn.execute("DELETE FROM ingest_jobs WHERE user_id = %s AND status <> 'processing'", (user.id,))
         scrubbed = conn.execute(
             "UPDATE audit_log SET query = %s, answer = NULL, rewritten_query = NULL, trace = '[]'::jsonb, "
             "sources = '[]'::jsonb, user_email = %s WHERE user_id = %s AND query <> %s",

@@ -42,6 +42,28 @@ STATEMENTS = [
     )
     """,
     "CREATE INDEX IF NOT EXISTS research_reports_user_idx ON research_reports (user_id, created_at DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS ingest_jobs (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        user_id UUID NOT NULL,
+        document_id UUID NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL DEFAULT '',
+        payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+        status TEXT NOT NULL DEFAULT 'queued',
+        attempts INT NOT NULL DEFAULT 0,
+        error TEXT,
+        error_status INT,
+        result JSONB,
+        run_after TIMESTAMPTZ NOT NULL DEFAULT now(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        started_at TIMESTAMPTZ,
+        finished_at TIMESTAMPTZ
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS ingest_jobs_queue_idx ON ingest_jobs (status, run_after, created_at)",
+    "CREATE INDEX IF NOT EXISTS ingest_jobs_user_idx ON ingest_jobs (tenant_id, user_id, created_at DESC)",
 ]
 
 if __name__ == "__main__":

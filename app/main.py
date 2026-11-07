@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import hmac
@@ -9,14 +10,24 @@ from fastapi.staticfiles import StaticFiles
 
 from app import config, observability
 from app.routers import admin, documents, retrieval, auth, chat, audit, me, research, sso
-from app.services import metrics
+from app.services import metrics, worker
 
 STATIC_DIR = Path(__file__).parent / "static"
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Start the upload worker with the server and stop it cleanly on shutdown."""
+    if config.INGEST_WORKER_ENABLED:
+        worker.start()
+    yield
+    worker.stop()
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="Enterprise Knowledge AI Platform",
     description="Secure multi-tenant RAG platform with hybrid search, RBAC, and local LLM generation",
-    version="0.9.0",
+    version="0.10.0",
 )
 
 observability.setup_logging()

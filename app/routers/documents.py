@@ -1,13 +1,15 @@
+import uuid
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 from pydantic import BaseModel, ConfigDict
 
+from app import config
 from app.schemas import IngestRequest
 from app.security import get_current_user
 from app.agents import comparer
-from app.services import admin, compare, extract, ingest, upload_policy, users, validation, versions
+from app.services import admin, compare, extract, ingest, jobs, upload_policy, users, validation, versions
 from app.services.llm import LLMUnavailable
 from app.services.users import User
 
@@ -32,6 +34,24 @@ def _add(user: User, title: str, content: str, level: int, engagement_id: Option
     return {"status": "success", **result}
 
 
+def _enqueue(user: User, title: str, content: str, level: int, team: Optional[str], filename: Optional[str],
+             review_by: Optional[str], previous: Optional[dict], response: Response) -> dict:
+    """Quick checks now, indexing later: the person gets an answer in a moment and follows the job."""
+    try:
+        content_hash = ingest.precheck(user, content, team)
+        document_id = str(uuid.uuid4())
+        status = ingest.status_for(user)
+        version = previous["version"] + 1 if previous else 1
+        job_id = jobs.enqueue(user, document_id=document_id, title=title, content=content, level=level,
+                              engagement_id=team, filename=filename, review_by=review_by, previous=previous,
+                              status=status, content_hash=content_hash, version=version)
+    except ingest.IngestError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.message)
+    response.status_code = 202
+    return {"status": "queued", "job_id": job_id, "document_id": document_id, "title": title,
+            "version": version, "publish_status": status}
+
+
 @router.get("/options")
 def upload_options(user: User = Depends(get_current_user)):
     """What this person may upload, for the upload form."""
@@ -52,6 +72,7 @@ def upload_document(
     engagement_id: str = Form(default=""),
     review_by: str = Form(default=""),
     new_version_of: str = Form(default=""),
+    response: Response = None,
     user: User = Depends(get_current_user),
 ):
     try:
@@ -88,7 +109,27 @@ def upload_document(
     except extract.ExtractError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     name = (title.strip() or (file.filename or "Untitled").rsplit(".", 1)[0])[:300]
+    if config.INGEST_ASYNC:
+        return _enqueue(user, name, text, level, team, file.filename, review, previous, response)
     return _add(user, name, text, level, team, file.filename, review, previous)
+
+
+@router.get("/jobs")
+def my_jobs(user: User = Depends(get_current_user)):
+    """Recent uploads and how far they got. Administrators see the whole company's; everyone else their own."""
+    return {"jobs": jobs.list_recent(user.tenant_id, None if user.is_admin else user.id)}
+
+
+@router.get("/jobs/{job_id}")
+def job_status(job_id: str, user: User = Depends(get_current_user)):
+    try:
+        job_id = str(UUID(job_id))
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job = jobs.get(user.tenant_id, job_id)
+    if job is None or not (user.is_admin or job["uploaded_by_id"] == user.id):
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
 
 
 @router.post("/ingest")
