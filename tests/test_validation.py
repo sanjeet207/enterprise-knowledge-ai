@@ -1,3 +1,5 @@
+import datetime as dt
+
 import pytest
 
 from app.services import validation
@@ -26,3 +28,21 @@ def test_level_must_be_one_to_four():
     for bad in (0, 5, -1):
         with pytest.raises(ValueError):
             validation.check_level(bad)
+
+
+TODAY = dt.date(2026, 11, 7)
+
+
+def test_review_date_optional():
+    assert validation.check_review_date("", TODAY) is None
+    assert validation.check_review_date("  ", TODAY) is None
+
+
+def test_review_date_accepts_a_future_date():
+    assert validation.check_review_date("2027-06-30", TODAY) == "2027-06-30"
+
+
+@pytest.mark.parametrize("bad", ["30/06/2027", "tomorrow", "2026-11-07", "2020-01-01", "2035-01-01"])
+def test_review_date_rejects_bad_values(bad):
+    with pytest.raises(ValueError):
+        validation.check_review_date(bad, TODAY)

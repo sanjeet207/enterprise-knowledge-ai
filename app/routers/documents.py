@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from app.schemas import IngestRequest
 from app.security import get_current_user
-from app.services import admin, extract, ingest, upload_policy, users
+from app.services import admin, extract, ingest, upload_policy, users, validation
 from app.services.users import User
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
@@ -19,10 +19,11 @@ def _authorize(user: User, level: int, engagement_id: Optional[str]) -> None:
         raise HTTPException(status_code=403, detail=str(exc))
 
 
-def _add(user: User, title: str, content: str, level: int, engagement_id: Optional[str], filename: Optional[str]) -> dict:
+def _add(user: User, title: str, content: str, level: int, engagement_id: Optional[str], filename: Optional[str],
+         review_by: Optional[str] = None) -> dict:
     _authorize(user, level, engagement_id)
     try:
-        result = ingest.ingest_document(user, title, content, level, engagement_id, filename)
+        result = ingest.ingest_document(user, title, content, level, engagement_id, filename, review_by)
     except ingest.IngestError as exc:
         raise HTTPException(status_code=exc.status, detail=exc.message)
     return {"status": "success", **result}
@@ -46,8 +47,13 @@ def upload_document(
     title: str = Form(default=""),
     classification_level: int = Form(default=1, ge=1, le=4),
     engagement_id: str = Form(default=""),
+    review_by: str = Form(default=""),
     user: User = Depends(get_current_user),
 ):
+    try:
+        review = validation.check_review_date(review_by)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
     team = None
     if engagement_id:
         try:
@@ -61,7 +67,7 @@ def upload_document(
     except extract.ExtractError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     name = (title.strip() or (file.filename or "Untitled").rsplit(".", 1)[0])[:300]
-    return _add(user, name, text, classification_level, team, file.filename)
+    return _add(user, name, text, classification_level, team, file.filename, review)
 
 
 @router.post("/ingest")

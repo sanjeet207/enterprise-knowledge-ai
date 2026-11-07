@@ -22,7 +22,8 @@ class IngestError(Exception):
 
 
 def ingest_document(user: User, title: str, content: str, level: int,
-                    engagement_id: Optional[str], filename: Optional[str] = None) -> dict:
+                    engagement_id: Optional[str], filename: Optional[str] = None,
+                    review_by: Optional[str] = None) -> dict:
     """Add one document to the caller's own company. The caller has already checked upload_policy."""
     if engagement_id and not admin.engagement_exists(user.tenant_id, engagement_id):
         raise IngestError(404, "That team does not exist in your company")
@@ -37,7 +38,7 @@ def ingest_document(user: User, title: str, content: str, level: int,
     # Maker-checker: an administrator publishes directly; anyone else's upload waits for an administrator to approve it.
     status = "published" if user.is_admin else "pending"
     metadata = {"title": title, "uploaded_by": user.email, "uploaded_by_id": user.id,
-                "content_hash": content_hash, "filename": filename}
+                "content_hash": content_hash, "filename": filename, "review_by": review_by}
     try:
         for item in chunks:
             vector_store.add_parent_and_children(

@@ -36,6 +36,7 @@
       <button role="tab" id="tab-audit" aria-selected="false" aria-controls="audit-panel" class="tab" hidden>Audit log</button>
     </nav>
     <div class="who">
+      <button id="my-data" class="link" title="Download everything held about you">My data</button>
       <span id="who-email" class="who-email"></span>
       <span id="who-role" class="badge"></span>
       <button id="logout" class="link">Sign out</button>
@@ -81,6 +82,7 @@
         <div><label for="up-title">Title (optional)</label><input id="up-title" type="text" maxlength="300" placeholder="Taken from the file name"></div>
         <div><label for="up-level">Who may read it</label><select id="up-level"></select></div>
         <div><label for="up-team">Engagement team</label><select id="up-team"></select></div>
+        <div><label for="up-review">Review by (optional)</label><input id="up-review" type="date"></div>
         <div class="form-actions"><button type="submit" class="primary" id="up-button">Upload</button></div>
       </form>
       <p id="upload-msg" class="small" role="status" hidden></p>
@@ -89,7 +91,7 @@
       <div class="audit-head"><h2 id="docs-title">Documents</h2><button id="docs-refresh" class="secondary">Refresh</button></div>
       <p class="muted small" id="docs-hint"></p>
       <div class="table-wrap"><table id="docs-table">
-        <thead><tr><th>Title</th><th>Status</th><th>Read level</th><th>Team</th><th>Sections</th><th>Added by</th><th>Added</th><th></th></tr></thead>
+        <thead><tr><th>Title</th><th>Status</th><th>Read level</th><th>Team</th><th>Review by</th><th>Sections</th><th>Added by</th><th>Added</th><th></th></tr></thead>
         <tbody></tbody></table></div>
       <p id="docs-empty" class="muted" hidden>No documents yet.</p>
     </div>

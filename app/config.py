@@ -19,6 +19,11 @@ if len(JWT_SECRET) < 32:
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_MINUTES = int(os.getenv("ACCESS_TOKEN_MINUTES", "60"))
 
+# Prometheus /metrics is off unless a token is set.
+METRICS_TOKEN = os.getenv("METRICS_TOKEN", "")
+# Audit rows and saved conversations older than this are removed by scripts/purge_retention.py.
+RETENTION_DAYS = int(os.getenv("RETENTION_DAYS", "365"))
+
 # Questions one person may ask per minute (protects the model and the budget).
 CHAT_RATE_PER_MINUTE = int(os.getenv("CHAT_RATE_PER_MINUTE", "20"))
 

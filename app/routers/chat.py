@@ -8,7 +8,7 @@ from app.agents import condenser, orchestrator
 from app import config
 from app.agents.retriever import Retriever
 from app.security import get_current_user
-from app.services import conversations, followup
+from app.services import conversations, followup, metrics
 from app.services.llm import LLMUnavailable
 from app.services.ratelimit import SlidingWindow
 from app.services.users import User
@@ -52,6 +52,7 @@ async def rag_query(payload: ChatRequest, user: User = Depends(get_current_user)
         result = await orchestrator.answer_question(user, question, payload.top_k, retriever)
     except LLMUnavailable:
         raise HTTPException(status_code=503, detail="The answer service is unavailable. Try again shortly.")
+    metrics.inc("chat_outcomes_total", outcome=result["outcome"])
     if question != payload.query:
         result["corrected_query"] = question
     if not conversation_id:

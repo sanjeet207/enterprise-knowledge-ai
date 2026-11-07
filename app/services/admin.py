@@ -36,11 +36,11 @@ def list_documents(tenant_id: str, uploaded_by_id: Optional[str] = None) -> List
     with _connect() as conn:
         rows = conn.execute(
             "SELECT p.document_id, MAX(p.metadata->>'title'), MAX(p.classification_level), MAX(e.name), "
-            "COUNT(*), MAX(p.metadata->>'uploaded_by'), MIN(p.created_at), MAX(p.metadata->>'filename'), MAX(p.status) "
+            "COUNT(*), MAX(p.metadata->>'uploaded_by'), MIN(p.created_at), MAX(p.metadata->>'filename'), MAX(p.status), MAX(p.metadata->>'review_by') "
             "FROM parent_chunks p LEFT JOIN engagements e ON e.id = p.engagement_id "
             "WHERE p.tenant_id = %s AND (%s::text IS NULL OR p.metadata->>'uploaded_by_id' = %s) "
             "GROUP BY p.document_id ORDER BY MIN(p.created_at) DESC", (tenant_id, uploaded_by_id, uploaded_by_id)).fetchall()
-    keys = ("document_id", "title", "level", "team", "sections", "uploaded_by", "created_at", "filename", "status")
+    keys = ("document_id", "title", "level", "team", "sections", "uploaded_by", "created_at", "filename", "status", "review_by")
     return [dict(zip(keys, (str(r[0]),) + tuple(r[1:]))) for r in rows]
 
 
@@ -195,6 +195,10 @@ def insights(tenant_id: str, days: int = 30) -> Dict[str, Any]:
             "SELECT lower(m.question), COUNT(*) FROM chat_messages m JOIN conversations c ON c.id = m.conversation_id "
             "WHERE c.tenant_id = %s AND m.rating = -1 AND m.rated_at > now() - make_interval(days => %s) "
             "GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 10", (tenant_id, days)).fetchall()
+        overdue = conn.execute(
+            "SELECT COUNT(DISTINCT document_id) FROM parent_chunks WHERE tenant_id = %s "
+            "AND metadata->>'review_by' IS NOT NULL AND metadata->>'review_by' < to_char(current_date, 'YYYY-MM-DD')",
+            (tenant_id,)).fetchone()[0]
     counts = {o: n for o, n in outcomes}
     total = sum(counts.values())
     return {
@@ -203,6 +207,7 @@ def insights(tenant_id: str, days: int = 30) -> Dict[str, Any]:
         "median_latency_ms": round(latency) if latency is not None else None,
         "daily": [{"day": str(d), "questions": n} for d, n in daily],
         "content_gaps": [{"question": q, "times": n} for q, n in gaps],
+        "reviews_overdue": overdue,
         "feedback": {"helpful": votes.get(1, 0), "not_helpful": votes.get(-1, 0)},
         "unhelpful_questions": [{"question": q, "times": n} for q, n in unhelpful],
     }

@@ -127,6 +127,13 @@ Every upload, deletion, approval and account change is written to an administrat
 
 Each person has their own saved conversations (pick one from the list above the chat, or start a new one). A follow-up such as "How many of them can be carried forward?" is rewritten into a standalone question by a small condenser agent before the normal pipeline runs. It sees **only the person's own earlier questions, never earlier answers**, so context cannot smuggle restricted text into a later search, and the rewritten question passes every normal check again (access control, citations, validation). The rewrite is shown to the user ("Searched for: ..."). Conversations are private to their owner: another person's conversation id is simply "not found". Each answer has *Helpful / Not helpful* buttons with an optional comment; administrators see the ratings and the questions rated not helpful as counts, never who asked.
 
+### Operations and privacy
+
+- **Observability:** every request gets an id (`X-Request-ID`, kept if the caller sends a safe one) and writes one JSON log line with route, status and timing, never names, emails or questions. `GET /ready` checks the database for container probes. `GET /metrics` (Prometheus text: request counts, latency histograms, answer outcomes) is **off** unless `METRICS_TOKEN` is set, then it needs that bearer token.
+- **Personal data:** `My data` downloads everything held about you as JSON. `POST /me/erase` (needs your password) deletes your conversations and scrubs your questions and answers from the audit log; the audit rows stay as counts (time, outcome, timing) so accountability and usage statistics survive.
+- **Retention:** `python -m scripts.purge_retention` removes audit rows and conversations older than `RETENTION_DAYS` (default 365, minimum 30). Run it daily from cron or an Azure scheduled job.
+- **Review dates:** an upload can carry a review-by date; overdue documents are flagged and counted in the administrator insights.
+
 ## Evaluation
 
 `python -m scripts.evaluate` (report in [`evaluation/`](evaluation/EVAL_REPORT.md)) asks the running API 86 questions as real demo users and scores the responses.
@@ -215,7 +222,7 @@ Try the same question as different users: for example *"What is the indicative v
 ### Tests and checks
 
 ```bash
-python -m pytest -q tests             # 155 unit tests, no database or model needed
+python -m pytest -q tests             # 164 unit tests, no database or model needed
 python -m scripts.verify_access       # 160 access-control checks (needs the database)
 python -m scripts.check_validator     # planted-error check for the validator (needs Ollama)
 python -m scripts.smoke_test          # end-to-end check of every path against the running server (needs Ollama)
@@ -254,7 +261,8 @@ tests/           unit tests and the 86-question evaluation set
 - [x] Document upload and an administration screen (people, teams, documents, activity log)
 - [x] Approval step (maker-checker), sign-in lockout, per-person rate limit, usage insights
 - [x] Saved multi-turn conversations with follow-up questions, answer feedback
-- [ ] SSO (OIDC), data retention/export/erase, observability (request IDs, metrics, tracing), document versions and review dates, OCR for scanned PDFs
+- [x] Request IDs, JSON logs, readiness and metrics; data export, erase and retention; document review dates
+- [ ] SSO (OIDC), distributed tracing (OpenTelemetry), document versions, OCR for scanned PDFs
 - [ ] An independently written evaluation set and broader adversarial security tests
 
 ## Tech

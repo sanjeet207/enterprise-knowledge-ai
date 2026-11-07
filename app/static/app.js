@@ -349,11 +349,19 @@
       }
       last.append(del);
       const st = el("td"); st.append(el("span", "tag " + (d.status === "pending" ? "pending" : "published"), d.status === "pending" ? "Waiting for approval" : "Live"));
-      tr.append(el("td", "q", d.title || ""), st, el("td", null, "L" + d.level), el("td", null, d.team || "Company-wide"),
+      tr.append(el("td", "q", d.title || ""), st, el("td", null, "L" + d.level), el("td", null, d.team || "Company-wide"), reviewCell(d.review_by),
         el("td", null, String(d.sections)), el("td", null, d.uploaded_by || "(seeded)"),
         el("td", null, d.created_at ? new Date(d.created_at).toLocaleDateString() : ""), last);
       tbody.append(tr);
     });
+  }
+
+  function reviewCell(day) {
+    const td = el("td");
+    if (!day) { td.textContent = "-"; return td; }
+    const overdue = day < new Date().toISOString().slice(0, 10);
+    td.append(el("span", overdue ? "bad-text" : null, day + (overdue ? " (overdue)" : "")));
+    return td;
   }
 
   async function upload(e) {
@@ -365,6 +373,7 @@
     form.append("title", $("up-title").value);
     form.append("classification_level", $("up-level").value);
     form.append("engagement_id", $("up-team").value);
+    form.append("review_by", $("up-review").value);
     $("up-button").disabled = true;
     note("upload-msg", "Reading and indexing " + f.name + "...", true);
     try {
@@ -410,6 +419,7 @@
       const box = $("stats"); box.replaceChildren();
       const stat = (v, label) => { const d = el("div", "stat"); d.append(el("b", null, String(v)), el("span", null, label)); box.append(d); };
       stat(i.total, "questions");
+      stat(i.reviews_overdue || 0, "documents past their review date");
       stat(i.answered_rate === null ? "n/a" : Math.round(i.answered_rate * 100) + "%", "answered from documents");
       stat(i.outcomes.refused || 0, "not available to the asker");
       stat(i.outcomes.no_answer || 0, "not in the documents");
@@ -519,6 +529,13 @@
 
   $("login-form").addEventListener("submit", (e) => { e.preventDefault(); login($("email").value.trim(), $("password").value); });
   $("logout").addEventListener("click", signOut);
+  $("my-data").addEventListener("click", async () => {
+    const r = await api("/me/data");
+    if (!r.ok) return;
+    const url = URL.createObjectURL(await r.blob());
+    const a = el("a"); a.href = url; a.download = "my-data.json"; document.body.append(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
   $("tab-chat").addEventListener("click", () => selectTab("chat"));
   $("conv-select").addEventListener("change", (e) => openConversation(e.target.value));
   $("new-chat").addEventListener("click", () => { resetChat(); loadConversations(""); $("question").focus(); });

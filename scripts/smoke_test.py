@@ -110,6 +110,25 @@ def publishing_checks(client, tokens, record) -> None:
            for e in client.get("/admin/events", headers=tokens["admin"]).json().get("events", [])))
 
 
+def platform_checks(client, tokens, record) -> None:
+    """Health probes, request ids, metrics lock-down, and the personal-data rights."""
+    r = client.get("/ready")
+    record("Readiness probe checks the database", r.status_code == 200 and r.json().get("status") == "ready")
+    r = client.get("/health", headers={"X-Request-ID": "smoke-test-request-id"})
+    record("A caller's request id is kept", r.headers.get("x-request-id") == "smoke-test-request-id")
+    record("A request id is created when missing", len(client.get("/health").headers.get("x-request-id", "")) >= 16)
+    record("Metrics are off without a token", client.get("/metrics").status_code in (404, 401))
+    h = tokens["globex_analyst"]
+    asked = client.post("/chat/query", headers=h, json={"query": "What is two-factor authentication?"}).json()
+    mine = client.get("/me/data", headers=h)
+    record("A person can download their own data", mine.status_code == 200 and "two-factor" in mine.text.lower())
+    record("Erasing needs the right password", client.post("/me/erase", headers=h, json={"password": "not-it"}).status_code == 403)
+    erased = client.post("/me/erase", headers=h, json={"password": PASSWORD})
+    record("A person can erase their data", erased.status_code == 200 and erased.json().get("conversations_deleted", 0) >= 1)
+    after = client.get("/me/data", headers=h).text.lower()
+    record("Their questions are gone afterwards", "two-factor" not in after, asked.get("outcome", ""))
+
+
 def conversation_checks(client, tokens, record) -> None:
     """Saved conversations, follow-up questions, ownership and feedback."""
     h = tokens["analyst"]
@@ -191,6 +210,7 @@ def main() -> int:
         record("Partner can read the audit log", events.status_code == 200 and CASES[0][2] in logged)
         record("Analyst cannot read the audit log", client.get("/audit/events", headers=tokens["analyst"]).status_code == 403)
 
+        platform_checks(client, tokens, record)
         conversation_checks(client, tokens, record)
         publishing_checks(client, tokens, record)
 

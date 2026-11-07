@@ -3,6 +3,8 @@
 ## Unreleased
 
 ### Added
+- Observability: request ids, JSON request logs, `/ready`, token-protected `/metrics`.
+- Data governance: personal data download and erase, retention purge script, document review dates with overdue counts.
 - Saved multi-turn conversations with follow-up understanding (the condenser sees only the person's earlier questions) and Helpful / Not helpful feedback on answers, with ratings in administrator insights.
 - Document upload (PDF, Word, text, Markdown, CSV) and an administration screen: people, levels, teams, documents, and an administrator activity log. Administrators publish company-wide documents; engagement managers add to their own team only.
 - Administrator flag on users, separate from the reading level (`users.is_admin`, `admin_events` table). Run `python -m scripts.init_db` to upgrade an existing database.
@@ -19,7 +21,7 @@
 ### Changed
 - Evaluation set grew from 80 to 86 questions; result 86/86 with 0 access leaks.
 - Evaluation outputs moved to `evaluation/`.
-- Unit tests: 155.
+- Unit tests: 164.
 - `POST /documents/ingest` now follows the same publishing rules as an upload.
 
 ### Removed
