@@ -232,10 +232,11 @@ GitHub Actions runs on every push: **unit tests**, **access-control checks again
 ```
 app/
   agents/        corrector, retriever, rewriter, planner, answerer, validator, orchestrator
-  routers/       auth, chat, documents, retrieval, audit (FastAPI)
-  services/      vector store (SQL access control), embedder, reranker, LLM client, audit, answer checks
-  static/        chat UI (login, sources panel, outcome states, audit view)
-scripts/         init_db, seed_demo, verify_access, check_validator, evaluate
+  routers/       auth, chat, documents (upload), admin, retrieval, audit (FastAPI)
+  services/      vector store (SQL access control), embedder, reranker, LLM client, audit, answer checks,
+                 file extraction, upload policy, admin, lockout, rate limit
+  static/        web UI (login, chat with sources, documents, administration, audit view)
+scripts/         quickstart, init_db, seed_demo, verify_access, smoke_test, check_validator, evaluate
 tests/           unit tests and the 86-question evaluation set
 ```
 
