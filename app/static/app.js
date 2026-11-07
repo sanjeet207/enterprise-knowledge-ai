@@ -23,6 +23,7 @@
     "What is the weather in Delhi today?"
   ];
   const OUTCOME_LABEL = {
+    report: "Research report", report_partial: "Partial research report",
     answered: "Answered", general: "General knowledge", refused: "Not available", no_answer: "Not in documents",
     unverified: "Could not verify", error: "Error"
   };
@@ -535,7 +536,62 @@
     if (r.ok) { $("team-form").reset(); loadAdmin(); } else note("user-msg", await errText(r), false);
   }
 
-  const PANELS = { chat: "chat-panel", docs: "docs-panel", admin: "admin-panel", audit: "audit-panel" };
+  /* ---------- research assistant ---------- */
+  function section(parent, title, items, render) {
+    if (!items || !items.length) return;
+    const box = el("div", "box"); box.append(el("b", null, title));
+    const ul = el("ul"); items.forEach((it) => { const li = el("li"); render(li, it); ul.append(li); });
+    box.append(ul); parent.append(box);
+  }
+  function renderReport(r) {
+    const v = $("report-view"); v.replaceChildren(); v.className = "report";
+    $("report-card").hidden = false;
+    v.append(el("h2", null, r.title));
+    const actions = el("div", "actions");
+    actions.append(el("span", "tag " + (r.gaps && r.gaps.length ? "report_partial" : "report"), "Draft: review before relying on it"));
+    if (r.reviewed_at) actions.append(el("span", "muted small", "Reviewed " + new Date(r.reviewed_at).toLocaleString()));
+    else {
+      const ok = el("button", "secondary", "Mark as reviewed"); ok.type = "button";
+      ok.addEventListener("click", async () => { const x = await api("/research/" + r.id + "/review", { method: "POST" }); if (x.ok) { r.reviewed_at = new Date().toISOString(); renderReport(r); } });
+      actions.append(ok);
+    }
+    const del = el("button", "danger", "Delete"); del.type = "button";
+    del.addEventListener("click", async () => { if (!window.confirm("Delete this report?")) return; await api("/research/" + r.id, { method: "DELETE" }); $("report-card").hidden = true; loadReports(""); });
+    actions.append(del); v.append(actions);
+    if (r.summary) { const b = el("div", "box"); b.append(el("b", null, "Executive summary"), el("p", null, r.summary)); v.append(b); }
+    (r.sections || []).forEach((s) => { v.append(el("h3", null, s.question), el("p", null, s.answer)); });
+    section(v, "Evidence gaps", r.gaps, (li, g) => { li.textContent = g.question + " — " + g.reason; });
+    section(v, "Possible inconsistencies (flagged by a model; check the sources)", r.inconsistencies, (li, c) => {
+      li.textContent = (c.topic ? c.topic + ": " : "") + '"' + c.statement_a + '" versus "' + c.statement_b + '"'; });
+    section(v, "Limitations", r.limitations, (li, t) => { li.textContent = t; });
+    section(v, "Sources", r.sources, (li, s) => { li.textContent = "[" + s.number + "] " + s.title; });
+    v.append(el("p", "muted small", "Prepared in " + r.elapsed_s + " s. Every research question was answered and checked under your own access rights."));
+  }
+  async function loadReports(selectId) {
+    const res = await api("/research");
+    if (!res.ok) return;
+    const list = (await res.json()).reports;
+    fillSelect($("research-past"), [["", "Earlier reports (" + list.length + ")"]].concat(
+      list.map((x) => [x.id, new Date(x.created_at).toLocaleDateString() + ": " + x.request + (x.reviewed ? " (reviewed)" : "")])));
+    $("research-past").value = selectId || "";
+  }
+  async function makeReport(e) {
+    e.preventDefault();
+    $("research-button").disabled = true;
+    note("research-msg", "Researching... this takes a minute or two. Please keep this page open.", true);
+    $("report-card").hidden = true;
+    try {
+      const res = await api("/research", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request: $("research-request").value }) });
+      if (!res.ok) { note("research-msg", await errText(res), false); return; }
+      const r = await res.json();
+      note("research-msg", "", true);
+      renderReport(r); loadReports(r.id);
+    } catch (err) { note("research-msg", err.message, false); }
+    finally { $("research-button").disabled = false; }
+  }
+
+  const PANELS = { chat: "chat-panel", research: "research-panel", docs: "docs-panel", admin: "admin-panel", audit: "audit-panel" };
   function selectTab(name) {
     Object.keys(PANELS).forEach((k) => {
       $(PANELS[k]).hidden = k !== name;
@@ -544,6 +600,7 @@
     });
     const fail = (id) => (e) => { $(id).textContent = e.message; $(id).hidden = false; };
     if (name === "audit") loadAudit().catch(fail("audit-empty"));
+    if (name === "research") loadReports("").catch(() => {});
     if (name === "docs") loadDocs().catch(fail("docs-empty"));
     if (name === "admin") loadAdmin().catch((e) => note("user-msg", e.message, false));
   }
@@ -582,6 +639,13 @@
   });
   $("tab-audit").addEventListener("click", () => selectTab("audit"));
   $("tab-docs").addEventListener("click", () => selectTab("docs"));
+  $("tab-research").addEventListener("click", () => selectTab("research"));
+  $("research-form").addEventListener("submit", makeReport);
+  $("research-past").addEventListener("change", async (e) => {
+    if (!e.target.value) { $("report-card").hidden = true; return; }
+    const r = await api("/research/" + e.target.value);
+    if (r.ok) renderReport(await r.json());
+  });
   $("tab-admin").addEventListener("click", () => selectTab("admin"));
   $("upload-form").addEventListener("submit", upload);
   $("docs-refresh").addEventListener("click", () => loadDocs());

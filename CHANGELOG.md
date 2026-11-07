@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Research assistant: a planner splits a broad request into questions, each answered under the asker's own access rules; cited, checked draft report with evidence gaps and possible inconsistencies; saved privately; included in data export and erase. `scripts/evaluate_research.py` and `tests/research_set.json`.
 - Document versions (a new version inherits level and team and archives the old one) and a comparison of any two readable documents: changes found by code, summary checked for invented figures.
 - Single sign-on (OpenID Connect with PKCE) for Entra ID and compatible providers, account linking by stable subject id, SSO-only accounts, `PASSWORD_LOGIN_ENABLED`. See docs/SSO.md.
 - Observability: request ids, JSON request logs, `/ready`, token-protected `/metrics`.

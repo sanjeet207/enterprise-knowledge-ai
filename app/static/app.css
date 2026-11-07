@@ -139,3 +139,12 @@ td select, td input { min-width: 110px; padding: 5px 8px; }
 .change.added { border-left-color: var(--ok); } .change.removed { border-left-color: var(--bad); } .change.changed { border-left-color: var(--warn); }
 .change b { font-size: 12px; text-transform: uppercase; color: var(--muted); }
 .change .before { text-decoration: line-through; color: var(--muted); }
+.research-actions { display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
+.research-actions select { max-width: 360px; }
+.tag.report { background: var(--ok-bg); color: var(--ok); }
+.tag.report_partial { background: var(--warn-bg); color: var(--warn); }
+.report h2 { margin-bottom: 4px; } .report h3 { margin: 16px 0 4px; font-size: 15px; }
+.report p { margin: 4px 0; white-space: pre-wrap; }
+.report .box { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: var(--bg); margin-top: 10px; }
+.report ol, .report ul { margin: 4px 0; padding-left: 22px; }
+.report .actions { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; align-items: center; }

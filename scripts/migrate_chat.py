@@ -30,6 +30,18 @@ STATEMENTS = [
     )
     """,
     "CREATE INDEX IF NOT EXISTS chat_messages_conv_idx ON chat_messages (conversation_id, id)",
+    """
+    CREATE TABLE IF NOT EXISTS research_reports (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        request TEXT NOT NULL,
+        report JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        reviewed_at TIMESTAMPTZ
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS research_reports_user_idx ON research_reports (user_id, created_at DESC)",
 ]
 
 if __name__ == "__main__":

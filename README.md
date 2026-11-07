@@ -127,6 +127,10 @@ Every upload, deletion, approval and account change is written to an administrat
 
 Each person has their own saved conversations (pick one from the list above the chat, or start a new one). A follow-up such as "How many of them can be carried forward?" is rewritten into a standalone question by a small condenser agent before the normal pipeline runs. It sees **only the person's own earlier questions, never earlier answers**, so context cannot smuggle restricted text into a later search, and the rewritten question passes every normal check again (access control, citations, validation). The rewrite is shown to the user ("Searched for: ..."). Conversations are private to their owner: another person's conversation id is simply "not found". Each answer has *Helpful / Not helpful* buttons with an optional comment; administrators see the ratings and the questions rated not helpful as counts, never who asked.
 
+### Research assistant
+
+The **Research** tab turns a broad request ("summarise the leave, travel and remote working rules for new joiners") into a cited draft report. A planner splits it into 2 to 5 questions, and **each question is answered by the same pipeline and the same SQL-filtered retrieval as a normal question, as the person asking**, so the assistant can never read more than they can and every step is validated and audited. Questions that cannot be answered become "evidence gaps" worded identically whether the cause was a refusal or missing content. Citations are renumbered report-wide, one number per document. The executive summary is accepted only if every sentence is cited, every citation exists and it contains no figure that is not in the findings; a consistency check lists possible conflicts only when both quoted statements really appear in the findings. There is a 5-minute budget and a limit of 5 reports per 10 minutes. Reports are private, marked as drafts, and can be marked as reviewed. `python -m scripts.evaluate_research` compares report coverage with a single question and counts leaks.
+
 ### Document versions and comparison
 
 Upload a file as **a new version** of a live document: the new version keeps the old one's reading level and team (versioning can never lower the protection), and the old version is archived, so search only ever finds the current text. If a manager uploads the new version, the old one is replaced only when an administrator approves it. **"What changed?"** compares two versions: the added, removed and changed sentences are found by plain code, then a model summarises them, and code rejects any summary that contains a figure not present in the changes. Anyone can compare documents they are allowed to read; an analyst cannot compare a level-3 document, and the comparison runs under the asker's own access rules.
@@ -230,7 +234,7 @@ Try the same question as different users: for example *"What is the indicative v
 ### Tests and checks
 
 ```bash
-python -m pytest -q tests             # 189 unit tests, no database or model needed
+python -m pytest -q tests             # 199 unit tests, no database or model needed
 python -m scripts.verify_access       # 160 access-control checks (needs the database)
 python -m scripts.check_validator     # planted-error check for the validator (needs Ollama)
 python -m scripts.smoke_test          # end-to-end check of every path against the running server (needs Ollama)
@@ -261,19 +265,25 @@ tests/           unit tests and the 86-question evaluation set
 
 ## Roadmap
 
-- [x] Hybrid retrieval with reranking, access control in SQL, JWT login
-- [x] Grounded answers, citation rule, claim validator, refusal threshold, audit log with agent trace
-- [x] Evaluation suite (86 questions) and CI
-- [ ] Azure deployment with a spending cap
-- [ ] Tracing dashboard (OpenTelemetry / Langfuse) and a model router
-- [x] Document upload and an administration screen (people, teams, documents, activity log)
-- [x] Approval step (maker-checker), sign-in lockout, per-person rate limit, usage insights
-- [x] Saved multi-turn conversations with follow-up questions, answer feedback
-- [x] Request IDs, JSON logs, readiness and metrics; data export, erase and retention; document review dates
-- [x] SSO (OpenID Connect), unit-tested; live Entra tenant test comes with the Azure deployment
-- [x] Document versions and comparison with a checked summary
-- [ ] Agentic research assistant, group-to-level mapping and SCIM, distributed tracing (OpenTelemetry), OCR for scanned PDFs
-- [ ] An independently written evaluation set and broader adversarial security tests
+**Completed**
+- Hybrid retrieval with reranking, access control in SQL, JWT login, tenant isolation and engagement-team access
+- Grounded answers, citation rule, claim validator, refusal threshold, general-knowledge router, audit log with agent trace
+- Evaluation suite (86 questions) and CI (unit tests, access checks against Postgres, Docker build)
+- Document upload, administration screen, maker-checker approval, sign-in lockout, rate limit, usage insights
+- Saved multi-turn conversations with follow-ups, answer feedback
+- Request IDs, JSON logs, readiness and metrics; personal-data export and erase; retention; review dates
+- Single sign-on (OpenID Connect), unit-tested against locally signed tokens
+- Document versions and comparison with a checked summary
+- Agentic research assistant: multi-step, cited reports where every step runs under the asker's own access rules (first measured results pending)
+
+**In progress**
+- Running and publishing the research evaluation
+
+**Planned**
+- An independently written evaluation set and broader adversarial security tests
+- Azure deployment with a spending cap, which also gives SSO its first test against a live Entra tenant
+- Distributed tracing (OpenTelemetry) and a model router
+- Group-to-level mapping and SCIM, OCR for scanned PDFs
 
 ## Tech
 

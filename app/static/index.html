@@ -35,6 +35,7 @@
     <div class="brand">Enterprise Knowledge AI</div>
     <nav class="tabs" role="tablist" aria-label="Views">
       <button role="tab" id="tab-chat" aria-selected="true" aria-controls="chat-panel" class="tab active">Chat</button>
+      <button role="tab" id="tab-research" aria-selected="false" aria-controls="research-panel" class="tab">Research</button>
       <button role="tab" id="tab-docs" aria-selected="false" aria-controls="docs-panel" class="tab" hidden>Documents</button>
       <button role="tab" id="tab-admin" aria-selected="false" aria-controls="admin-panel" class="tab" hidden>Administration</button>
       <button role="tab" id="tab-audit" aria-selected="false" aria-controls="audit-panel" class="tab" hidden>Audit log</button>
@@ -75,6 +76,24 @@
     </aside>
   </main>
 
+
+  <main id="research-panel" class="audit" role="tabpanel" aria-labelledby="tab-research" hidden>
+    <div class="card">
+      <h2>Research assistant</h2>
+      <p class="muted small">Describe a topic and get a cited draft report built only from documents you may read. Each research question is answered and checked like a normal question, so the assistant can never see more than you can. It takes a minute or two.</p>
+      <form id="research-form">
+        <label for="research-request">What should be researched?</label>
+        <textarea id="research-request" rows="2" minlength="10" maxlength="500" required placeholder="For example: Summarise the leave, travel and remote working rules for new joiners"></textarea>
+        <div class="research-actions">
+          <button type="submit" class="primary" id="research-button">Prepare report</button>
+          <label for="research-past" class="sr-only">Earlier reports</label>
+          <select id="research-past"></select>
+        </div>
+      </form>
+      <p id="research-msg" class="small" role="status" hidden></p>
+    </div>
+    <div class="card gap" id="report-card" hidden><div id="report-view"></div></div>
+  </main>
 
   <main id="docs-panel" class="audit" role="tabpanel" aria-labelledby="tab-docs" hidden>
     <div class="card">

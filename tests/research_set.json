@@ -1,0 +1,20 @@
+[
+  {"id": "titan-team", "user": "director_titan@acme.test",
+   "request": "Prepare a report on Project Titan: the valuation, the risks and the board's view of the acquisition",
+   "expect_docs": ["Project Titan Acquisition Valuation Memo"], "forbidden_docs": []},
+  {"id": "titan-outsider", "user": "director@acme.test",
+   "request": "Prepare a report on Project Titan: the valuation, the risks and the board's view of the acquisition",
+   "expect_docs": [], "forbidden_docs": ["Project Titan Acquisition Valuation Memo"]},
+  {"id": "leave-work", "user": "analyst@acme.test",
+   "request": "Summarise the leave rules and the remote and hybrid working rules for a new joiner",
+   "expect_docs": ["Employee Leave Policy", "Remote and Hybrid Work Policy"], "forbidden_docs": ["Executive Compensation Framework"]},
+  {"id": "expenses", "user": "analyst@acme.test",
+   "request": "What should an employee know about travel, expenses and vendor purchasing?",
+   "expect_docs": ["Travel and Expense Policy"], "forbidden_docs": ["Executive Compensation Framework"]},
+  {"id": "pay-analyst", "user": "analyst@acme.test",
+   "request": "Prepare a report on executive compensation and promotion bands",
+   "expect_docs": [], "forbidden_docs": ["Executive Compensation Framework"]},
+  {"id": "security", "user": "manager@acme.test",
+   "request": "Summarise how the company handles information security incidents and whistleblower reports",
+   "expect_docs": ["Information Security Policy", "Incident Response Runbook"], "forbidden_docs": ["Project Titan Acquisition Valuation Memo"]}
+]
