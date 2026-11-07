@@ -123,6 +123,10 @@ Modelled on how large firms run an internal knowledge portal: ordinary employees
 
 Every upload, deletion, approval and account change is written to an administrator activity log. An uploaded document is chunked, embedded and searchable at once, and it obeys the same level, team and tenant rules as every other document. Identical content is rejected as a duplicate, files are checked by type and size, and an administrator cannot change their own level, status or administrator access.
 
+### Conversations and feedback
+
+Each person has their own saved conversations (pick one from the list above the chat, or start a new one). A follow-up such as "How many of them can be carried forward?" is rewritten into a standalone question by a small condenser agent before the normal pipeline runs. It sees **only the person's own earlier questions, never earlier answers**, so context cannot smuggle restricted text into a later search, and the rewritten question passes every normal check again (access control, citations, validation). The rewrite is shown to the user ("Searched for: ..."). Conversations are private to their owner: another person's conversation id is simply "not found". Each answer has *Helpful / Not helpful* buttons with an optional comment; administrators see the ratings and the questions rated not helpful as counts, never who asked.
+
 ## Evaluation
 
 `python -m scripts.evaluate` (report in [`evaluation/`](evaluation/EVAL_REPORT.md)) asks the running API 86 questions as real demo users and scores the responses.
@@ -211,7 +215,7 @@ Try the same question as different users: for example *"What is the indicative v
 ### Tests and checks
 
 ```bash
-python -m pytest -q tests             # 147 unit tests, no database or model needed
+python -m pytest -q tests             # 155 unit tests, no database or model needed
 python -m scripts.verify_access       # 160 access-control checks (needs the database)
 python -m scripts.check_validator     # planted-error check for the validator (needs Ollama)
 python -m scripts.smoke_test          # end-to-end check of every path against the running server (needs Ollama)
@@ -232,7 +236,7 @@ GitHub Actions runs on every push: **unit tests**, **access-control checks again
 ```
 app/
   agents/        corrector, retriever, rewriter, planner, answerer, validator, orchestrator
-  routers/       auth, chat, documents (upload), admin, retrieval, audit (FastAPI)
+  routers/       auth, chat (conversations, feedback), documents (upload), admin, retrieval, audit (FastAPI)
   services/      vector store (SQL access control), embedder, reranker, LLM client, audit, answer checks,
                  file extraction, upload policy, admin, lockout, rate limit
   static/        web UI (login, chat with sources, documents, administration, audit view)
@@ -249,7 +253,8 @@ tests/           unit tests and the 86-question evaluation set
 - [ ] Tracing dashboard (OpenTelemetry / Langfuse) and a model router
 - [x] Document upload and an administration screen (people, teams, documents, activity log)
 - [x] Approval step (maker-checker), sign-in lockout, per-person rate limit, usage insights
-- [ ] Answer feedback (thumbs up/down), document versions and review dates, OCR for scanned PDFs, SSO (OIDC)
+- [x] Saved multi-turn conversations with follow-up questions, answer feedback
+- [ ] SSO (OIDC), data retention/export/erase, observability (request IDs, metrics, tracing), document versions and review dates, OCR for scanned PDFs
 - [ ] An independently written evaluation set and broader adversarial security tests
 
 ## Tech

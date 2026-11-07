@@ -9,13 +9,13 @@ import psycopg
 
 from app.config import DATABASE_URL
 from app.services.vector_store import VectorStoreService
-from scripts import migrate_audit, migrate_auth
+from scripts import migrate_audit, migrate_auth, migrate_chat
 
 
 def main() -> None:
     VectorStoreService().init_schema()
     with psycopg.connect(DATABASE_URL) as conn:
-        for statement in migrate_auth.STATEMENTS + migrate_audit.STATEMENTS:
+        for statement in migrate_auth.STATEMENTS + migrate_audit.STATEMENTS + migrate_chat.STATEMENTS:
             conn.execute(statement)
     print("Database ready: schema (pgvector, HNSW, hybrid search), auth columns and audit table.")
 

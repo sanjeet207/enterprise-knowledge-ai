@@ -187,6 +187,14 @@ def insights(tenant_id: str, days: int = 30) -> Dict[str, Any]:
             "SELECT lower(query), COUNT(*) FROM audit_log WHERE tenant_id = %s AND outcome = 'no_answer' "
             "AND created_at > now() - make_interval(days => %s) GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 10",
             (tenant_id, days)).fetchall()
+        votes = dict(conn.execute(
+            "SELECT m.rating, COUNT(*) FROM chat_messages m JOIN conversations c ON c.id = m.conversation_id "
+            "WHERE c.tenant_id = %s AND m.rating IS NOT NULL AND m.rated_at > now() - make_interval(days => %s) "
+            "GROUP BY m.rating", (tenant_id, days)).fetchall())
+        unhelpful = conn.execute(
+            "SELECT lower(m.question), COUNT(*) FROM chat_messages m JOIN conversations c ON c.id = m.conversation_id "
+            "WHERE c.tenant_id = %s AND m.rating = -1 AND m.rated_at > now() - make_interval(days => %s) "
+            "GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 10", (tenant_id, days)).fetchall()
     counts = {o: n for o, n in outcomes}
     total = sum(counts.values())
     return {
@@ -195,4 +203,6 @@ def insights(tenant_id: str, days: int = 30) -> Dict[str, Any]:
         "median_latency_ms": round(latency) if latency is not None else None,
         "daily": [{"day": str(d), "questions": n} for d, n in daily],
         "content_gaps": [{"question": q, "times": n} for q, n in gaps],
+        "feedback": {"helpful": votes.get(1, 0), "not_helpful": votes.get(-1, 0)},
+        "unhelpful_questions": [{"question": q, "times": n} for q, n in unhelpful],
     }

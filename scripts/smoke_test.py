@@ -110,6 +110,27 @@ def publishing_checks(client, tokens, record) -> None:
            for e in client.get("/admin/events", headers=tokens["admin"]).json().get("events", [])))
 
 
+def conversation_checks(client, tokens, record) -> None:
+    """Saved conversations, follow-up questions, ownership and feedback."""
+    h = tokens["analyst"]
+    first = client.post("/chat/query", headers=h, json={"query": "How many days of annual leave do employees get?"}).json()
+    conv = first.get("conversation_id")
+    record("A question starts a saved conversation", bool(conv) and bool(first.get("message_id")))
+    follow = client.post("/chat/query", headers=h, json={"query": "How many of them can be carried forward?", "conversation_id": conv}).json()
+    record("A follow-up question is understood", follow.get("outcome") == "answered" and follow.get("conversation_id") == conv,
+           f"searched for: {follow.get('corrected_query')}")
+    messages = client.get(f"/chat/conversations/{conv}", headers=h).json().get("messages", [])
+    record("The conversation is saved in order", [m["role"] for m in messages] == ["user", "assistant", "user", "assistant"])
+    record("Another person cannot read it", client.get(f"/chat/conversations/{conv}", headers=tokens["director"]).status_code == 404)
+    record("Another person cannot continue it",
+           client.post("/chat/query", headers=tokens["director"], json={"query": "hello again", "conversation_id": conv}).status_code == 404)
+    mid = first.get("message_id")
+    record("Another person cannot rate its answers", client.post(f"/chat/messages/{mid}/feedback", headers=tokens["director"], json={"rating": 1}).status_code == 404)
+    record("The owner can rate an answer", client.post(f"/chat/messages/{mid}/feedback", headers=h, json={"rating": -1, "comment": "smoke test"}).status_code == 200)
+    record("Ratings only accept 1 or -1", client.post(f"/chat/messages/{mid}/feedback", headers=h, json={"rating": 7}).status_code == 422)
+    record("The owner can delete it", client.delete(f"/chat/conversations/{conv}", headers=h).status_code == 200)
+
+
 def lockout_checks(client, tokens, record) -> None:
     email, good = "lockout.test@acme.test", "Correct-Horse-1"
     created = client.post("/admin/users", headers=tokens["admin"], json={"email": email, "password": good, "level": 1})
@@ -170,6 +191,7 @@ def main() -> int:
         record("Partner can read the audit log", events.status_code == 200 and CASES[0][2] in logged)
         record("Analyst cannot read the audit log", client.get("/audit/events", headers=tokens["analyst"]).status_code == 403)
 
+        conversation_checks(client, tokens, record)
         publishing_checks(client, tokens, record)
 
     failed = [label for label, ok, _ in results if not ok]

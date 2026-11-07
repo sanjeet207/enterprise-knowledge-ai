@@ -1,0 +1,39 @@
+import psycopg
+
+from app.config import DATABASE_URL
+
+STATEMENTS = [
+    """
+    CREATE TABLE IF NOT EXISTS conversations (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS conversations_user_idx ON conversations (user_id, updated_at DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS chat_messages (
+        id BIGSERIAL PRIMARY KEY,
+        conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        question TEXT,
+        outcome TEXT,
+        sources JSONB NOT NULL DEFAULT '[]'::jsonb,
+        rating INT,
+        feedback_comment TEXT,
+        rated_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS chat_messages_conv_idx ON chat_messages (conversation_id, id)",
+]
+
+if __name__ == "__main__":
+    with psycopg.connect(DATABASE_URL) as conn:
+        for statement in STATEMENTS:
+            conn.execute(statement)
+    print("Conversation tables ready")

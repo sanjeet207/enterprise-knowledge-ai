@@ -55,7 +55,7 @@
   }
 
   function signOut() {
-    token = null; me = null; store(false, null);
+    token = null; me = null; convId = null; store(false, null);
     $("messages").querySelectorAll(".msg").forEach((m) => m.remove());
     $("empty").hidden = false;
     clearSources();
@@ -73,6 +73,7 @@
     $("tab-admin").hidden = !me.is_admin;
     selectTab("chat");
     show("app");
+    resetChat(); loadConversations("");
     $("question").focus();
   }
 
@@ -153,7 +154,42 @@
     return m;
   }
 
-  let counter = 0;
+  let counter = 0, convId = null;
+
+  function renderBot(bot, data, msgId) {
+    bot.replaceChildren();
+    bot.append(tag(data.outcome));
+    if (data.corrected_query) bot.append(el("span", "note", "Searched for: " + data.corrected_query));
+    const b = el("span", "body");
+    if (data.outcome === "answered") renderAnswerText(b, data.answer, msgId, data.sources);
+    else b.textContent = data.answer;
+    bot.append(b);
+    if (data.outcome === "general") bot.append(el("span", "note", "General knowledge, not from company documents. Check it before relying on it."));
+    if (data.outcome === "answered") renderSources(data.sources, msgId); else clearSources();
+    if (data.message_id && (data.outcome === "answered" || data.outcome === "general" || data.outcome === "no_answer")) bot.append(feedbackBar(data.message_id, data.rating));
+  }
+
+  function feedbackBar(messageId, current) {
+    const bar = el("div", "feedback");
+    const up = el("button", current === 1 ? "on" : "", "Helpful"), down = el("button", current === -1 ? "on" : "", "Not helpful");
+    up.type = down.type = "button";
+    const send = async (rating, comment) => {
+      const r = await api("/chat/messages/" + messageId + "/feedback", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rating: rating, comment: comment || null })
+      });
+      bar.replaceChildren(el("span", "thanks", r.ok ? "Thanks, your feedback was recorded." : "Could not save feedback."));
+    };
+    up.addEventListener("click", () => send(1));
+    down.addEventListener("click", () => {
+      const box = el("input"); box.type = "text"; box.maxLength = 500; box.placeholder = "What was wrong? (optional)";
+      const go = el("button", null, "Send"); go.type = "button";
+      go.addEventListener("click", () => send(-1, box.value));
+      bar.replaceChildren(box, go); box.focus();
+    });
+    bar.append(up, down);
+    return bar;
+  }
+
   async function ask(question) {
     if (busy || !question.trim()) return;
     busy = true; $("send").disabled = true;
@@ -165,25 +201,21 @@
       const res = await api("/chat/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: question, top_k: 3 })
+        body: JSON.stringify({ query: question, top_k: 3, conversation_id: convId })
       });
       bot.classList.remove("thinking");
       bot.replaceChildren();
       if (!res.ok) {
         const msg = res.status === 503 ? "The language model is not reachable right now. Please try again shortly."
+          : res.status === 429 ? "You are asking too quickly. Please wait a moment."
           : res.status === 422 ? "That question could not be processed. Keep it under 1000 characters."
           : "Something went wrong (" + res.status + ").";
         bot.append(tag("error"), body(msg));
       } else {
         const data = await res.json();
-        bot.append(tag(data.outcome));
-        if (data.corrected_query) bot.append(el("span", "note", "Searched for: " + data.corrected_query));
-        const b = el("span", "body");
-        if (data.outcome === "answered") renderAnswerText(b, data.answer, msgId, data.sources);
-        else b.textContent = data.answer;
-        bot.append(b);
-        if (data.outcome === "general") bot.append(el("span", "note", "General knowledge, not from company documents. Check it before relying on it."));
-        if (data.outcome === "answered") renderSources(data.sources, msgId); else clearSources();
+        convId = data.conversation_id;
+        renderBot(bot, data, msgId);
+        loadConversations(convId);
       }
     } catch (e) {
       bot.classList.remove("thinking");
@@ -196,6 +228,40 @@
   }
   function tag(outcome) { return el("span", "tag " + outcome, OUTCOME_LABEL[outcome] || outcome); }
   function body(t) { return el("span", "body", t); }
+
+  /* ---------- saved conversations ---------- */
+  function resetChat() {
+    convId = null;
+    $("messages").querySelectorAll(".msg").forEach((m) => m.remove());
+    $("empty").hidden = false;
+    clearSources();
+  }
+  async function loadConversations(selectId) {
+    const res = await api("/chat/conversations");
+    if (!res.ok) return;
+    const list = (await res.json()).conversations;
+    const sel = $("conv-select");
+    sel.replaceChildren();
+    const fresh = el("option", null, "New conversation"); fresh.value = ""; sel.append(fresh);
+    list.forEach((c) => { const o = el("option", null, c.title); o.value = c.id; sel.append(o); });
+    sel.value = selectId || "";
+    $("del-chat").hidden = !sel.value;
+  }
+  async function openConversation(id) {
+    if (!id) { resetChat(); $("del-chat").hidden = true; return; }
+    const res = await api("/chat/conversations/" + id);
+    if (!res.ok) { resetChat(); return; }
+    resetChat();
+    convId = id;
+    $("del-chat").hidden = false;
+    (await res.json()).messages.forEach((m) => {
+      const msgId = ++counter;
+      if (m.role === "user") { addMessage("user").textContent = m.content; return; }
+      renderBot(addMessage("bot"), { outcome: m.outcome, answer: m.content, sources: m.sources, message_id: m.id, rating: m.rating }, msgId);
+    });
+    clearSources();
+    $("messages").scrollTop = $("messages").scrollHeight;
+  }
 
   /* ---------- audit ---------- */
   async function loadAudit() {
@@ -348,6 +414,9 @@
       stat(i.outcomes.refused || 0, "not available to the asker");
       stat(i.outcomes.no_answer || 0, "not in the documents");
       stat(i.median_latency_ms === null ? "n/a" : (i.median_latency_ms / 1000).toFixed(1) + " s", "median answer time");
+      stat((i.feedback.helpful) + " / " + (i.feedback.not_helpful), "helpful / not helpful ratings");
+      const ub = $("unhelpful-table").querySelector("tbody"); ub.replaceChildren();
+      i.unhelpful_questions.forEach((g) => { const tr = el("tr"); tr.append(el("td", "q", g.question), el("td", null, String(g.times))); ub.append(tr); });
       const gb = $("gaps-table").querySelector("tbody"); gb.replaceChildren();
       i.content_gaps.forEach((g) => { const tr = el("tr"); tr.append(el("td", "q", g.question), el("td", null, String(g.times))); gb.append(tr); });
       $("gaps-empty").hidden = i.content_gaps.length > 0;
@@ -451,6 +520,13 @@
   $("login-form").addEventListener("submit", (e) => { e.preventDefault(); login($("email").value.trim(), $("password").value); });
   $("logout").addEventListener("click", signOut);
   $("tab-chat").addEventListener("click", () => selectTab("chat"));
+  $("conv-select").addEventListener("change", (e) => openConversation(e.target.value));
+  $("new-chat").addEventListener("click", () => { resetChat(); loadConversations(""); $("question").focus(); });
+  $("del-chat").addEventListener("click", async () => {
+    if (!convId || !window.confirm("Delete this conversation?")) return;
+    await api("/chat/conversations/" + convId, { method: "DELETE" });
+    resetChat(); loadConversations("");
+  });
   $("tab-audit").addEventListener("click", () => selectTab("audit"));
   $("tab-docs").addEventListener("click", () => selectTab("docs"));
   $("tab-admin").addEventListener("click", () => selectTab("admin"));

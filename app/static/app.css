@@ -122,3 +122,10 @@ td select, td input { min-width: 110px; padding: 5px 8px; }
 .stat span { color: var(--muted); font-size: 12px; }
 .tag.pending { background: var(--warn-bg); color: var(--warn); }
 .tag.published { background: var(--ok-bg); color: var(--ok); }
+.convbar { display: flex; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.convbar select { flex: 1; min-width: 0; padding: 7px 10px; }
+.feedback { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.feedback button { padding: 2px 10px; font-size: 12px; border-radius: 99px; }
+.feedback button.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.feedback input { width: 220px; padding: 3px 8px; font-size: 12px; }
+.feedback .thanks { font-size: 12px; color: var(--muted); }

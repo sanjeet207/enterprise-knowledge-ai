@@ -44,6 +44,12 @@
 
   <main id="chat-panel" class="layout" role="tabpanel" aria-labelledby="tab-chat">
     <section class="chat">
+      <div class="convbar">
+        <label for="conv-select" class="sr-only">Conversation</label>
+        <select id="conv-select"></select>
+        <button id="new-chat" class="secondary" type="button">New chat</button>
+        <button id="del-chat" class="secondary" type="button" hidden>Delete</button>
+      </div>
       <div id="messages" class="messages" aria-live="polite">
         <div class="empty" id="empty">
           <h2>What would you like to know?</h2>
@@ -97,6 +103,8 @@
       <div class="table-wrap"><table id="gaps-table">
         <thead><tr><th>Unanswered question</th><th>Times asked</th></tr></thead><tbody></tbody></table></div>
       <p id="gaps-empty" class="muted small" hidden>No unanswered questions. Nothing to publish.</p>
+      <div class="table-wrap"><table id="unhelpful-table">
+        <thead><tr><th>Question whose answer was rated not helpful</th><th>Times</th></tr></thead><tbody></tbody></table></div>
     </div>
     <div class="card gap">
       <h2>People</h2>

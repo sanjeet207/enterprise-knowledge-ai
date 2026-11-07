@@ -20,6 +20,7 @@ Please do not open a public issue for a security problem. Use GitHub's private r
 - **Refusals look identical** whether a document is forbidden or does not exist, so refusals reveal nothing.
 - **Audit:** every question is logged with its outcome and trace. Only Partners (level 4) can read the log.
 - **Publishing is separated from reading.** Only administrators publish company-wide documents, and engagement managers only to their own team. An administrator manages documents and people without gaining access to restricted content. All of it is tenant-scoped, and every upload, delete and account change is logged. Uploads by non-administrators stay unsearchable until an administrator approves them. Five wrong passwords lock an account for 15 minutes, and the response is identical to a wrong password. Uploads are limited by type and size, checked by content, de-duplicated and cleaned up if indexing fails.
+- **Conversations are private and context is limited.** A conversation is visible only to its owner. Follow-up rewriting uses the person's own earlier questions only, never earlier answers, and the rewritten question goes through all normal checks. Saved answers are what the person was allowed to see at the time; they stay in the owner's history until deleted.
 - **General-knowledge answers** never use company documents, carry no sources, and are labelled in the UI.
 
 ## Known limits
