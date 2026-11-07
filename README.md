@@ -111,7 +111,7 @@ Plus **tenant isolation** (a Globex user never sees Acme documents) and **engage
 
 ## Evaluation
 
-`python -m scripts.evaluate` asks the running API 86 questions as real demo users and scores the responses.
+`python -m scripts.evaluate` (report in [`evaluation/`](evaluation/EVAL_REPORT.md)) asks the running API 86 questions as real demo users and scores the responses.
 
 | Metric | Result |
 |---|---|
@@ -235,3 +235,7 @@ tests/           unit tests and the 86-question evaluation set
 ## Tech
 
 Python 3.12 · FastAPI · PostgreSQL 16 + pgvector (HNSW) · psycopg 3 · sentence-transformers (`all-MiniLM-L6-v2`) · FlashRank reranker · Ollama (`qwen2.5:7b`) · JWT · Docker · GitHub Actions
+
+## License and security
+
+MIT, see [LICENSE](LICENSE). Security model and reporting: [SECURITY.md](SECURITY.md). History: [CHANGELOG.md](CHANGELOG.md).

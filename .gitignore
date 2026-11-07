@@ -3,6 +3,6 @@ __pycache__/
 .env
 .pytest_cache/
 .DS_Store
-EVAL_REPORT_quick.md
-eval_results_quick.json
+evaluation/EVAL_REPORT_quick.md
+evaluation/eval_results_quick.json
 server_error.log

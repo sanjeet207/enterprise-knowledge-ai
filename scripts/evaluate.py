@@ -1,8 +1,8 @@
-"""Evaluate the running API against tests/eval_set.json and write EVAL_REPORT.md.
+"""Evaluate the running API against tests/eval_set.json and write evaluation/EVAL_REPORT.md.
 
 Usage (server running):  python -m scripts.evaluate [--base-url http://127.0.0.1:8000]
   --workers 3                    ask 3 questions at a time (faster; latencies then include waiting in line)
-  --only answerable,restricted   run only these categories (a partial run does not overwrite EVAL_REPORT.md)
+  --only answerable,restricted   run only these categories (a partial run does not overwrite evaluation/EVAL_REPORT.md)
 
 Metrics
   answer accuracy    answerable questions answered, with an expected phrase in the answer
@@ -159,8 +159,9 @@ def main() -> int:
             lines.append(f"- [{r['category']}] {r['user']}: {r['question']} -> outcome={r['outcome']}, leaked={r['leaked']}")
     # A partial or parallel run is for quick checks; only a full single-worker run is the published report.
     publish = not partial and workers == 1
-    Path("EVAL_REPORT.md" if publish else "EVAL_REPORT_quick.md").write_text("\n".join(lines) + "\n")
-    Path("eval_results.json" if publish else "eval_results_quick.json").write_text(json.dumps(results, indent=1))
+    Path("evaluation").mkdir(exist_ok=True)
+    Path("evaluation/EVAL_REPORT.md" if publish else "evaluation/EVAL_REPORT_quick.md").write_text("\n".join(lines) + "\n")
+    Path("evaluation/eval_results.json" if publish else "evaluation/eval_results_quick.json").write_text(json.dumps(results, indent=1))
     print("\n" + "\n".join(lines))
     return 1 if leaks else 0
 
