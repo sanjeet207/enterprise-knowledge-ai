@@ -358,6 +358,7 @@
         last.append(document.createTextNode(" "), cmp);
       }
       const st = el("td"); st.append(el("span", "tag " + d.status, d.status === "pending" ? "Waiting for approval" : d.status === "archived" ? "Replaced" : "Live"));
+      if (d.note) st.append(el("div", "muted small", d.note));
       tr.append(el("td", "q", (d.title || "") + (d.version > 1 ? "  (v" + d.version + ")" : "")), st, el("td", null, "L" + d.level), el("td", null, d.team || "Company-wide"), reviewCell(d.review_by),
         el("td", null, String(d.sections)), el("td", null, d.uploaded_by || "(seeded)"),
         el("td", null, d.created_at ? new Date(d.created_at).toLocaleDateString() : ""), last);
@@ -408,7 +409,7 @@
       const j = await res.json();
       if (j.status === "done") {
         note("upload-msg", j.publish_status === "pending"
-          ? '"' + title + '" was received and waits for an administrator to approve it before anyone can search it.'
+          ? '"' + title + '" was received and waits for an administrator to approve it before anyone can search it.' + (j.review_note ? " " + j.review_note : "")
           : '"' + title + '" is now searchable (' + j.parents_created + " sections).", true);
         loadDocs();
         return;

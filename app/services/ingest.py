@@ -1,8 +1,10 @@
+import asyncio
 import hashlib
 import uuid
 from typing import Optional
 
-from app.services import admin, versions
+from app import config
+from app.services import admin, content_scan, versions
 from app.services.chunker import HierarchicalChunker
 from app.services.users import User
 from app.services.vector_store import VectorStoreService
@@ -18,6 +20,12 @@ class IngestError(Exception):
         self.message = message
 
 
+def inspect_text(content: str) -> Optional[str]:
+    """Ask the reviewer model whether the text gives instructions to an AI. Runs in a worker or request thread."""
+    from app.agents import inspector
+    return asyncio.run(inspector.scan(content))
+
+
 def status_for(user: User) -> str:
     """Maker-checker: an administrator publishes directly; anyone else's upload waits for an administrator to approve it."""
     return "published" if user.is_admin else "pending"
@@ -27,6 +35,9 @@ def precheck(user: User, content: str, engagement_id: Optional[str]) -> str:
     """The quick checks done while the person waits. Returns the content hash. Nothing is written."""
     if engagement_id and not admin.engagement_exists(user.tenant_id, engagement_id):
         raise IngestError(404, "That team does not exist in your company")
+    reason = content_scan.suspicious(content)
+    if reason:
+        raise IngestError(422, f"This document was not added: {reason}. Ask a security reviewer to look at it.")
     content_hash = hashlib.sha256(" ".join(content.split()).encode("utf-8")).hexdigest()
     existing = admin.find_by_hash(user.tenant_id, content_hash)
     if existing:
@@ -54,8 +65,16 @@ def index_document(user: User, document_id: str, title: str, content: str, level
         current = versions.info(user.tenant_id, previous["document_id"])
         if current is None or current["status"] != "published":
             raise IngestError(409, "The document this was meant to replace has changed or been removed in the meantime")
+    # The reviewer model is less precise than the upload patterns, so what it flags is held for a second
+    # administrator to read (with the quoted sentence), not thrown away: a false alarm costs a review, not a lost document.
+    review_note = None
+    if config.INSPECT_UPLOADS:
+        reason = inspect_text(content)
+        if reason:
+            status = "pending"
+            review_note = f"Held for review: {reason}"
     metadata = {"title": title, "uploaded_by": user.email, "uploaded_by_id": user.id,
-                "content_hash": content_hash, "filename": filename, "review_by": review_by}
+                "content_hash": content_hash, "filename": filename, "review_by": review_by, "review_note": review_note}
     if previous:
         metadata.update({"doc_key": previous["doc_key"], "version": previous["version"] + 1, "supersedes": previous["document_id"]})
     try:
@@ -75,7 +94,7 @@ def index_document(user: User, document_id: str, title: str, content: str, level
                                                   "engagement_id": engagement_id, "filename": filename, "status": status,
                                                   "supersedes": previous["document_id"] if previous else None})
     return {"document_id": document_id, "title": title, "parents_created": len(chunks), "status": status,
-            "version": metadata.get("version", 1)}
+            "version": metadata.get("version", 1), "review_note": review_note}
 
 
 def ingest_document(user: User, title: str, content: str, level: int,

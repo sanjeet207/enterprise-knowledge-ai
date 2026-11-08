@@ -5,7 +5,7 @@ No database and no clock in here, so every rule can be unit-tested.
 MAX_ATTEMPTS = 3
 BASE_DELAY_SECONDS = 2
 MAX_DELAY_SECONDS = 60
-STUCK_AFTER_SECONDS = 600  # a job "processing" for longer than this lost its worker (crash, restart)
+STUCK_AFTER_SECONDS = 1800  # a job "processing" for longer than this lost its worker (crash, restart); long documents are read by a model first
 MAX_PENDING_PER_USER = 20
 
 

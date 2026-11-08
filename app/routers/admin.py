@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app import config
 from app.schemas import NewTeam, NewUser, TeamMember, UserChange
 from app.security import require_admin
-from app.services import admin, validation
+from app.services import admin, admin_policy, validation
 from app.services.users import User
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -30,6 +30,10 @@ def create_user(body: NewUser, user: User = Depends(require_admin)):
             raise ValueError("Enter a temporary password")
     except ValueError as exc:
         _bad(exc)
+    try:
+        admin_policy.check_grant(config.ADMIN_MAX_GRANT_LEVEL, body.level, None, False)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
     new_id = admin.create_user(user.tenant_id, email, body.password, body.level, body.is_admin)
     if new_id is None:
         raise HTTPException(status_code=409, detail="That email is already registered")
@@ -49,6 +53,13 @@ def change_user(user_id: UUID, body: UserChange, user: User = Depends(require_ad
             validation.check_password(changes["password"])
         except ValueError as exc:
             _bad(exc)
+    target_level = admin.user_level(user.tenant_id, str(user_id))
+    if target_level is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    try:
+        admin_policy.check_grant(config.ADMIN_MAX_GRANT_LEVEL, changes.get("level"), target_level, "password" in changes)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
     if not admin.update_user(user.tenant_id, str(user_id), changes):
         raise HTTPException(status_code=404, detail="User not found")
     admin.record(user, "user.update", str(user_id), {k: ("(changed)" if k == "password" else v) for k, v in changes.items()})

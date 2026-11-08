@@ -4,6 +4,9 @@ import os
 
 MAX_BYTES = 5 * 1024 * 1024
 MAX_CHARS = 500_000
+MAX_UNPACKED_BYTES = 50 * 1024 * 1024  # a .docx is a zip file: a few KB can unpack to gigabytes
+MAX_ZIP_ENTRIES = 2000
+MAX_PDF_PAGES = 400
 ALLOWED = {".txt", ".md", ".csv", ".pdf", ".docx"}
 
 
@@ -54,16 +57,38 @@ def _pdf(data: bytes) -> str:
         reader = PdfReader(io.BytesIO(data))
         if reader.is_encrypted:
             raise ExtractError("The PDF is password protected")
-        return "\n".join((page.extract_text() or "") for page in reader.pages)
+        if len(reader.pages) > MAX_PDF_PAGES:
+            raise ExtractError(f"The PDF has more than {MAX_PDF_PAGES} pages. Split it into parts")
+        parts, size = [], 0
+        for page in reader.pages:
+            text = page.extract_text() or ""
+            size += len(text)
+            if size > MAX_CHARS:  # stop reading early instead of building a huge string first
+                raise ExtractError("The document has too much text (limit 500,000 characters)")
+            parts.append(text)
+        return "\n".join(parts)
     except ExtractError:
         raise
     except Exception:
         raise ExtractError("Could not read this PDF")
 
 
+def check_zip(data: bytes) -> None:
+    """Refuse a zip that would unpack to something huge, before anything tries to unpack it."""
+    import zipfile
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            entries = archive.infolist()
+    except zipfile.BadZipFile:
+        raise ExtractError("This is not a valid Word document")
+    if len(entries) > MAX_ZIP_ENTRIES or sum(e.file_size for e in entries) > MAX_UNPACKED_BYTES:
+        raise ExtractError("This Word document is too large once unpacked")
+
+
 def _docx(data: bytes) -> str:
     if not data.startswith(b"PK"):
         raise ExtractError("This is not a valid Word document")
+    check_zip(data)
     try:
         from docx import Document
         document = Document(io.BytesIO(data))

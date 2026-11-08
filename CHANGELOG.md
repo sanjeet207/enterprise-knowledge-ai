@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Security review and hardening: prompt-wrapper breakout fixed, zip/PDF bomb limits, administrator grant ceiling (`ADMIN_MAX_GRANT_LEVEL`), upload scan and reviewer model (`agents/inspector.py`, `INSPECT_UPLOADS`, `scripts/check_inspector.py`) for planted instructions, rate limit on search, browser security headers, `API_DOCS_ENABLED`. New `scripts/security_probe.py` (live attacks) and `docs/SECURITY_REVIEW.md`.
 - Background document processing: uploads return 202 with a job id and are indexed by a worker (PostgreSQL job queue with SKIP LOCKED, retries with back-off, stuck-job recovery, permissions re-checked when the job runs, idempotent retries). `GET /documents/jobs`, `scripts/worker.py`, `INGEST_ASYNC`, `INGEST_WORKER_ENABLED`.
 - Research assistant: a planner splits a broad request into questions, each answered under the asker's own access rules; cited, checked draft report with evidence gaps and possible inconsistencies; saved privately; included in data export and erase. `scripts/evaluate_research.py` and `tests/research_set.json`.
 - Document versions (a new version inherits level and team and archives the old one) and a comparison of any two readable documents: changes found by code, summary checked for invented figures.

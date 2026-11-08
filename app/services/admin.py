@@ -36,11 +36,11 @@ def list_documents(tenant_id: str, uploaded_by_id: Optional[str] = None) -> List
     with _connect() as conn:
         rows = conn.execute(
             "SELECT p.document_id, MAX(p.metadata->>'title'), MAX(p.classification_level), MAX(e.name), "
-            "COUNT(*), MAX(p.metadata->>'uploaded_by'), MIN(p.created_at), MAX(p.metadata->>'filename'), MAX(p.status), MAX(p.metadata->>'review_by'), MAX(p.metadata->>'version'), MAX(p.metadata->>'supersedes') "
+            "COUNT(*), MAX(p.metadata->>'uploaded_by'), MIN(p.created_at), MAX(p.metadata->>'filename'), MAX(p.status), MAX(p.metadata->>'review_by'), MAX(p.metadata->>'version'), MAX(p.metadata->>'supersedes'), MAX(p.metadata->>'review_note') "
             "FROM parent_chunks p LEFT JOIN engagements e ON e.id = p.engagement_id "
             "WHERE p.tenant_id = %s AND (%s::text IS NULL OR p.metadata->>'uploaded_by_id' = %s) "
             "GROUP BY p.document_id ORDER BY MIN(p.created_at) DESC", (tenant_id, uploaded_by_id, uploaded_by_id)).fetchall()
-    keys = ("document_id", "title", "level", "team", "sections", "uploaded_by", "created_at", "filename", "status", "review_by", "version", "supersedes")
+    keys = ("document_id", "title", "level", "team", "sections", "uploaded_by", "created_at", "filename", "status", "review_by", "version", "supersedes", "note")
     docs = [dict(zip(keys, (str(r[0]),) + tuple(r[1:]))) for r in rows]
     for d in docs:
         d["version"] = int(d["version"] or 1)
@@ -155,6 +155,12 @@ def create_user(tenant_id: str, email: str, password: Optional[str], level: int,
     except UniqueViolation:
         return None
     return user_id
+
+
+def user_level(tenant_id: str, user_id: str) -> Optional[int]:
+    with _connect() as conn:
+        row = conn.execute("SELECT role_level FROM users WHERE id = %s AND tenant_id = %s", (user_id, tenant_id)).fetchone()
+    return row[0] if row else None
 
 
 def update_user(tenant_id: str, user_id: str, changes: Dict[str, Any]) -> bool:

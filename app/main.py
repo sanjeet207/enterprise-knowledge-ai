@@ -25,6 +25,9 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(
     lifespan=lifespan,
+    docs_url="/docs" if config.API_DOCS_ENABLED else None,
+    redoc_url="/redoc" if config.API_DOCS_ENABLED else None,
+    openapi_url="/openapi.json" if config.API_DOCS_ENABLED else None,
     title="Enterprise Knowledge AI Platform",
     description="Secure multi-tenant RAG platform with hybrid search, RBAC, and local LLM generation",
     version="0.10.0",

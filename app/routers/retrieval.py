@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.schemas import SearchRequest
 from app.security import get_current_user
@@ -14,6 +14,9 @@ CANDIDATES = 20
 
 @router.post("/search")
 def search(payload: SearchRequest, user: User = Depends(get_current_user)):
+    from app.routers.chat import limiter  # one shared per-person budget for everything that searches or calls the model
+    if not limiter.allow(user.id):
+        raise HTTPException(status_code=429, detail="Too many requests. Please wait a moment.", headers={"Retry-After": "60"})
     candidates = vector_store.secure_hybrid_rrf_search(
         tenant_id=user.tenant_id,
         user_id=user.id,

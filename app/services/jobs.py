@@ -33,6 +33,7 @@ def _view(row) -> Dict[str, Any]:
             "version": result.get("version", payload.get("version", 1)),
             "publish_status": result.get("status", payload.get("status")),
             "parents_created": result.get("parents_created"),
+            "review_note": result.get("review_note"),
             "created_at": row[10].isoformat() if row[10] else None,
             "finished_at": row[11].isoformat() if row[11] else None}
 

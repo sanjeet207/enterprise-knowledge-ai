@@ -31,6 +31,8 @@ def _add(user: User, title: str, content: str, level: int, engagement_id: Option
         result = ingest.ingest_document(user, title, content, level, engagement_id, filename, review_by, previous)
     except ingest.IngestError as exc:
         raise HTTPException(status_code=exc.status, detail=exc.message)
+    except LLMUnavailable:
+        raise HTTPException(status_code=503, detail="The document checker is unavailable. Try again shortly.")
     return {"status": "success", **result}
 
 

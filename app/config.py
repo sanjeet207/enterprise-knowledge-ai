@@ -70,3 +70,12 @@ def agent_model(name: str) -> str:
 INGEST_ASYNC = os.getenv("INGEST_ASYNC", "true").lower() in ("1", "true", "yes")
 # true: the web process also runs a worker thread. false: run "python -m scripts.worker" as its own process.
 INGEST_WORKER_ENABLED = os.getenv("INGEST_WORKER_ENABLED", "true").lower() in ("1", "true", "yes")
+
+# The highest reading level a portal administrator may grant (separation of duties). Higher levels come from IT security.
+ADMIN_MAX_GRANT_LEVEL = max(1, min(4, int(os.getenv("ADMIN_MAX_GRANT_LEVEL", "2"))))
+
+# The interactive API documentation (/docs) is handy locally. Switch it off in production.
+API_DOCS_ENABLED = os.getenv("API_DOCS_ENABLED", "true").lower() in ("1", "true", "yes")
+
+# A reviewer model reads each upload for instructions aimed at the assistant (indirect prompt injection).
+INSPECT_UPLOADS = os.getenv("INSPECT_UPLOADS", "true").lower() in ("1", "true", "yes")
