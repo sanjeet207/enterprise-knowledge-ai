@@ -150,7 +150,7 @@ def parse_plan(text: str, max_len: int = 150) -> tuple[str, str]:
 _STOPWORDS = frozenset(
     "a an and are as at be been by can do does for from has have how i if in into is it its may more must no not "
     "of on or our per than that the their them then there these they this to up was we were what when which who "
-    "will with within you your also all any each may other such".split()
+    "will with within you your also all any each may other such ok okay".split()
 )
 
 
@@ -159,18 +159,24 @@ def _content_words(text: str) -> set[str]:
     return {w.rstrip("s") if len(w) > 3 else w for w in words if w not in _STOPWORDS}
 
 
-def citation_mismatches(answer: str, passages: list[str], threshold: float = 0.4) -> list[str]:
+def citation_mismatches(answer: str, passages: list[str], threshold: float = 0.4, question: str = "") -> list[str]:
     """Sentences whose [n] citation points to a passage that does not contain most of the sentence's words.
 
     Plain code, no model: a sentence passes if at least one passage it cites shares >= `threshold` of its
     content words. Sentences with no valid citation are skipped (the validator agent judges those).
+
+    Words the question itself used are not counted against the sentence: a correct yes/no answer repeats the
+    question ("No, it is not okay to keep customer files in your personal Dropbox [1]") and the document never
+    mentions Dropbox. What is left, the words that carry the claim, must still be found in the cited passage, so
+    a wrong claim ("Yes ...") still fails. A sentence made only of question words is left to the validator.
     """
+    asked = _content_words(question)
     bad = []
     for sentence in re.split(r"(?<=[.!?])\s+|\n+", answer):
         cited = cited_numbers(sentence, len(passages))
         if not cited:
             continue
-        words = _content_words(_CITATION.sub(" ", sentence))
+        words = _content_words(_CITATION.sub(" ", sentence)) - asked
         if not words:
             continue
         best = max(len(words & _content_words(passages[n - 1])) / len(words) for n in cited)

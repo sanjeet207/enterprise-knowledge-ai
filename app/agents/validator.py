@@ -40,7 +40,7 @@ async def run(query: str, answer: str, passages: list[str]) -> tuple[bool, str]:
     ok, detail = parse_validation(raw)
     if ok:
         # Second check, in plain code: each [n] must point to a passage that contains the cited sentence's words.
-        wrong = citation_mismatches(answer, passages)
+        wrong = citation_mismatches(answer, passages, question=query)
         if wrong:
             return False, f"citation mismatch: {wrong[0]}"[:140]
     return ok, detail

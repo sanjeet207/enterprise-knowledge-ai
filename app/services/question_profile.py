@@ -18,6 +18,8 @@ COMPANY_WORDS = {
     "board", "client", "clients",
     # Questions about "the top / worst" of an organisation's own risks, teams or figures.
     "enterprise", "top", "worst", "retention",
+    # Found by the independent question set: "how is executive pay split" was answered from general knowledge.
+    "executive", "executives", "pay", "wage", "wages", "remuneration",
 }
 
 # Attempts to override the assistant's rules are never answered, with or without documents.

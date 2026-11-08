@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Found by the second question set: pay questions are now treated as company questions (never answered from general knowledge); the citation check no longer penalises words the question itself used; one quick retry when the model server drops a request. `scripts/diagnose.py` shows every step for one question. A prompt rule for comparing amounts was tried and removed because it lowered accuracy.
 - Independent evaluation kit: `evaluation/QUESTION_BRIEF.md` for a person who writes questions, a CSV template, `scripts/import_questions.py` (checks the sheet and builds the set), `scripts/export_documents.py`, and `evaluate --tag` for a separate report.
 - Tracing: every request, model call, retrieval step and upload job becomes a span in a trace, sent as standard OTLP to Jaeger or any compatible backend (`app/tracing.py`, `docs/TRACING.md`, `docker-compose.tracing.yml`). Off by default. Spans never contain questions, answers, document text or names. `X-Trace-ID` header and `trace_id` in request logs.
 - Security review and hardening: prompt-wrapper breakout fixed, zip/PDF bomb limits, administrator grant ceiling (`ADMIN_MAX_GRANT_LEVEL`), upload scan and reviewer model (`agents/inspector.py`, `INSPECT_UPLOADS`, `scripts/check_inspector.py`) for planted instructions, rate limit on search, browser security headers, `API_DOCS_ENABLED`. New `scripts/security_probe.py` (live attacks) and `docs/SECURITY_REVIEW.md`.

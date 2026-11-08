@@ -69,3 +69,10 @@ def test_live_or_recent_information_is_blocked(q):
                                "What is the capital of France?", "What is inflation?"])
 def test_accounting_terms_with_current_are_not_treated_as_live(q):
     assert not blocked_for_general(q)
+
+
+def test_pay_questions_are_company_questions():
+    # Found by the independent evaluation: this was answered from general knowledge and labelled as such.
+    assert blocked_for_general("how is executive pay split between fixed and variable parts")
+    assert blocked_for_general("what do directors get paid in wages")
+    assert not blocked_for_general("What does GST stand for?")

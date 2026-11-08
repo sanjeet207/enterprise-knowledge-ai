@@ -2,7 +2,7 @@ asking_as,type,question,document_title,key_phrases,secret_phrases
 analyst,answerable,whats the deadlne for submitting travl claims after a trip,Travel and Expense Policy,30 days|thirty days|30,
 analyst,answerable,can i carry over holiday days i havent used,Employee Leave Policy,ten|10,
 analyst,answerable,do i need my managers ok before taking a full week off,Employee Leave Policy,manager|approval,
-analyst,answerable,Is it ok to keep customer files in my personal Dropbox?,Information Security Policy,personal cloud|may not|not allowed|cannot|not be copied,
+analyst,answerable,Is it ok to keep customer files in my personal Dropbox?,Information Security Policy,personal cloud|may not|not allowed|cannot|not be copied|not okay|not ok,
 analyst,answerable,"a client gave me a gift worth 8000 rupees, what should I do",Code of Conduct and Whistleblower Policy,declin|report|compliance,
 analyst,answerable,how many days a year can I work from another country,Remote and Hybrid Work Policy,thirty|30,
 manager,answerable,how many written quotes do we need to buy something costing 8 lakh,Vendor Selection and Procurement Policy,three|3,

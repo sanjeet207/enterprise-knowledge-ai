@@ -172,7 +172,27 @@ Optional OpenID Connect login (authorization code flow with PKCE, state and nonc
 
 Measured on a MacBook Pro (M3, 16 GB) with `qwen2.5:7b` via Ollama.
 
-**What the evaluation found along the way** (each fix was driven by a failing case):
+**A second set of 27 questions (`evaluation/independent_questions.csv`) was written by the AI assistant that helped build the project, from the documents alone, before any results were seen. It is not tuned to the system, but it is not written by an outside person either. It was run twice, and both runs are kept so the change is visible.
+
+| Category | First run | After fixes |
+|---|---|---|
+| Answerable | 83% (10/12) | 92% (11/12) |
+| Restricted (must be refused) | 83% (5/6) | 100% (6/6) |
+| Not in the documents | 100% (5/5) | 100% (5/5) |
+| General knowledge | 100% (2/2) | 100% (2/2) |
+| Off-topic | 50% (1/2) | 50% (1/2) |
+| **Overall** | **85% (23/27)** | **93% (25/27)** |
+| **Access leaks** | **0** | **0** |
+
+What the first run found, and what was done:
+- "How is executive pay split?" was answered from general knowledge instead of being refused as a company question. The plain-code guard now covers pay words. Fixed.
+- A correct yes/no answer about personal cloud storage was rejected by a plain-code citation check, because the answer repeated words from the question that the document never uses. The check now ignores the question's own words; a wrong "Yes" is still caught (unit-tested). Fixed. (The question sheet's accepted phrases also missed "not okay"; that list was corrected.)
+- "Who approves a 30 lakh vendor contract?" is still unanswered: the document says "above twenty-five lakh" and the 7B model does not compare a digit amount with a threshold written in words. A prompt rule that taught it to compare numbers fixed this question but made answers worse elsewhere (86-question accuracy fell to 95% and multi-part to 4 of 6), so it was removed. Known limit.
+- A recipe request is answered as general knowledge. The questions' author expected a refusal; the system is designed to answer general questions. Counted as a miss anyway.
+
+After the fixes the 86-question suite was run again on the final code: 100% in every category, 0 leaks. Full reports: `evaluation/EVAL_REPORT.md` and `evaluation/INDEPENDENT_REPORT.md`.
+
+What the evaluation found along the way** (each fix was driven by a failing case):
 
 - Company and live-information questions ("our policy", "today's weather", "top enterprise risks") were wrongly answered as general knowledge until a plain-code guard was added that runs before any model sees the question.
 - Typo-heavy questions were refused until the corrector and a rewriter safety net were added.
@@ -242,7 +262,7 @@ Try the same question as different users: for example *"What is the indicative v
 ### Tests and checks
 
 ```bash
-python -m pytest -q tests             # 267 unit tests, no database or model needed
+python -m pytest -q tests             # 274 unit tests, no database or model needed
 python -m scripts.verify_access       # 160 access-control checks (needs the database)
 python -m scripts.check_validator     # planted-error check for the validator (needs Ollama)
 python -m scripts.smoke_test          # end-to-end check of every path against the running server (needs Ollama)

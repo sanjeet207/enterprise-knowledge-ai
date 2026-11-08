@@ -38,4 +38,5 @@ Each finding below was confirmed in the code first, then fixed, then given a tes
   administrator, who sees the quoted sentence, so the cost is a delay, not a lost document. It was tuned on cases written by the
   author, so its real miss rate against a determined, unseen attacker is unknown (10 of 11 known cases pass, see
   `scripts/check_inspector.py`).
+- **Number words.** A question that gives an amount ("30 lakh") is not reliably compared with a threshold the document writes in words ("twenty-five lakh"); the assistant says it cannot answer rather than guessing. This is a safe failure, recorded in `evaluation/INDEPENDENT_REPORT.md`.
 - The demo accounts and password are for local use only.

@@ -179,3 +179,17 @@ def test_general_check_fails_closed_on_bad_replies():
     for bad in ["", "yes", "{}", "[]", '{"answers_the_question": "true", "company_specific": false, "uncertain_specifics": false}',
                 '{"answers_the_question": true, "company_specific": false}']:
         assert parse_general_check(bad)[0] is False
+
+
+def test_a_yes_no_answer_may_repeat_the_question():
+    from app.services.answer_check import citation_mismatches
+    passages = ["Employees must use multi-factor authentication. Customer data may not be copied to personal devices or personal cloud storage."]
+    q = "Is it ok to keep customer files in my personal Dropbox?"
+    assert citation_mismatches("No, it is not okay to keep customer files in your personal Dropbox [1].", passages, question=q) == []
+
+
+def test_a_wrong_yes_still_fails_when_the_question_is_repeated():
+    from app.services.answer_check import citation_mismatches
+    passages = ["Customer data may not be copied to personal devices or personal cloud storage."]
+    q = "Is it ok to keep customer files in my personal Dropbox?"
+    assert citation_mismatches("Yes, customer files are welcome in personal Dropbox folders [1].", passages, question=q) != []
