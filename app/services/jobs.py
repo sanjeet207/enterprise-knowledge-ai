@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 import psycopg
 from psycopg.types.json import Jsonb
 
-from app import config
+from app import config, tracing
 from app.services import ingest, job_policy, metrics, upload_policy, users
 from app.services.users import User
 
