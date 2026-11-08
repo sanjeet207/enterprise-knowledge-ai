@@ -107,7 +107,7 @@ def requeue_stuck() -> int:
 def _done(job_id: str, result: dict) -> None:
     with _connect() as conn:
         conn.execute("UPDATE ingest_jobs SET status = 'done', finished_at = now(), content = '', error = NULL, "
-                     "result = %s WHERE id = %s", (Jsonb(result), job_id))
+                     "result = %s WHERE id = %s AND status = 'processing'", (Jsonb(result), job_id))
 
 
 def _failed(job: dict, message: str, status_code: int, permanent: bool) -> str:
@@ -115,11 +115,11 @@ def _failed(job: dict, message: str, status_code: int, permanent: bool) -> str:
     with _connect() as conn:
         if next_status == "queued":
             conn.execute("UPDATE ingest_jobs SET status = 'queued', error = %s, "
-                         "run_after = now() + make_interval(secs => %s::float8) WHERE id = %s",
+                         "run_after = now() + make_interval(secs => %s::float8) WHERE id = %s AND status = 'processing'",
                          (message[:300], float(delay), job["id"]))
         else:
             conn.execute("UPDATE ingest_jobs SET status = 'failed', finished_at = now(), content = '', error = %s, "
-                         "error_status = %s WHERE id = %s", (message[:300], status_code, job["id"]))
+                         "error_status = %s WHERE id = %s AND status = 'processing'", (message[:300], status_code, job["id"]))
     return next_status
 
 

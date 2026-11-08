@@ -274,6 +274,10 @@ python -m scripts.evaluate --only multi_part --workers 3   # a category, in para
 
 `docker compose --profile app up -d --build` builds and starts the API container next to the database (it reaches Ollama on the host through `host.docker.internal`). CI verifies that the image builds; a full deployed run on Azure is on the roadmap.
 
+## Audit and reproducibility
+
+`docs/TECHNICAL_AUDIT.md` is a written review of access control, job recovery, the security fixes and the research assistant (a self-audit, so labelled as one). `bash scripts/reproduce.sh` runs the unit tests, access checks, crash test, smoke test, attack probe and every evaluation, and keeps the logs and reports of that run in `evaluation/logs/`.
+
 ## Tracing
 
 Optional request tracing shows where each answer's time went (retrieval, reranking, each model call). Spans carry only ids, counts and timings, never questions, answers or document text. See [docs/TRACING.md](docs/TRACING.md).

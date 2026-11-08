@@ -55,7 +55,11 @@ def index_document(user: User, document_id: str, title: str, content: str, level
     if not chunks:
         raise IngestError(400, "Document content is empty or invalid.")
     # Idempotent: a retry after a crash that happened after the write must not fail as a "duplicate" of itself.
-    if versions.info(user.tenant_id, document_id):
+    already = versions.info(user.tenant_id, document_id)
+    if already and already["status"] == "indexing":
+        admin.delete_document(user.tenant_id, document_id)  # an earlier attempt died half way: start clean
+        already = None
+    if already:
         return {"document_id": document_id, "title": title, "parents_created": len(chunks), "status": status,
                 "version": (previous["version"] + 1) if previous else 1}
     existing = admin.find_by_hash(user.tenant_id, content_hash)
@@ -82,8 +86,9 @@ def index_document(user: User, document_id: str, title: str, content: str, level
             vector_store.add_parent_and_children(
                 parent_id=str(uuid.uuid4()), tenant_id=user.tenant_id, document_id=document_id,
                 parent_content=item["parent_content"], child_chunks=item["child_chunks"],
-                classification_level=level, engagement_id=engagement_id, metadata=metadata, status=status,
+                classification_level=level, engagement_id=engagement_id, metadata=metadata, status="indexing",
             )
+        versions.promote(user.tenant_id, document_id, status)  # all chunks become visible together
     except Exception:
         # Never leave half a document behind: remove what was written and report the failure.
         admin.delete_document(user.tenant_id, document_id)

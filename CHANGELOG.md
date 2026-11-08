@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Technical self-audit (`docs/TECHNICAL_AUDIT.md`). Fixed: a worker killed mid-upload could leave half a document searchable and the retry reported it done (chunks are now written hidden and published in one statement); a slow worker could overwrite a job another worker owned. `scripts/crash_test.py` simulates the kill. `scripts/reproduce.sh` runs every check and saves logs to `evaluation/logs/`.
 - Found by the second question set: pay questions are now treated as company questions (never answered from general knowledge); the citation check no longer penalises words the question itself used; one quick retry when the model server drops a request. `scripts/diagnose.py` shows every step for one question. A prompt rule for comparing amounts was tried and removed because it lowered accuracy.
 - Independent evaluation kit: `evaluation/QUESTION_BRIEF.md` for a person who writes questions, a CSV template, `scripts/import_questions.py` (checks the sheet and builds the set), `scripts/export_documents.py`, and `evaluate --tag` for a separate report.
 - Tracing: every request, model call, retrieval step and upload job becomes a span in a trace, sent as standard OTLP to Jaeger or any compatible backend (`app/tracing.py`, `docs/TRACING.md`, `docker-compose.tracing.yml`). Off by default. Spans never contain questions, answers, document text or names. `X-Trace-ID` header and `trace_id` in request logs.

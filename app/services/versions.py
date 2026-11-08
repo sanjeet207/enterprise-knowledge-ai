@@ -26,6 +26,14 @@ def info(tenant_id: str, document_id: str) -> Optional[Dict[str, Any]]:
             "doc_key": row[4] or document_id, "version": int(row[5] or 1), "uploaded_by_id": row[6]}
 
 
+def promote(tenant_id: str, document_id: str, status: str) -> int:
+    """Make a fully written document visible in one statement. Until then its chunks are 'indexing', which no
+    search, listing or comparison reads, so a worker that dies half way never leaves half a document in search."""
+    with _connect() as conn:
+        return conn.execute("UPDATE parent_chunks SET status = %s WHERE tenant_id = %s AND document_id = %s "
+                            "AND status = 'indexing'", (status, tenant_id, document_id)).rowcount
+
+
 def archive(tenant_id: str, document_id: str) -> int:
     with _connect() as conn:
         return conn.execute("UPDATE parent_chunks SET status = 'archived' WHERE tenant_id = %s AND document_id = %s "
