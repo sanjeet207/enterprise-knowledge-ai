@@ -7,6 +7,7 @@ import uuid
 
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app import tracing
 from app.services import metrics
 
 logger = logging.getLogger("eka.request")
@@ -45,6 +46,12 @@ class RequestMiddleware(BaseHTTPMiddleware):
     counts it. The line has no names, emails, questions or answers: only ids, route, status and timing."""
 
     async def dispatch(self, request, call_next):
+        if request.url.path == "/metrics":
+            return await self._handle(request, call_next, tracing._NO_SPAN)
+        with tracing.span("http.request", method=request.method) as sp:
+            return await self._handle(request, call_next, sp)
+
+    async def _handle(self, request, call_next, sp):
         incoming = request.headers.get("x-request-id", "")
         request_id = incoming if _SAFE_ID.match(incoming) else uuid.uuid4().hex
         request.state.request_id = request_id
@@ -54,6 +61,8 @@ class RequestMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             status = response.status_code
             response.headers["X-Request-ID"] = request_id
+            if sp.trace_id:
+                response.headers["X-Trace-ID"] = sp.trace_id
             https = request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
             for name, value in security_headers(request.url.path, https).items():
                 response.headers.setdefault(name, value)
@@ -61,8 +70,10 @@ class RequestMiddleware(BaseHTTPMiddleware):
         finally:
             elapsed = time.perf_counter() - started
             route = getattr(request.scope.get("route"), "path", None) or "unmatched"
+            sp.set(route=route, status=status, request_id=request_id)
             if route not in ("/metrics",):
                 metrics.inc("http_requests_total", method=request.method, route=route, status=status)
                 metrics.observe(elapsed, route=route)
                 logger.info(json.dumps({"event": "request", "request_id": request_id, "method": request.method,
-                                        "route": route, "status": status, "ms": round(elapsed * 1000)}))
+                                        "route": route, "status": status, "ms": round(elapsed * 1000),
+                                        "trace_id": sp.trace_id or None}))

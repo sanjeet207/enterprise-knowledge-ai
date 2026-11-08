@@ -3,6 +3,8 @@ import re
 import time
 from dataclasses import dataclass, field
 
+from app import tracing
+
 MAX_PASSAGE_CHARS = 2000
 
 
@@ -14,6 +16,7 @@ class Trace:
     def add(self, agent: str, started: float, detail: str = "") -> None:
         self.steps.append({"agent": agent, "ms": int((time.perf_counter() - started) * 1000),
                            "detail": (detail or "")[:400]})
+        tracing.record_step(agent, started)
 
 
 _OUR_TAGS = re.compile(r"<(/?\s*)(source|documents)", re.IGNORECASE)

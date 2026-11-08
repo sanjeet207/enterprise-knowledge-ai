@@ -8,7 +8,7 @@ from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
-from app import config, observability
+from app import config, observability, tracing
 from app.routers import admin, documents, retrieval, auth, chat, audit, me, research, sso
 from app.services import metrics, worker
 
@@ -17,10 +17,12 @@ STATIC_DIR = Path(__file__).parent / "static"
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Start the upload worker with the server and stop it cleanly on shutdown."""
+    tracing.setup()
     if config.INGEST_WORKER_ENABLED:
         worker.start()
     yield
     worker.stop()
+    tracing.shutdown()
 
 
 app = FastAPI(
@@ -30,7 +32,7 @@ app = FastAPI(
     openapi_url="/openapi.json" if config.API_DOCS_ENABLED else None,
     title="Enterprise Knowledge AI Platform",
     description="Secure multi-tenant RAG platform with hybrid search, RBAC, and local LLM generation",
-    version="0.10.0",
+    version="0.11.0",
 )
 
 observability.setup_logging()

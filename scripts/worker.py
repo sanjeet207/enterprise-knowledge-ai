@@ -6,6 +6,7 @@ Usage: INGEST_WORKER_ENABLED=false uvicorn app.main:app   # web only
 import signal
 import threading
 
+from app import tracing
 from app.services import worker
 
 
@@ -13,8 +14,10 @@ def main() -> None:
     stop = threading.Event()
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: stop.set())
+    tracing.setup()
     print("Upload worker running. Press Ctrl+C to stop.")
     worker.loop(stop)
+    tracing.shutdown()
 
 
 if __name__ == "__main__":

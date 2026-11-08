@@ -128,6 +128,12 @@ def run_one() -> bool:
     job = claim()
     if job is None:
         return False
+    with tracing.span("ingest.job", attempt=job["attempts"]):
+        _process(job)
+    return True
+
+
+def _process(job: dict) -> None:
     started = time.perf_counter()
     try:
         # Nothing from the queue is trusted: who the person is and what they may do is read again, now.
@@ -156,4 +162,3 @@ def run_one() -> bool:
         _done(job["id"], result)
         metrics.inc("ingest_jobs", result="done")
         log.info("ingest job %s done in %.1fs", job["id"], time.perf_counter() - started)
-    return True

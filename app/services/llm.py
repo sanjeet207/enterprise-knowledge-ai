@@ -1,7 +1,7 @@
 """Thin client for the model server. Agents build their own prompts and call chat()."""
 import httpx
 
-from app import config
+from app import config, tracing
 
 
 class LLMUnavailable(RuntimeError):
@@ -24,11 +24,13 @@ async def chat(system: str, user: str, *, model: str | None = None, num_ctx: int
     }
     if schema:
         payload["format"] = schema  # the server constrains the reply to this JSON shape
-    try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(f"{config.OLLAMA_URL}/api/chat", json=payload)
-    except httpx.HTTPError as exc:
-        raise LLMUnavailable(f"Could not reach the model server: {exc.__class__.__name__}") from exc
-    if response.status_code != 200:
-        raise LLMUnavailable(f"Model server returned status {response.status_code}")
-    return response.json().get("message", {}).get("content", "").strip()
+    with tracing.span("llm.chat", **{"llm.model": payload["model"], "llm.structured": bool(schema)}) as sp:
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.post(f"{config.OLLAMA_URL}/api/chat", json=payload)
+        except httpx.HTTPError as exc:
+            raise LLMUnavailable(f"Could not reach the model server: {exc.__class__.__name__}") from exc
+        sp.set(**{"http.status": response.status_code})
+        if response.status_code != 200:
+            raise LLMUnavailable(f"Model server returned status {response.status_code}")
+        return response.json().get("message", {}).get("content", "").strip()

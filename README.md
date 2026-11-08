@@ -254,6 +254,10 @@ python -m scripts.evaluate --only multi_part --workers 3   # a category, in para
 
 `docker compose --profile app up -d --build` builds and starts the API container next to the database (it reaches Ollama on the host through `host.docker.internal`). CI verifies that the image builds; a full deployed run on Azure is on the roadmap.
 
+## Tracing
+
+Optional request tracing shows where each answer's time went (retrieval, reranking, each model call). Spans carry only ids, counts and timings, never questions, answers or document text. See [docs/TRACING.md](docs/TRACING.md).
+
 ## Continuous integration
 
 GitHub Actions runs on every push: **unit tests**, **access-control checks against a real Postgres with pgvector** (the job fails on any leak), and a **Docker image build**.
