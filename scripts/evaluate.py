@@ -75,6 +75,7 @@ def main() -> int:
     parser.add_argument("--eval-set", default="tests/eval_set.json")
     parser.add_argument("--workers", type=int, default=1, help="questions asked at the same time")
     parser.add_argument("--only", default="", help="comma-separated categories to run")
+    parser.add_argument("--tag", default="", help="name for a separate report, e.g. independent -> evaluation/INDEPENDENT_REPORT.md")
     args = parser.parse_args()
 
     cases = json.loads(Path(args.eval_set).read_text())
@@ -160,8 +161,12 @@ def main() -> int:
     # A partial or parallel run is for quick checks; only a full single-worker run is the published report.
     publish = not partial and workers == 1
     Path("evaluation").mkdir(exist_ok=True)
-    Path("evaluation/EVAL_REPORT.md" if publish else "evaluation/EVAL_REPORT_quick.md").write_text("\n".join(lines) + "\n")
-    Path("evaluation/eval_results.json" if publish else "evaluation/eval_results_quick.json").write_text(json.dumps(results, indent=1))
+    if args.tag:
+        Path(f"evaluation/{args.tag.upper()}_REPORT.md").write_text("\n".join(lines) + "\n")
+        Path(f"evaluation/{args.tag}_results.json").write_text(json.dumps(results, indent=1))
+    else:
+        Path("evaluation/EVAL_REPORT.md" if publish else "evaluation/EVAL_REPORT_quick.md").write_text("\n".join(lines) + "\n")
+        Path("evaluation/eval_results.json" if publish else "evaluation/eval_results_quick.json").write_text(json.dumps(results, indent=1))
     print("\n" + "\n".join(lines))
     return 1 if leaks else 0
 

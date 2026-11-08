@@ -182,7 +182,7 @@ Measured on a MacBook Pro (M3, 16 GB) with `qwen2.5:7b` via Ollama.
 
 ### Honest limitations
 
-- The 86 questions were written by the author against the same demo documents, so 100% means "no regressions on this suite", not "perfect in general". An independently written question set is the next improvement to the evaluation.
+- The 86 questions were written by the author against the same demo documents, so 100% means "no regressions on this suite", not "perfect in general". A second set of 27 questions (evaluation/independent_questions.csv) was written by the AI assistant that helped build the project, from the documents alone and before seeing any results, so it is not tuned to the system but it is not written by an outside person either. A set written by a human outside the project (brief in evaluation/QUESTION_BRIEF.md) is still wanted. Results are published as they come, whatever they are.
 - The corpus is small and fictional. No claim is made about scale.
 - Latency is that of a local 7B model on a laptop. A hosted model would be faster; the agents are model-agnostic through a per-agent model setting (`<AGENT>_MODEL`).
 - The model-based evaluation is **not** run in CI (the 7B model is too slow on hosted runners). CI runs the unit tests, the access-control sweep and the image build; the evaluation is run locally before a release.
@@ -242,7 +242,7 @@ Try the same question as different users: for example *"What is the indicative v
 ### Tests and checks
 
 ```bash
-python -m pytest -q tests             # 249 unit tests, no database or model needed
+python -m pytest -q tests             # 267 unit tests, no database or model needed
 python -m scripts.verify_access       # 160 access-control checks (needs the database)
 python -m scripts.check_validator     # planted-error check for the validator (needs Ollama)
 python -m scripts.smoke_test          # end-to-end check of every path against the running server (needs Ollama)
@@ -266,13 +266,19 @@ GitHub Actions runs on every push: **unit tests**, **access-control checks again
 
 ```
 app/
-  agents/        corrector, retriever, rewriter, planner, answerer, validator, orchestrator
-  routers/       auth, sso, chat (conversations, feedback), documents (upload, versions, compare), admin, retrieval, audit (FastAPI)
+  agents/        corrector, condenser, retriever, rewriter, planner, answerer, validator, router, general and its checker,
+                 comparer, inspector (reviews uploads), research planner and writer, orchestrator
+  routers/       auth, sso, chat (conversations, feedback), documents (upload, jobs, versions, compare), research, admin,
+                 me (data export and erase), retrieval, audit (FastAPI)
   services/      vector store (SQL access control), embedder, reranker, LLM client, audit, answer checks,
-                 file extraction, upload policy, admin, lockout, rate limit
+                 file extraction, upload policy, admin, lockout, rate limit, background job queue and worker,
+                 content scan, reports, metrics, tracing
   static/        web UI (login, chat with sources, documents, administration, audit view)
-scripts/         quickstart, init_db, seed_demo, verify_access, smoke_test, check_validator, evaluate
-tests/           unit tests and the 86-question evaluation set
+scripts/         quickstart, init_db, seed_demo, verify_access, smoke_test, check_validator, check_inspector,
+                 security_probe, evaluate, evaluate_research, import_questions, worker, migrations, purge_retention
+tests/           unit tests, the 86-question evaluation set and the research task set
+docs/            SECURITY_REVIEW, SSO, TRACING
+evaluation/      reports from the evaluation runs, the question brief for an independent question writer
 ```
 
 ## Roadmap
@@ -286,15 +292,18 @@ tests/           unit tests and the 86-question evaluation set
 - Request IDs, JSON logs, readiness and metrics; personal-data export and erase; retention; review dates
 - Single sign-on (OpenID Connect), unit-tested against locally signed tokens
 - Document versions and comparison with a checked summary
+- Background document processing: PostgreSQL job queue with retries, back-off and crash recovery
+- Security review with a live attack script and an upload reviewer (docs/SECURITY_REVIEW.md)
+- Request tracing (OTLP, Jaeger), spans free of questions, answers and names (docs/TRACING.md)
 - Agentic research assistant: multi-step, cited reports where every step runs under the asker's own access rules (on 6 author-written tasks the report cited 4 of 6 expected documents against 2 of 6 for a single question, with 0 leaks; see evaluation/RESEARCH_EVAL.md)
 
 **In progress**
-- Independent evaluation set (questions written by someone else)
+- Evaluation by a human outside the project: brief and importer are ready (evaluation/QUESTION_BRIEF.md); a 27-question second-party set is in evaluation/independent_questions.csv
 
 **Planned**
-- An independently written evaluation set and broader adversarial security tests
+- Broader adversarial security tests, including an outside review
 - Azure deployment with a spending cap, which also gives SSO its first test against a live Entra tenant
-- Distributed tracing (OpenTelemetry) and a model router
+- A model router (a small model for easy steps, a larger one for hard ones)
 - Group-to-level mapping and SCIM, OCR for scanned PDFs
 
 ## Tech

@@ -33,4 +33,9 @@ Each finding below was confirmed in the code first, then fixed, then given a tes
 - **Text extraction runs inside the upload request** (indexing runs in the worker), bounded by the size, unpacked-size, page and character limits above.
 - **The rate limiter is in memory**, so it is per server process.
 - **Planted-instruction defence is layered, not perfect**: patterns, a reviewer model that reads each upload, the neutralised prompt wrapper, "reference data, never instructions" prompts and the claim validator. A reviewer model can be fooled or can wrongly flag unusual wording (an administrator then sees the quoted sentence). The reviewer reads documents when they are uploaded, so documents added before it existed were not read.
+- **The reviewer model gives false alarms.** On ordinary staff instructions written to employees (for example a rules
+  document that tells staff what to do) it flagged about 1 in 6 of the cases I tried. A flag only holds the upload for a second
+  administrator, who sees the quoted sentence, so the cost is a delay, not a lost document. It was tuned on cases written by the
+  author, so its real miss rate against a determined, unseen attacker is unknown (10 of 11 known cases pass, see
+  `scripts/check_inspector.py`).
 - The demo accounts and password are for local use only.
