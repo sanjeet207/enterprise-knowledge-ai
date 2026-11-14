@@ -57,9 +57,10 @@ PLANNER_ENABLED = os.getenv("PLANNER_ENABLED", "false").lower() in ("1", "true",
 PLANNER_MAX_SEARCHES = int(os.getenv("PLANNER_MAX_SEARCHES", "3"))
 
 
+# Off by default: a question the documents cannot answer is refused. Set GENERAL_ENABLED=true to allow labelled general answers.
 # General-knowledge path: questions the documents cannot answer, answered by the model alone and labelled as such.
 # Company-specific questions are never answered this way (see app/services/question_profile.py).
-GENERAL_ENABLED = os.getenv("GENERAL_ENABLED", "true").lower() in ("1", "true", "yes")
+GENERAL_ENABLED = os.getenv("GENERAL_ENABLED", "false").lower() in ("1", "true", "yes")
 
 
 def agent_model(name: str) -> str:

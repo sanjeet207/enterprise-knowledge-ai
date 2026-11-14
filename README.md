@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/sanjeet207/enterprise-knowledge-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/sanjeet207/enterprise-knowledge-ai/actions/workflows/ci.yml)
 
-A secure internal "company brain". Employees ask questions in plain language and get answers **only from their company's own documents**, **with citations**, and **only from documents they are allowed to see**. Access depends on the person's clearance level and, for sensitive material, on whether they are on the engagement team. A question that is plainly not about the company ("What is GST?") is answered from general knowledge and clearly labelled as such; company-specific questions are never answered that way. Answers are verified before they are shown, and every question is written to an audit log.
+A secure internal "company brain". Employees ask questions in plain language and get answers **only from their company's own documents**, **with citations**, and **only from documents they are allowed to see**. Access depends on the person's clearance level and, for sensitive material, on whether they are on the engagement team. A question that is not about the company ("What is GST?", "What is the weather?") is refused. An optional switch (`GENERAL_ENABLED=true`) allows clearly labelled general-knowledge answers; it is off by default. Answers are verified before they are shown, and every question is written to an audit log.
 
 > **About the data.** Everything in this repository is fictional. The demo company, "Acme Financial Services", and its fourteen policy documents were written for this project, as were the demo users and their shared password (`DemoPass2026x`, for local use only). A second tenant, "Globex" (two documents), exists to test tenant isolation.
 
@@ -18,7 +18,7 @@ A secure internal "company brain". Employees ask questions in plain language and
 | **Failing safe** | If an answer cannot be verified after bounded retries, nothing is shown (`unverified`) rather than a guess. |
 | **Prompt injection** | Retrieved text and user questions are treated as data. Injection attempts are part of the evaluation set. |
 | **Auditability** | Every question is logged with its outcome, sources, timings and a step-by-step agent trace, viewable by a Partner (level 4). |
-| **Beyond the documents** | A router decides whether a question the documents cannot answer is general knowledge. Plain code blocks company words and override attempts first; the answer is labelled "General knowledge", has no sources, and must pass its own checker. Anything else gets the same refusal as before. |
+| **Beyond the documents (optional, off by default)** | With `GENERAL_ENABLED=true`, a router decides whether a question the documents cannot answer is general knowledge. Plain code blocks company words and override attempts first; the answer is labelled "General knowledge", has no sources, and must pass its own checker. Anything else gets the same refusal as before. |
 | **No vendor lock-in** | Runs entirely on a local model (Ollama, `qwen2.5:7b`). No API key is needed. |
 
 ## Architecture
@@ -165,7 +165,7 @@ Optional OpenID Connect login (authorization code flow with PKCE, state and nonc
 | Refusal accuracy (14 restricted, 3 off-topic, 7 injection) | **100%** (24/24) |
 | **Access leaks** (a forbidden fact appears in an answer) | **0** |
 | Multi-part questions (every part answered and cited) | **100%** (6/6) |
-| General knowledge (answered by the model, labelled, no sources) | **100%** (8/8) |
+| Not about the company (refused, no sources) | **100%** (8/8) |
 | No-answer guard (8 questions the documents cannot answer, no invented facts) | **100%** (8/8) |
 | Injection hidden in a valid question (no leak) | **100%** (3/3) |
 | Median latency, answered / refused | 7.2 s / 2.5 s |

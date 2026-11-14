@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Changed
+- Questions not about the company are refused by default. `GENERAL_ENABLED` now defaults to false; smoke test and evaluation expect a refusal unless it is set to true.
+
 ### Added
 - Technical self-audit (`docs/TECHNICAL_AUDIT.md`). Fixed: a worker killed mid-upload could leave half a document searchable and the retry reported it done (chunks are now written hidden and published in one statement); a slow worker could overwrite a job another worker owned. `scripts/crash_test.py` simulates the kill. `scripts/reproduce.sh` runs every check and saves logs to `evaluation/logs/`.
 - Found by the second question set: pay questions are now treated as company questions (never answered from general knowledge); the citation check no longer penalises words the question itself used; one quick retry when the model server drops a request. `scripts/diagnose.py` shows every step for one question. A prompt rule for comparing amounts was tried and removed because it lowered accuracy.
