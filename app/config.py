@@ -66,6 +66,11 @@ PLANNER_MAX_SEARCHES = int(os.getenv("PLANNER_MAX_SEARCHES", "3"))
 RERANK_BLEND = os.getenv("RERANK_BLEND", "rrf").lower()
 
 REFINER_ENABLED = os.getenv("REFINER_ENABLED", "false").lower() in ("1", "true", "yes")
+# The refiner runs only when the first search scored below this (a clear question with a strong match is left alone),
+# and its rewrite is used to search, never shown to the answerer.
+REFINER_BELOW = float(os.getenv("REFINER_BELOW", "0.5"))
+# A smaller answering model is used only when the documents clearly match (top score at least this).
+ROUTER_MIN_SCORE = float(os.getenv("ROUTER_MIN_SCORE", "0.9"))
 
 # Off by default: a question the documents cannot answer is refused. Set GENERAL_ENABLED=true to allow labelled general answers.
 # General-knowledge path: questions the documents cannot answer, answered by the model alone and labelled as such.

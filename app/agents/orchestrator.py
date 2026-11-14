@@ -5,10 +5,12 @@ Plain code, not a model. Access control is decided by the retriever's SQL filter
 import time
 
 from app import config
-from app.agents import answerer, corrector, general, general_checker, planner, refiner, rewriter, router, validator
+from app.agents import (answerer, corrector, fit_checker, general, general_checker, planner, refiner, rewriter, router,
+                        validator)
 from app.agents.base import Trace
 from app.services import audit
-from app.services.answer_check import cited_numbers, is_insufficient, strip_invalid_citations, uncited_sentences
+from app.services.answer_check import (cited_numbers, is_hollow, is_insufficient, strip_invalid_citations,
+                                       uncited_sentences, unsupported_numbers)
 from app.services import question_profile
 from app.services.llm import LLMUnavailable
 
@@ -174,24 +176,24 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
         if general_result is not None:
             return general_result
         return finish("refused", REFUSAL, top_score=top_score)
-    # 4b. Relevance is settled, so the question is worth improving: the refiner rewrites it into its clearest form.
-    #     The analysis above stays on what the person actually wrote; the answerer and validator see the refined
-    #     question, and a search with it can add passages the first wording missed.
-    if config.REFINER_ENABLED:
+    # 4b. Relevance is settled. If the match is only moderate, the refiner rewrites the question into its clearest
+    #     form and that wording is used to SEARCH for more passages. The answerer and validator keep the person's own
+    #     (typo-fixed) wording: measured earlier, answering the rewrite changed vocabulary and cost accuracy. A clear
+    #     question with a strong match is never rewritten, so the common case pays nothing.
+    if config.REFINER_ENABLED and top_score < config.REFINER_BELOW:
         t = _now()
         try:
             refined = await refiner.run(question)
         except LLMUnavailable:
             refined = question
-        if refined.lower() != question.lower():
-            trace.add("refiner", t, f"-> {refined}")
-            notes.append(f"refined: {refined}")
-            question = refined
-            if refined.lower() not in tried:
-                tried.add(refined.lower())
-                search(refined)
-                reranked = combine()
-                top_score = max(top_score, reranked[0]["rerank_score"]) if reranked else top_score
+        if refined.lower() != question.lower() and refined.lower() not in tried:
+            tried.add(refined.lower())
+            before = top_score
+            search(refined)
+            reranked = combine()
+            top_score = max(top_score, reranked[0]["rerank_score"]) if reranked else top_score
+            trace.add("refiner", t, f"search with: {refined} (score {before:.3f} -> {top_score:.3f})")
+            notes.append(f"refined search: {refined}")
         else:
             trace.add("refiner", t, "no change")
     trace.add("analysis", _now(), f"depth {prof['depth']}, format {prof['format']}")
@@ -201,7 +203,7 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
     passages = [p["parent_content"] for p in reranked]
     # Model router: the question's depth picks the model that writes the answer. Any retry goes to the main model.
     main_model = config.agent_model(answerer.NAME)
-    model = config.answer_model(prof["depth"])
+    model = config.answer_model(prof["depth"]) if top_score >= config.ROUTER_MIN_SCORE else main_model
     if model != main_model:  # the default path calls the answerer exactly as before
         style_kw["model"] = model
         trace.add("router", _now(), f"{prof['depth']} question: {model}")
@@ -223,6 +225,33 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
             t = _now()
             answer = await answerer.run(question, passages, **style_kw)
             trace.add("answerer", t, "main model: insufficient" if is_insufficient(answer) else f"main model: {answer}")
+        # Hollow answer (only citation markers): no check below can judge it, so it never goes on.
+        if not is_insufficient(answer) and is_hollow(answer):
+            trace.add("validator", _now(), "hollow: no content besides citation markers")
+            if model != main_model:
+                escalate()
+                t = _now()
+                answer = await answerer.run(question, passages, **style_kw)
+                trace.add("answerer", t, "main model: insufficient" if is_insufficient(answer) else f"main model: {answer}")
+            if not is_insufficient(answer) and is_hollow(answer):
+                return finish("unverified", UNVERIFIED, top_score=top_score, model=model)
+        # A smaller model's answer must use only figures from the passages and must address the question,
+        # or the main model writes the answer instead.
+        if model != main_model and not is_insufficient(answer):
+            reason = None
+            if unsupported_numbers(answer, passages):
+                reason = "number not found in the passages"
+            else:
+                t = _now()
+                if not await fit_checker.run(question, answer):
+                    reason = "answer does not address the question"
+                    trace.add("validator", t, "fit: no")
+            if reason:
+                trace.add("router", _now(), f"{reason}: main model answers")
+                escalate()
+                t = _now()
+                answer = await answerer.run(question, passages, **style_kw)
+                trace.add("answerer", t, "main model: insufficient" if is_insufficient(answer) else f"main model: {answer}")
         if not is_insufficient(answer) and not cited_numbers(answer, len(passages)):
             escalate()
             t = _now()

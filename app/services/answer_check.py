@@ -135,6 +135,33 @@ def parse_corrected_question(text: str, original: str) -> str:
     return accept_correction(original, value) if isinstance(value, str) else original
 
 
+def is_hollow(answer: str) -> bool:
+    """True if the answer has no real content once citation markers like [1] are removed (a model that writes only "[1]"); even "Yes [1]" has content."""
+    words = re.findall(r"[A-Za-z]{2,}", re.sub(r"\[\d+\]", " ", answer or ""))
+    return not words
+
+
+def parse_fit(text: str) -> bool:
+    """Read the fit checker's JSON reply {"answers_question": bool}. Anything unreadable counts as yes (fail open)."""
+    data = _load_json_object(text)
+    value = data.get("answers_question") if data else None
+    return value if isinstance(value, bool) else True
+
+
+def unsupported_numbers(answer: str, passages: list[str]) -> list[str]:
+    """Figures in the answer that appear in none of the passages (citation markers like [1] are ignored).
+
+    Plain code. A figure the model wrote as digits but the document wrote in words ("3" / "three") also shows up here,
+    which is harmless: it only sends the question to the larger model.
+    """
+    text = re.sub(r"\[\d+\]", " ", answer)
+    wanted = set(re.findall(r"\d+(?:[.,]\d+)*", text))
+    have = set(re.findall(r"\d+(?:[.,]\d+)*", " ".join(passages)))
+    norm = lambda n: n.replace(",", "")  # noqa: E731
+    have_norm = {norm(h) for h in have}
+    return sorted(n for n in wanted if norm(n) not in have_norm)
+
+
 def accept_refinement(original: str, refined: str) -> str:
     """Return the refined question only if plain code agrees it kept the meaning; otherwise the original.
 
