@@ -135,6 +135,38 @@ def parse_corrected_question(text: str, original: str) -> str:
     return accept_correction(original, value) if isinstance(value, str) else original
 
 
+def accept_refinement(original: str, refined: str) -> str:
+    """Return the refined question only if plain code agrees it kept the meaning; otherwise the original.
+
+    Rules: one line, not an answer; no number added or dropped; not much longer than a clear question needs; and
+    most of the original's content words are still there (so no part of a multi-part question is lost).
+    """
+    text = " ".join((refined or "").replace('"', " ").split())
+    if not text or "[" in text or "\n" in (refined or "").strip():
+        return original
+    if text.lower().startswith(("answer:", "the answer", "yes,", "no,")):
+        return original
+    if len(text.split()) > max(45, 3 * len(original.split()) + 15):
+        return original
+    numbers = lambda s: sorted(re.findall(r"\d+(?:[.,]\d+)?", s))  # noqa: E731
+    if numbers(text) != numbers(original):
+        return original
+    wanted = {w[:4] for w in _content_words(original)}
+    if not wanted:
+        return original
+    have = {w[:4] for w in _content_words(text)}
+    if len(wanted & have) / len(wanted) < 0.7:
+        return original
+    return text
+
+
+def parse_refined_question(text: str, original: str) -> str:
+    """Read the refiner's JSON reply {"refined_question": "..."}; anything invalid keeps the original."""
+    data = _load_json_object(text)
+    value = data.get("refined_question") if data else None
+    return accept_refinement(original, value) if isinstance(value, str) else original
+
+
 def parse_plan(text: str, max_len: int = 150) -> tuple[str, str]:
     """Read the planner's JSON reply. Anything invalid, or a search with no usable query, means finish."""
     data = _load_json_object(text)

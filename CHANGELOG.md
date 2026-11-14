@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Refiner agent (off by default, `REFINER_ENABLED=true`): after a question is accepted as being about the company, the model rewrites it into its clearest form; plain code rejects a rewrite that adds or drops a number, loses part of the question, or looks like an answer. A search with the refined wording is merged into the passages. Measured: no gain (86-question answerable 37/37 -> 36/37, +4 s per answer), so it stays off.
+
 ### Changed
 - Questions not about the company are refused by default. `GENERAL_ENABLED` now defaults to false; smoke test and evaluation expect a refusal unless it is set to true.
 

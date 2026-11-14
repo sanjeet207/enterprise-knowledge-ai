@@ -199,6 +199,7 @@ What the evaluation found along the way** (each fix was driven by a failing case
 - A validator that judged all claims in one free-text reply produced false rejections; per-claim JSON verdicts plus a deterministic citation check fixed it (7/7 planted-error cases).
 - Multi-part questions went **4/6 → 6/6** after two changes found by reading the audit trace: a plain-code rule that every sentence needs a citation, and sending the validator's objection back to the answerer on retry (at temperature 0, an unchanged retry just repeats the same answer).
 - A **bounded planner agent** (a search-or-finish tool loop) was built and measured fairly with an on/off comparison. It gave **no gain** (4/6 with and without it) and cost about 2 s per question, so it is **off by default** (`PLANNER_ENABLED=true` turns it on).
+- A **question refiner** (rewrites a question already accepted as being about the company into its clearest form, checked by plain code) was measured the same way and **did not help**. With it on, 86-question answerable accuracy fell from 37/37 to 36/37 and answers took about 4 s longer; in one case the longer rewritten wording made the answerer say "insufficient" although the right passages had been found. It is **off by default** (`REFINER_ENABLED=true` turns it on). The 27-question run with it on is kept in `evaluation/refiner_experiment/`.
 
 ### Honest limitations
 

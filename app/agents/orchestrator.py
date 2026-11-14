@@ -5,7 +5,7 @@ Plain code, not a model. Access control is decided by the retriever's SQL filter
 import time
 
 from app import config
-from app.agents import answerer, corrector, general, general_checker, planner, rewriter, router, validator
+from app.agents import answerer, corrector, general, general_checker, planner, refiner, rewriter, router, validator
 from app.agents.base import Trace
 from app.services import audit
 from app.services.answer_check import cited_numbers, is_insufficient, strip_invalid_citations, uncited_sentences
@@ -152,8 +152,8 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
             if alt_score > top_score:
                 reranked, top_score = alt, alt_score
 
-    # When several searches ran, combine them: keep relevant passages only, best first, no duplicates.
-    if len(searches) > 1 and top_score >= config.REFUSAL_THRESHOLD:
+    def combine() -> list[dict]:
+        """Combine several searches: keep relevant passages only, best first, no duplicates."""
         pool: dict[str, dict] = {}
         for hits in searches:
             for h in hits:
@@ -161,7 +161,10 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
                     key = h["parent_content"]
                     if key not in pool or h["rerank_score"] > pool[key]["rerank_score"]:
                         pool[key] = h
-        reranked = sorted(pool.values(), key=lambda h: h["rerank_score"], reverse=True)[:min(5, top_k + 1)]
+        return sorted(pool.values(), key=lambda h: h["rerank_score"], reverse=True)[:min(5, top_k + 1)]
+
+    if len(searches) > 1 and top_score >= config.REFUSAL_THRESHOLD:
+        reranked = combine()
 
     # 4. Still not relevant to any document this user may see. A question that is plainly not about the
     #    company may be answered from general knowledge, labelled as such; everything else is refused.
@@ -171,6 +174,26 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
         if general_result is not None:
             return general_result
         return finish("refused", REFUSAL, top_score=top_score)
+    # 4b. Relevance is settled, so the question is worth improving: the refiner rewrites it into its clearest form.
+    #     The analysis above stays on what the person actually wrote; the answerer and validator see the refined
+    #     question, and a search with it can add passages the first wording missed.
+    if config.REFINER_ENABLED:
+        t = _now()
+        try:
+            refined = await refiner.run(question)
+        except LLMUnavailable:
+            refined = question
+        if refined.lower() != question.lower():
+            trace.add("refiner", t, f"-> {refined}")
+            notes.append(f"refined: {refined}")
+            question = refined
+            if refined.lower() not in tried:
+                tried.add(refined.lower())
+                search(refined)
+                reranked = combine()
+                top_score = max(top_score, reranked[0]["rerank_score"]) if reranked else top_score
+        else:
+            trace.add("refiner", t, "no change")
     trace.add("analysis", _now(), f"depth {prof['depth']}, format {prof['format']}")
     style = question_profile.style_for(prof["format"])
     style_kw = {"style": style} if style else {}

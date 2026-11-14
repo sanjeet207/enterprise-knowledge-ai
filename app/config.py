@@ -57,6 +57,10 @@ PLANNER_ENABLED = os.getenv("PLANNER_ENABLED", "false").lower() in ("1", "true",
 PLANNER_MAX_SEARCHES = int(os.getenv("PLANNER_MAX_SEARCHES", "3"))
 
 
+# Refiner: after a question is accepted as being about the company, rewrite it into its clearest form for the
+# answering model (checked by plain code). Off until the evaluation shows it helps; REFINER_ENABLED=true turns it on.
+REFINER_ENABLED = os.getenv("REFINER_ENABLED", "false").lower() in ("1", "true", "yes")
+
 # Off by default: a question the documents cannot answer is refused. Set GENERAL_ENABLED=true to allow labelled general answers.
 # General-knowledge path: questions the documents cannot answer, answered by the model alone and labelled as such.
 # Company-specific questions are never answered this way (see app/services/question_profile.py).
