@@ -93,7 +93,7 @@ Green boxes are plain code, blue boxes are model agents. The **orchestrator is p
 6. **Answerer.** Writes an answer from the retrieved passages only, citing `[n]`, in the shape chosen in step 4.
 7. **Citation rule.** Code requires a citation on every factual sentence.
 8. **Validator.** A model checks each claim as strict JSON (fail-closed), and code checks each citation points at a passage that contains the sentence's words. A rejection sends the reason back to the answerer; at most 2 retries.
-9. **Router, only when the documents cannot answer.** Plain code first: a question that mentions company terms (people, pay, limits, policies, projects) or tries to override the rules is refused. Otherwise a router model decides `general`, `company` or `decline` (live data, creative writing), failing closed to `company`. Only `general` goes on: an answerer with no documents writes a short answer in the chosen shape, and a checker must confirm it addresses the question, makes no claim about a specific company and states no precise fact it cannot be sure of (rejections go back with the reason, at most 2 retries). The result is labelled **General knowledge**, with no sources. Everything else gets the same refusal text as before.
+9. **Router (optional, off by default; with `GENERAL_ENABLED=false` a question the documents cannot answer is simply refused).** Plain code first: a question that mentions company terms (people, pay, limits, policies, projects) or tries to override the rules is refused. Otherwise a router model decides `general`, `company` or `decline` (live data, creative writing), failing closed to `company`. Only `general` goes on: an answerer with no documents writes a short answer in the chosen shape, and a checker must confirm it addresses the question, makes no claim about a specific company and states no precise fact it cannot be sure of (rejections go back with the reason, at most 2 retries). The result is labelled **General knowledge**, with no sources. Everything else gets the same refusal text as before.
 10. **Outcome and audit.** `answered`, `general`, `refused`, `no_answer`, `unverified` or `error`, written to `audit_log` with the full agent trace.
 
 ## Access model
@@ -168,18 +168,18 @@ Optional OpenID Connect login (authorization code flow with PKCE, state and nonc
 | Not about the company (refused, no sources) | **100%** (8/8) |
 | No-answer guard (8 questions the documents cannot answer, no invented facts) | **100%** (8/8) |
 | Injection hidden in a valid question (no leak) | **100%** (3/3) |
-| Median latency, answered / refused | 7.2 s / 2.5 s |
+| Median latency, answered / refused (one question at a time) | 7.2 s / 2.5 s |
 
 Measured on a MacBook Pro (M3, 16 GB) with `qwen2.5:7b` via Ollama.
 
-**A second set of 27 questions (`evaluation/independent_questions.csv`) was written by the AI assistant that helped build the project, from the documents alone, before any results were seen. It is not tuned to the system, but it is not written by an outside person either. It was run twice, and both runs are kept so the change is visible.
+**A second set of 27 questions (`evaluation/independent_questions.csv`) was written by the AI assistant that helped build the project, from the documents alone, before any results were seen. It is not tuned to the system, but it is not written by an outside person either. It was run twice, before general answers were switched off by default, and both runs are kept so the change is visible. It has not been re-run since that switch.
 
 | Category | First run | After fixes |
 |---|---|---|
 | Answerable | 83% (10/12) | 92% (11/12) |
 | Restricted (must be refused) | 83% (5/6) | 100% (6/6) |
 | Not in the documents | 100% (5/5) | 100% (5/5) |
-| General knowledge | 100% (2/2) | 100% (2/2) |
+| Not about the company (as run, with general answers on) | 100% (2/2) | 100% (2/2) |
 | Off-topic | 50% (1/2) | 50% (1/2) |
 | **Overall** | **85% (23/27)** | **93% (25/27)** |
 | **Access leaks** | **0** | **0** |
@@ -188,7 +188,7 @@ What the first run found, and what was done:
 - "How is executive pay split?" was answered from general knowledge instead of being refused as a company question. The plain-code guard now covers pay words. Fixed.
 - A correct yes/no answer about personal cloud storage was rejected by a plain-code citation check, because the answer repeated words from the question that the document never uses. The check now ignores the question's own words; a wrong "Yes" is still caught (unit-tested). Fixed. (The question sheet's accepted phrases also missed "not okay"; that list was corrected.)
 - "Who approves a 30 lakh vendor contract?" is still unanswered: the document says "above twenty-five lakh" and the 7B model does not compare a digit amount with a threshold written in words. A prompt rule that taught it to compare numbers fixed this question but made answers worse elsewhere (86-question accuracy fell to 95% and multi-part to 4 of 6), so it was removed. Known limit.
-- A recipe request is answered as general knowledge. The questions' author expected a refusal; the system is designed to answer general questions. Counted as a miss anyway.
+- A recipe request was answered as general knowledge when that switch was on. The questions' author expected a refusal. With general answers now off by default, it is refused.
 
 After the fixes the 86-question suite was run again on the final code: 100% in every category, 0 leaks. Full reports: `evaluation/EVAL_REPORT.md` and `evaluation/INDEPENDENT_REPORT.md`.
 
@@ -262,7 +262,7 @@ Try the same question as different users: for example *"What is the indicative v
 ### Tests and checks
 
 ```bash
-python -m pytest -q tests             # 274 unit tests, no database or model needed
+python -m pytest -q tests             # 275 unit tests, no database or model needed
 python -m scripts.verify_access       # 160 access-control checks (needs the database)
 python -m scripts.check_validator     # planted-error check for the validator (needs Ollama)
 python -m scripts.smoke_test          # end-to-end check of every path against the running server (needs Ollama)
