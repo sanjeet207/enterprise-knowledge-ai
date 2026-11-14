@@ -85,7 +85,7 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
     def search(text: str) -> tuple[list[dict], float]:
         t = _now()
         hits = retriever.run(user, text, top_k)
-        score = hits[0]["rerank_score"] if hits else 0.0
+        score = max((h["rerank_score"] for h in hits), default=0.0)
         titles = ", ".join(str(h["metadata"].get("title")) for h in hits)
         trace.add("retriever", t, f"score {score:.3f}: {titles}" if titles else f"score {score:.3f}")
         searches.append(hits)

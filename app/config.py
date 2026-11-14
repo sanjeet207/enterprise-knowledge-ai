@@ -60,6 +60,11 @@ PLANNER_MAX_SEARCHES = int(os.getenv("PLANNER_MAX_SEARCHES", "3"))
 
 # Refiner: after a question is accepted as being about the company, rewrite it into its clearest form for the
 # answering model (checked by plain code). Off until the evaluation shows it helps; REFINER_ENABLED=true turns it on.
+# How the reranker's order is combined with the search order. "rrf" (default) = rank-fuse both orders, so the
+# reranker cannot drop a passage the search ranked highly. "none" = rerank order only; "guard" = rerank order, but
+# the search's first hit is never dropped. Measured with scripts/retrieval_eval.py (see README).
+RERANK_BLEND = os.getenv("RERANK_BLEND", "rrf").lower()
+
 REFINER_ENABLED = os.getenv("REFINER_ENABLED", "false").lower() in ("1", "true", "yes")
 
 # Off by default: a question the documents cannot answer is refused. Set GENERAL_ENABLED=true to allow labelled general answers.
