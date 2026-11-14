@@ -38,7 +38,8 @@ RETENTION_DAYS = int(os.getenv("RETENTION_DAYS", "365"))
 CHAT_RATE_PER_MINUTE = int(os.getenv("CHAT_RATE_PER_MINUTE", "20"))
 
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-EMBEDDING_DIM = 384
+EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "local").lower()  # local | ollama
+EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", "384"))
 
 # --- LLM and answer-safety settings ---
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")

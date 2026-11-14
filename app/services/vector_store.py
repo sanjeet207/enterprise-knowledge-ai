@@ -130,7 +130,7 @@ class VectorStoreService:
     def secure_hybrid_rrf_search(
         self, tenant_id: str, user_id: str, user_level: int, query: str, top_k: int = 5, k_rrf: int = 60
     ) -> List[Dict[str, Any]]:
-        query_embedding = embed_texts([query])[0]
+        query_embedding = embed_texts([query], kind="query")[0]
         sql_secure_rrf = """
         WITH allowed_parents AS (
             SELECT id FROM parent_chunks
