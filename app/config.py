@@ -73,6 +73,16 @@ REFINER_ENABLED = os.getenv("REFINER_ENABLED", "false").lower() in ("1", "true",
 GENERAL_ENABLED = os.getenv("GENERAL_ENABLED", "false").lower() in ("1", "true", "yes")
 
 
+def answer_model(depth: str) -> str:
+    """Model that writes the answer, chosen by how hard the question is (quick, standard, deep).
+
+    Set ANSWERER_QUICK_MODEL=qwen2.5:3b to give short, simple questions to a smaller, faster model. Unset depths use
+    the normal answerer model. The validator always uses its own model, so a fast answer is still checked, and an
+    answer the small model cannot write or that fails a check is written again by the normal model.
+    """
+    return os.getenv(f"ANSWERER_{depth.upper()}_MODEL") or agent_model("answerer")
+
+
 def agent_model(name: str) -> str:
     """Model for one agent. Set e.g. VALIDATOR_MODEL=qwen2.5:3b to use a different model for that agent."""
     return os.getenv(f"{name.upper()}_MODEL") or LLM_MODEL

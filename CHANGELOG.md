@@ -6,6 +6,7 @@
 - The reranker's order is fused with the search order by default (`RERANK_BLEND=rrf`; `none` restores the old behaviour). Retrieval check: right document in the top 5 92% -> 100% on the 86-question set; full evaluations unchanged or better. The relevance gate now uses the best rerank score among the kept passages.
 
 ### Added
+- Model router for answers: the question's depth (quick, standard, deep) can pick the answering model (`ANSWERER_QUICK_MODEL`, `ANSWERER_STANDARD_MODEL`, `ANSWERER_DEEP_MODEL`). Unset by default; measured with qwen2.5:3b: faster (19.3 s -> 14.4 s median) but answer accuracy 37/37 -> 35/37 and a weaker refusal of uncovered questions, so it stays off. The validator keeps its own model, and any retry or an "insufficient" from a smaller model goes to the main model.
 - Embedding provider switch: `EMBEDDING_PROVIDER=ollama` serves embeddings (e.g. nomic-embed-text, bge-m3) from Ollama; `scripts/reindex_embeddings.py` re-embeds stored chunks without re-uploading; `scripts/retrieval_eval.py` measures retrieval alone (right document in the top results, MRR).
 - Refiner agent (off by default, `REFINER_ENABLED=true`): after a question is accepted as being about the company, the model rewrites it into its clearest form; plain code rejects a rewrite that adds or drops a number, loses part of the question, or looks like an answer. A search with the refined wording is merged into the passages. Measured: no gain (86-question answerable 37/37 -> 36/37, +4 s per answer), so it stays off.
 

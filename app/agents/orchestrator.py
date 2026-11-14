@@ -199,14 +199,32 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
     style_kw = {"style": style} if style else {}
 
     passages = [p["parent_content"] for p in reranked]
-    model = config.agent_model(answerer.NAME)
+    # Model router: the question's depth picks the model that writes the answer. Any retry goes to the main model.
+    main_model = config.agent_model(answerer.NAME)
+    model = config.answer_model(prof["depth"])
+    if model != main_model:  # the default path calls the answerer exactly as before
+        style_kw["model"] = model
+        trace.add("router", _now(), f"{prof['depth']} question: {model}")
+
+    def escalate() -> None:
+        nonlocal model
+        if model != main_model:
+            model = main_model
+            style_kw.pop("model", None)
 
     try:
         # 5. Answerer, with one retry if it forgot to cite.
         t = _now()
         answer = await answerer.run(question, passages, **style_kw)
         trace.add("answerer", t, "insufficient" if is_insufficient(answer) else f"drafted: {answer}")
+        if is_insufficient(answer) and model != main_model:
+            # The small model found nothing: the main model gets one try before the question is called unanswerable.
+            escalate()
+            t = _now()
+            answer = await answerer.run(question, passages, **style_kw)
+            trace.add("answerer", t, "main model: insufficient" if is_insufficient(answer) else f"main model: {answer}")
         if not is_insufficient(answer) and not cited_numbers(answer, len(passages)):
+            escalate()
             t = _now()
             answer = await answerer.run(question, passages, strict=True, **style_kw)
             trace.add("answerer", t, "retry: citations")
@@ -222,6 +240,7 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
                     trace.add("validator", _now(), f"uncited: {missing[0][:150]}")
                     if attempt == config.VALIDATOR_MAX_RETRIES:
                         return finish("unverified", UNVERIFIED, top_score=top_score, model=model)
+                    escalate()
                     t = _now()
                     answer = await answerer.run(question, passages, strict=True, **style_kw,
                                                  feedback=f"this sentence has no source number: {missing[0]}")
@@ -234,6 +253,7 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
                     break
                 if attempt == config.VALIDATOR_MAX_RETRIES:
                     return finish("unverified", UNVERIFIED, top_score=top_score, model=model)
+                escalate()
                 t = _now()
                 answer = await answerer.run(question, passages, strict=True, grounding=True, feedback=raw, **style_kw)
                 trace.add("answerer", t, f"retry: grounding: {answer}")
