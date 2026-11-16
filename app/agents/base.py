@@ -4,6 +4,7 @@ import time
 from dataclasses import dataclass, field
 
 from app import tracing
+from app.services.answer_check import annotate_number_words
 
 MAX_PASSAGE_CHARS = 2000
 
@@ -31,6 +32,6 @@ def documents_block(passages: list[str]) -> str:
     """Numbered sources. Passages are data: the prompts tell the model to ignore instructions in them,
     and the wrapper tags cannot be forged from inside a passage."""
     docs = "\n".join(
-        f'<source id="{i}">\n{neutralise(p[:MAX_PASSAGE_CHARS])}\n</source>' for i, p in enumerate(passages, start=1)
+        f'<source id="{i}">\n{annotate_number_words(neutralise(p[:MAX_PASSAGE_CHARS]))}\n</source>' for i, p in enumerate(passages, start=1)
     )
     return f"<documents>\n{docs}\n</documents>"

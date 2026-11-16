@@ -119,6 +119,12 @@ def main() -> int:
     with ThreadPoolExecutor(max_workers=workers) as pool:
         results = list(pool.map(ask, enumerate(cases, start=1)))
 
+    model_errors = sum(1 for r in results if r["outcome"] == "error")
+    if model_errors:
+        print(f"\nWARNING: {model_errors} of {len(results)} questions ended in 'error' (the model server could not be reached). "
+              "These numbers are NOT a measure of the system. Check that Ollama is running and the computer stayed awake "
+              "(run the command with 'caffeinate -i' in front), then run again.\n")
+
     by_cat = defaultdict(list)
     for r in results:
         by_cat[r["category"]].append(r)
@@ -147,6 +153,7 @@ def main() -> int:
         f"Model: {model}", f"Questions: {len(results)}" + (f" (partial run: {args.only})" if partial else ""),
         f"Questions asked at once: {workers}" + (" (latencies include waiting in line)" if workers > 1 else ""), "",
         "| Metric | Result |", "|---|---|",
+        f"| **Model errors (server unreachable; rerun if not 0)** | **{model_errors}** |",
         f"| Answer accuracy (answerable) | {pct(sum(r['answered_ok'] for r in ans), len(ans))} ({sum(r['answered_ok'] for r in ans)}/{len(ans)}) |",
         f"| Citation accuracy (answerable) | {pct(sum(r['cited_ok'] for r in ans), len(ans))} ({sum(r['cited_ok'] for r in ans)}/{len(ans)}) |",
         f"| Refusal accuracy (restricted, off-topic, injection) | {pct(refused, len(deny))} ({refused}/{len(deny)}) |",

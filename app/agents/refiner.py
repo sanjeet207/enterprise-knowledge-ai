@@ -35,7 +35,7 @@ SCHEMA = {
 
 async def run(question: str) -> str:
     raw = await llm.chat(PROMPT, question, model=config.agent_model(NAME), num_predict=200, timeout=60.0, schema=SCHEMA)
-    refined = parse_refined_question(raw, question)
+    refined = parse_refined_question(raw, question, config.REFINER_MIN_OVERLAP)
     if refined != question and OVERRIDE_PATTERN.search(refined) and not OVERRIDE_PATTERN.search(question):
         return question  # the rewrite must never introduce an instruction-like phrase
     return refined

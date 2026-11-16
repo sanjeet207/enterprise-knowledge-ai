@@ -2,6 +2,7 @@
 
 Usage:
   python -m scripts.import_questions questions.csv            # writes evaluation/independent_set.json
+  python -m scripts.import_questions questions.csv out.json   # or to a file of your choice
   python -m scripts.evaluate --eval-set evaluation/independent_set.json --tag independent
 
 The sheet format is described in evaluation/QUESTION_BRIEF.md. Mistakes in the sheet are listed with their row
@@ -80,7 +81,7 @@ def main() -> int:
     if problems:
         print("Fix these first:\n  " + "\n  ".join(problems))
         return 1
-    out = Path("evaluation/independent_set.json")
+    out = Path(sys.argv[2] if len(sys.argv) > 2 else "evaluation/independent_set.json")
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps(cases, indent=1))
     kinds = {}

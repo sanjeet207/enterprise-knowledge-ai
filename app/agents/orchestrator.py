@@ -139,6 +139,25 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
             if alt_score > top_score:
                 top_score = alt_score
                 reranked = alt
+    # Refiner (optional): when the first search matched only weakly, the model rewrites the question into its clearest
+    #     form and that wording is used to SEARCH for better passages, before the system gives up on the question.
+    #     The answerer and validator keep the person's own (typo-fixed) wording: measured earlier, answering the
+    #     rewrite changed vocabulary and cost accuracy. A clear question with a strong match is never rewritten.
+    if config.REFINER_ENABLED and top_score < config.REFINER_BELOW:
+        t = _now()
+        try:
+            refined = await refiner.run(question)
+        except LLMUnavailable:
+            refined = question
+        if refined.lower() != question.lower() and refined.lower() not in tried:
+            tried.add(refined.lower())
+            alt, alt_score = search(refined)
+            trace.add("refiner", t, f"search with: {refined} (score {top_score:.3f} -> {max(top_score, alt_score):.3f})")
+            notes.append(f"refined search: {refined}")
+            if alt_score > top_score:
+                reranked, top_score = alt, alt_score
+        else:
+            trace.add("refiner", t, "no change")
     # Safety net: still weak after the planner (or planner off), so try the plain rewriter once.
     if top_score < config.REFUSAL_THRESHOLD:
         t = _now()
@@ -176,26 +195,6 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
         if general_result is not None:
             return general_result
         return finish("refused", REFUSAL, top_score=top_score)
-    # 4b. Relevance is settled. If the match is only moderate, the refiner rewrites the question into its clearest
-    #     form and that wording is used to SEARCH for more passages. The answerer and validator keep the person's own
-    #     (typo-fixed) wording: measured earlier, answering the rewrite changed vocabulary and cost accuracy. A clear
-    #     question with a strong match is never rewritten, so the common case pays nothing.
-    if config.REFINER_ENABLED and top_score < config.REFINER_BELOW:
-        t = _now()
-        try:
-            refined = await refiner.run(question)
-        except LLMUnavailable:
-            refined = question
-        if refined.lower() != question.lower() and refined.lower() not in tried:
-            tried.add(refined.lower())
-            before = top_score
-            search(refined)
-            reranked = combine()
-            top_score = max(top_score, reranked[0]["rerank_score"]) if reranked else top_score
-            trace.add("refiner", t, f"search with: {refined} (score {before:.3f} -> {top_score:.3f})")
-            notes.append(f"refined search: {refined}")
-        else:
-            trace.add("refiner", t, "no change")
     trace.add("analysis", _now(), f"depth {prof['depth']}, format {prof['format']}")
     style = question_profile.style_for(prof["format"])
     style_kw = {"style": style} if style else {}

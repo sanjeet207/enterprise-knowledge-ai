@@ -68,6 +68,9 @@ RERANK_BLEND = os.getenv("RERANK_BLEND", "rrf").lower()
 REFINER_ENABLED = os.getenv("REFINER_ENABLED", "false").lower() in ("1", "true", "yes")
 # The refiner runs only when the first search scored below this (a clear question with a strong match is left alone),
 # and its rewrite is used to search, never shown to the answerer.
+# The rewrite only drives a search, so it may reword freely ("holidays" -> "annual leave"); it still may not add or
+# drop a number or become an answer. Share of the question's key words that must survive:
+REFINER_MIN_OVERLAP = float(os.getenv("REFINER_MIN_OVERLAP", "0.4"))
 REFINER_BELOW = float(os.getenv("REFINER_BELOW", "0.5"))
 # A smaller answering model is used only when the documents clearly match (top score at least this).
 ROUTER_MIN_SCORE = float(os.getenv("ROUTER_MIN_SCORE", "0.9"))

@@ -6,6 +6,8 @@
 - The reranker's order is fused with the search order by default (`RERANK_BLEND=rrf`; `none` restores the old behaviour). Retrieval check: right document in the top 5 92% -> 100% on the 86-question set; full evaluations unchanged or better. The relevance gate now uses the best rerank score among the kept passages.
 
 ### Fixed
+- The digits shown next to number words were copied into answers (like twenty-five (25) lakh) and broke the citation overlap check; they are now stripped from every draft before any check or display.
+- Found with a 45-question harder set (evaluation/hard_questions.csv): a Yes/No lead sentence with no citation, followed by a cited sentence, now shares that citation (it was rejected three times in a row); models are shown the digits next to number words in the passages (twenty-five (25) lakh), so 40 lakh can be compared with a threshold written in words; the refiner runs before a weak match is refused, and its rewrite may reword freely because it only drives the search.
 - An answer made only of citation markers (like [1]) passed every check, because the citation rule and the claim validator both had nothing to judge. Such an answer is now treated as hollow: rewritten by the main model, else not shown.
 
 ### Added

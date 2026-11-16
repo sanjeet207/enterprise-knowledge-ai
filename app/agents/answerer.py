@@ -2,6 +2,7 @@
 from app import config
 from app.agents.base import documents_block
 from app.services import llm
+from app.services.answer_check import repair_conclusion_citation, repair_lead_citation, strip_number_annotations
 
 NAME = "answerer"
 SYSTEM_PROMPT = (
@@ -37,4 +38,5 @@ async def run(query: str, passages: list[str], strict: bool = False, grounding: 
     system = (SYSTEM_PROMPT + (("\n" + style) if style else "") + (STRICT_REMINDER if strict else "")
               + (GROUNDING_REMINDER if grounding else "") + (feedback_note(feedback) if feedback else ""))
     user = f"{documents_block(passages)}\n\nQuestion: {query}"
-    return await llm.chat(system, user, model=model or config.agent_model(NAME))
+    raw = await llm.chat(system, user, model=model or config.agent_model(NAME))
+    return repair_conclusion_citation(repair_lead_citation(strip_number_annotations(raw), len(passages)), len(passages))

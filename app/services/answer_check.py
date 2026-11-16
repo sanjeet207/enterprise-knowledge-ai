@@ -135,6 +135,85 @@ def parse_corrected_question(text: str, original: str) -> str:
     return accept_correction(original, value) if isinstance(value, str) else original
 
 
+_UNITS = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9}
+_TEENS = {"ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16,
+          "seventeen": 17, "eighteen": 18, "nineteen": 19}
+_TENS = {"twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60, "seventy": 70, "eighty": 80, "ninety": 90}
+_NUMBER_WORD = re.compile(
+    r"\b(?:(" + "|".join(_TENS) + r")(?:[- ](" + "|".join(_UNITS) + r"))?|(" + "|".join(_TEENS) + r")|(" + "|".join(_UNITS) + r"))\b",
+    re.IGNORECASE)
+
+
+_ANNOTATED = re.compile(_NUMBER_WORD.pattern + r" \(\d+\)", re.IGNORECASE)
+
+
+def strip_number_annotations(text: str) -> str:
+    """Undo annotate_number_words in a model's answer: "twenty-five (25) lakh" -> "twenty-five lakh".
+
+    The models copy the digits they were shown. People should read the document's own wording, and every plain-code
+    check (citation overlap, number check) compares against the original passages, so the answer is cleaned first.
+    """
+    return _ANNOTATED.sub(lambda m: m.group(0)[:m.group(0).rindex(" (")], text or "")
+
+
+def annotate_number_words(text: str) -> str:
+    """Put the digits after number words: "above twenty-five lakh" -> "above twenty-five (25) lakh".
+
+    Shown to the models only, so that comparing "40" with a threshold written in words is possible; the stored
+    passages and every plain-code check keep the original text. "one" is left alone (it is mostly not a figure).
+    """
+    def repl(m):
+        tens, unit, teen, small = m.group(1), m.group(2), m.group(3), m.group(4)
+        if tens:
+            value = _TENS[tens.lower()] + (_UNITS[unit.lower()] if unit else 0)
+        else:
+            value = _TEENS[teen.lower()] if teen else _UNITS[small.lower()]
+        if text[m.end():m.end() + 2] == " (":
+            return m.group(0)
+        return f"{m.group(0)} ({value})"
+    return _NUMBER_WORD.sub(repl, text)
+
+
+def repair_lead_citation(answer: str, source_count: int) -> str:
+    """A Yes/No lead sentence with no citation, directly followed by a cited sentence, takes that sentence's citations.
+
+    Models often write "No, you cannot do X. According to the policy [1], Y." The lead is the verdict on the
+    explanation that follows, so the citation covers it; the claim validator still checks it against the sources.
+    Nothing else is repaired, so the every-factual-sentence-needs-a-citation rule stays strict.
+    """
+    parts = re.split(r"(?<=[.!?])\s+", (answer or "").strip())
+    for i in range(len(parts) - 1):
+        lead, nxt = parts[i], parts[i + 1]
+        if (re.match(r"(?i)(yes|no)\b", lead) and not cited_numbers(lead, source_count)
+                and cited_numbers(nxt, source_count)):
+            marks = "".join(f"[{k}]" for k in cited_numbers(nxt, source_count))
+            end = re.search(r"[.!?]+$", lead)
+            parts[i] = (lead[:end.start()] + " " + marks + lead[end.start():]) if end else f"{lead} {marks}"
+    return " ".join(parts)
+
+
+def repair_conclusion_citation(answer: str, source_count: int, min_overlap: float = 0.4) -> str:
+    """An uncited sentence that restates the cited sentence just before it takes that sentence's citations.
+
+    Models often write "Purchases above five lakh need three quotes [1]. Since this costs six lakh, you need three
+    quotes." The second sentence applies the first to the user's case. Only a sentence that shares at least
+    `min_overlap` of its content words with the cited sentence before it is repaired; the claim validator and the
+    citation overlap check still judge it afterwards, and every other uncited sentence still fails.
+    """
+    parts = re.split(r"(?<=[.!?])\s+", (answer or "").strip())
+    for i in range(1, len(parts)):
+        prev, cur = parts[i - 1], parts[i]
+        marks_prev = cited_numbers(prev, source_count)
+        if cited_numbers(cur, source_count) or not marks_prev:
+            continue
+        a, b = set(_content_words(prev)), set(_content_words(cur))
+        if len(b) >= 3 and len(a & b) / len(b) >= min_overlap:
+            marks = "".join(f"[{k}]" for k in marks_prev)
+            end = re.search(r"[.!?]+$", cur)
+            parts[i] = (cur[:end.start()] + " " + marks + cur[end.start():]) if end else f"{cur} {marks}"
+    return " ".join(parts)
+
+
 def is_hollow(answer: str) -> bool:
     """True if the answer has no real content once citation markers like [1] are removed (a model that writes only "[1]"); even "Yes [1]" has content."""
     words = re.findall(r"[A-Za-z]{2,}", re.sub(r"\[\d+\]", " ", answer or ""))
@@ -162,7 +241,7 @@ def unsupported_numbers(answer: str, passages: list[str]) -> list[str]:
     return sorted(n for n in wanted if norm(n) not in have_norm)
 
 
-def accept_refinement(original: str, refined: str) -> str:
+def accept_refinement(original: str, refined: str, min_overlap: float = 0.7) -> str:
     """Return the refined question only if plain code agrees it kept the meaning; otherwise the original.
 
     Rules: one line, not an answer; no number added or dropped; not much longer than a clear question needs; and
@@ -182,16 +261,16 @@ def accept_refinement(original: str, refined: str) -> str:
     if not wanted:
         return original
     have = {w[:4] for w in _content_words(text)}
-    if len(wanted & have) / len(wanted) < 0.7:
+    if len(wanted & have) / len(wanted) < min_overlap:
         return original
     return text
 
 
-def parse_refined_question(text: str, original: str) -> str:
+def parse_refined_question(text: str, original: str, min_overlap: float = 0.7) -> str:
     """Read the refiner's JSON reply {"refined_question": "..."}; anything invalid keeps the original."""
     data = _load_json_object(text)
     value = data.get("refined_question") if data else None
-    return accept_refinement(original, value) if isinstance(value, str) else original
+    return accept_refinement(original, value, min_overlap) if isinstance(value, str) else original
 
 
 def parse_plan(text: str, max_len: int = 150) -> tuple[str, str]:
