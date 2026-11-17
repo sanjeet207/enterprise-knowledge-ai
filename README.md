@@ -168,11 +168,11 @@ Optional OpenID Connect login (authorization code flow with PKCE, state and nonc
 | Not about the company (refused, no sources) | **100%** (8/8) |
 | No-answer guard (8 questions the documents cannot answer, no invented facts) | **100%** (8/8) |
 | Injection hidden in a valid question (no leak) | **100%** (3/3) |
-| Median latency, answered / refused (one question at a time) | 7.2 s / 2.5 s |
+| Median latency, answered / refused (two requests at a time) | 11.6 s / 4.2 s |
 
 Measured on a MacBook Pro (M3, 16 GB) with `qwen2.5:7b` via Ollama.
 
-**A second set of 27 questions (`evaluation/independent_questions.csv`) was written by the AI assistant that helped build the project, from the documents alone, before any results were seen. It is not tuned to the system, but it is not written by an outside person either. It was run twice, before general answers were switched off by default, and both runs are kept so the change is visible. A later run on the current defaults (general answers off, rank fusion on) scored 26/27 with 0 leaks; see evaluation/BLEND_RRF_REPORT.md.
+A second set of 27 questions (`evaluation/independent_questions.csv`) was written by the AI assistant that helped build the project, from the documents alone, before any results were seen. It is not tuned to the system, but it is not written by an outside person either. It was run twice, before general answers were switched off by default, and both runs are kept so the change is visible. A later run on the current defaults (general answers off, rank fusion on) scored 26/27 with 0 leaks; see evaluation/BLEND_RRF_REPORT.md.
 
 | Category | First run | After fixes |
 |---|---|---|
@@ -192,7 +192,7 @@ What the first run found, and what was done:
 
 After the fixes the 86-question suite was run again on the final code: 100% in every category, 0 leaks. Full reports: `evaluation/EVAL_REPORT.md` and `evaluation/INDEPENDENT_REPORT.md`.
 
-What the evaluation found along the way** (each fix was driven by a failing case):
+**What the evaluation found along the way** (each fix was driven by a failing case):
 
 - Company and live-information questions ("our policy", "today's weather", "top enterprise risks") were wrongly answered as general knowledge until a plain-code guard was added that runs before any model sees the question.
 - Typo-heavy questions were refused until the corrector and a rewriter safety net were added.
@@ -203,6 +203,10 @@ What the evaluation found along the way** (each fix was driven by a failing case
 - A **stronger embedding model** (nomic-embed-text through Ollama, 768 values instead of 384) was compared with the default using `scripts/retrieval_eval.py`, which checks retrieval alone. Before reranking it was slightly better on the 86-question set (right document first 86% -> 92%) and slightly worse on the 27-question set (92% -> 83%); after reranking, which is what the answerer sees, the two were identical. The corpus is only 22 chunks, too small to separate embedding models, so MiniLM stays the default (`EMBEDDING_PROVIDER=ollama` switches). The check also showed that the reranker drops the right document from the top 5 for 3 of 37 questions that plain search had in its top 5. Reports: `evaluation/retrieval_minilm.md`, `evaluation/retrieval_nomic.md`.
 - **Rank fusion after the reranker** fixed that. The reranker's order is now fused with the search order (`RERANK_BLEND=rrf`, the default), so a passage the search ranked highly cannot be thrown out. Retrieval alone on the 86-question set: right document in the top 5 went from 92% to 100% and MRR from 0.905 to 0.927 (one question moved from first to second place). End to end with it on: the 86-question suite stayed at 100% with 0 leaks, the smoke test at 83/83, and the 27-question set scored 26/27 (the remaining miss is the 30-lakh question above). That 27-question run also includes the refuse-by-default change, which is why the recipe request now passes. Reports: `evaluation/retrieval_blend_*.md`, `evaluation/BLEND_RRF_REPORT.md`.
 - A **model router** (the question's depth, decided by plain code, picks the model that writes the answer) was measured with qwen2.5:3b for quick and standard questions. The first version was faster (19.3 s to 14.4 s median) but answer accuracy fell from 37/37 to 35/37 and a question the documents do not cover was answered instead of refused. Reading what the small model actually wrote found two causes. It had once written just "[1]", with no sentence, and every check accepted it, because the citation rule and the claim validator both had nothing to judge; this was a hole for any model, and answers with no content besides citation markers are now never shown. And it had given an answer that was supported by the documents but did not answer the question ("What is two-factor authentication?" -> "it is used for all company systems"). The router now uses the small model only when the documents clearly match (top score 0.9 or more), a plain-code check sends any answer with a figure not in the passages to the 7B model, a fit checker (the 7B model) sends answers that do not address the question there too, and a retry or an "insufficient" also goes to the 7B model. With those, the 86-question suite is back to 100% with 8/8 refusals and 0 leaks, and the median time per answered question is 17.1 s against 18.6 s for the 7B model alone, a gain of about 8%. That is small for a 2 GB extra model, so it is **off by default** (`ANSWERER_QUICK_MODEL`, `ANSWERER_STANDARD_MODEL` and `ANSWERER_DEEP_MODEL` set it). A hosted model is the realistic way to get both speed and accuracy. Reports: `evaluation/router_experiment/`.
+
+### A third, harder set
+
+A set of 45 harder questions (`evaluation/hard_set.json`: paraphrases, typos, figures to compare with a threshold, restricted and unanswerable questions) was written by the same AI assistant, so it is also not independent. On the current defaults the 25 answerable questions score 80% to 88% across runs (21/25 on the default, 22/25 with the refiner on), with 0 access leaks and 100% on refusing restricted, off-topic and injection questions and on the no-invented-facts guard. The misses are mostly right answers that the checks reject (for example, "Can I work on customer records from my personal Google Drive" is rejected because the checks do not treat Google Drive as personal cloud storage), plus one question that flips between answered and no-answer from run to run. They are reported as they are, not tuned away. Reports: `evaluation/HARD_*_REPORT.md`, `evaluation/FIX*_REPORT.md`.
 
 ### Honest limitations
 
@@ -324,6 +328,7 @@ evaluation/      reports from the evaluation runs, the question brief for an ind
 - Security review with a live attack script and an upload reviewer (docs/SECURITY_REVIEW.md)
 - Request tracing (OTLP, Jaeger), spans free of questions, answers and names (docs/TRACING.md)
 - Agentic research assistant: multi-step, cited reports where every step runs under the asker's own access rules (on 6 author-written tasks the report cited 4 of 6 expected documents against 2 of 6 for a single question, with 0 leaks; see evaluation/RESEARCH_EVAL.md)
+- Model router, question refiner and a stronger embedding model, each built and measured; all three are off by default because the measured gain was small or none (see the evaluation notes above)
 
 **In progress**
 - Evaluation by a human outside the project: brief and importer are ready (evaluation/QUESTION_BRIEF.md); a 27-question second-party set is in evaluation/independent_questions.csv
@@ -331,7 +336,6 @@ evaluation/      reports from the evaluation runs, the question brief for an ind
 **Planned**
 - Broader adversarial security tests, including an outside review
 - Azure deployment with a spending cap, which also gives SSO its first test against a live Entra tenant
-- A model router (a small model for easy steps, a larger one for hard ones)
 - Group-to-level mapping and SCIM, OCR for scanned PDFs
 
 ## Tech
