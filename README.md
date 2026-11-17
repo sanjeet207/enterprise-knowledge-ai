@@ -208,10 +208,16 @@ After the fixes the 86-question suite was run again on the final code: 100% in e
 
 A set of 45 harder questions (`evaluation/hard_set.json`: paraphrases, typos, figures to compare with a threshold, restricted and unanswerable questions) was written by the same AI assistant, so it is also not independent. On the current defaults the 25 answerable questions score 80% to 88% across runs (21/25 on the default, 22/25 with the refiner on), with 0 access leaks and 100% on refusing restricted, off-topic and injection questions and on the no-invented-facts guard. The misses are mostly right answers that the checks reject (for example, "Can I work on customer records from my personal Google Drive" is rejected because the checks do not treat Google Drive as personal cloud storage), plus one question that flips between answered and no-answer from run to run. They are reported as they are, not tuned away. Reports: `evaluation/HARD_*_REPORT.md`, `evaluation/FIX*_REPORT.md`.
 
+### Scale test
+
+`python -m scripts.scale_test` builds a synthetic corpus in its own tenant (100, 1,000 and 10,000 documents, about 30,000 chunks at the top size), hides 30 unique "needle" facts and 15 restricted ones among look-alike noise (30% of it restricted), and asks the same secure hybrid search the application uses. On a MacBook Pro (M3) with local Postgres and pgvector: search took 19 ms (median) at 100 documents, 24 ms at 1,000 and 61 ms at 10,000 (95th percentile 70 ms), the right document was in the top 5 for 100% of questions at every size, 5 results came back every time, and no restricted document ever reached a level-1 user (0 leaks). Eight simultaneous searches ran at about 83 per second with no errors at 10,000 documents. Report: `evaluation/SCALE_REPORT.md`.
+
+What this does not show: the needles contain made-up words, so keyword search finds them easily and the vector side is not stressed; the filter is mild (a level-1 user sees about 70% of the tenant, and no other tenants share the table); it measures retrieval only, not the 10 to 15 seconds the local 7B model takes to write and check an answer; and nothing is claimed above 10,000 documents.
+
 ### Honest limitations
 
 - The 86 questions were written by the author against the same demo documents, so 100% means "no regressions on this suite", not "perfect in general". A second set of 27 questions (evaluation/independent_questions.csv) was written by the AI assistant that helped build the project, from the documents alone and before seeing any results, so it is not tuned to the system but it is not written by an outside person either. A set written by a human outside the project (brief in evaluation/QUESTION_BRIEF.md) is still wanted. Results are published as they come, whatever they are.
-- The corpus is small and fictional. No claim is made about scale.
+- The demo corpus is small and fictional (22 chunks). The scale test above covers retrieval on a synthetic corpus of up to 10,000 documents; no claim is made about larger corpora, a corpus where one tenant is a small part of a large table, or model latency at scale.
 - Latency is that of a local 7B model on a laptop. A hosted model would be faster; the agents are model-agnostic through a per-agent model setting (`<AGENT>_MODEL`).
 - The model-based evaluation is **not** run in CI (the 7B model is too slow on hosted runners). CI runs the unit tests, the access-control sweep and the image build; the evaluation is run locally before a release.
 

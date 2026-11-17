@@ -1,0 +1,167 @@
+[
+  {
+    "documents": 100,
+    "insert_docs_per_s": 151.06286472056806,
+    "sizes": {
+      "child_mb": 8.9,
+      "parent_mb": 0.2,
+      "scale_chunks": 255
+    },
+    "level1": {
+      "questions": 45,
+      "answerable": 30,
+      "recall_at_5": 1.0,
+      "search_ms_p50": 18.621875000008004,
+      "search_ms_p95": 25.573874999963664,
+      "embed_ms_p50": 7.879125000044951,
+      "mean_results": 5,
+      "leaks": 0
+    },
+    "level4": {
+      "questions": 15,
+      "answerable": 15,
+      "recall_at_5": 1.0,
+      "search_ms_p50": 17.875416999913796,
+      "search_ms_p95": 21.056624999800988,
+      "embed_ms_p50": 7.397249999939959,
+      "mean_results": 5,
+      "leaks": 0
+    },
+    "concurrency": [
+      {
+        "workers": 1,
+        "searches": 120,
+        "errors": 0,
+        "per_second": 50.00862996843784,
+        "p50_ms": 19.266812499949992,
+        "p95_ms": 23.79604200018548
+      },
+      {
+        "workers": 4,
+        "searches": 120,
+        "errors": 0,
+        "per_second": 86.7023623712536,
+        "p50_ms": 45.09841650008184,
+        "p95_ms": 54.7984169998017
+      },
+      {
+        "workers": 8,
+        "searches": 120,
+        "errors": 0,
+        "per_second": 102.62426274889745,
+        "p50_ms": 78.18939600008434,
+        "p95_ms": 91.13879200003794
+      }
+    ]
+  },
+  {
+    "documents": 1000,
+    "insert_docs_per_s": 168.57512305419775,
+    "sizes": {
+      "child_mb": 15.3,
+      "parent_mb": 1.1,
+      "scale_chunks": 2955
+    },
+    "level1": {
+      "questions": 45,
+      "answerable": 30,
+      "recall_at_5": 1.0,
+      "search_ms_p50": 24.20174999997471,
+      "search_ms_p95": 40.262333000100625,
+      "embed_ms_p50": 7.859917000132555,
+      "mean_results": 5,
+      "leaks": 0
+    },
+    "level4": {
+      "questions": 15,
+      "answerable": 15,
+      "recall_at_5": 1.0,
+      "search_ms_p50": 26.775417000180823,
+      "search_ms_p95": 38.86454199982836,
+      "embed_ms_p50": 8.32100000002356,
+      "mean_results": 5,
+      "leaks": 0
+    },
+    "concurrency": [
+      {
+        "workers": 1,
+        "searches": 120,
+        "errors": 0,
+        "per_second": 37.75712305824997,
+        "p50_ms": 24.134270499985178,
+        "p95_ms": 31.388542000058806
+      },
+      {
+        "workers": 4,
+        "searches": 120,
+        "errors": 0,
+        "per_second": 71.69908970405693,
+        "p50_ms": 54.620312499991996,
+        "p95_ms": 70.03624999993008
+      },
+      {
+        "workers": 8,
+        "searches": 120,
+        "errors": 0,
+        "per_second": 86.57075904925314,
+        "p50_ms": 90.03816649999408,
+        "p95_ms": 108.90024999980596
+      }
+    ]
+  },
+  {
+    "documents": 10000,
+    "insert_docs_per_s": 124.02988859852425,
+    "sizes": {
+      "child_mb": 141.9,
+      "parent_mb": 11.1,
+      "scale_chunks": 29955
+    },
+    "level1": {
+      "questions": 45,
+      "answerable": 30,
+      "recall_at_5": 1.0,
+      "search_ms_p50": 61.14108299993859,
+      "search_ms_p95": 70.0306249998448,
+      "embed_ms_p50": 7.679041000073994,
+      "mean_results": 5,
+      "leaks": 0
+    },
+    "level4": {
+      "questions": 15,
+      "answerable": 15,
+      "recall_at_5": 1.0,
+      "search_ms_p50": 29.172667000011643,
+      "search_ms_p95": 31.59262500003024,
+      "embed_ms_p50": 7.789208000076542,
+      "mean_results": 5,
+      "leaks": 0
+    },
+    "concurrency": [
+      {
+        "workers": 1,
+        "searches": 120,
+        "errors": 0,
+        "per_second": 30.924185718675925,
+        "p50_ms": 29.34810349995587,
+        "p95_ms": 59.66104100002667
+      },
+      {
+        "workers": 4,
+        "searches": 120,
+        "errors": 0,
+        "per_second": 70.07090252151526,
+        "p50_ms": 55.653416500035746,
+        "p95_ms": 68.51395800003957
+      },
+      {
+        "workers": 8,
+        "searches": 120,
+        "errors": 0,
+        "per_second": 82.89425518557174,
+        "p50_ms": 91.52468699983274,
+        "p95_ms": 124.5550829999047
+      }
+    ]
+  }
+]
