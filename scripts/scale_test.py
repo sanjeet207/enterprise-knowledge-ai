@@ -13,7 +13,8 @@ The noise documents are generated from templates with invented names and numbers
 measures the retrieval step only, not the model that writes the answer. The results describe this machine, this
 database and this synthetic corpus; they are not a claim about any real company's data.
 
-Usage: python -m scripts.scale_test [--sizes 100,1000,10000] [--keep]
+Usage: python -m scripts.scale_test [--sizes 100,1000,10000] [--background 20000] [--explain] [--keep]
+  --background N puts N documents of other tenants in the same tables first (report: SCALE_REPORT_multitenant.md)
 Report: evaluation/SCALE_REPORT.md and evaluation/scale_results.json
 """
 import argparse
@@ -28,6 +29,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 TENANT = "scaletest"
+BACKGROUND_TENANT = "scalebg"  # other companies sharing the same tables, when --background is used
 DEPARTMENTS = ["Finance", "Legal", "Procurement", "Operations", "Compliance", "Risk", "Treasury", "Audit", "Facilities", "Payroll"]
 TOPICS = ["travel", "vendor", "expense", "security", "leave", "onboarding", "records", "approval", "reporting", "training"]
 UNITS = ["days", "lakh rupees", "hours", "working days", "percent", "quotations"]
@@ -85,7 +87,7 @@ def percentile(values: list[float], p: float) -> float:
     return ordered[min(len(ordered) - 1, int(round(p / 100 * (len(ordered) - 1))))]
 
 
-def insert(svc, docs: list[dict]) -> float:
+def insert(svc, docs: list[dict], tenant: str = TENANT) -> float:
     """Embed and insert documents in one batch; returns seconds taken."""
     from psycopg.types.json import Jsonb
     from app.services.embedder import embed_texts
@@ -96,12 +98,12 @@ def insert(svc, docs: list[dict]) -> float:
         cur.executemany(
             "INSERT INTO parent_chunks (id, tenant_id, document_id, content, classification_level, engagement_id, metadata, status) "
             "VALUES (%s, %s, %s, %s, %s, NULL, %s, 'published')",
-            [(d["id"], TENANT, d["id"], " ".join(d["children"]), d["level"], Jsonb({"title": "synthetic"})) for d in docs],
+            [(d["id"], tenant, d["id"], " ".join(d["children"]), d["level"], Jsonb({"title": "synthetic"})) for d in docs],
         )
         rows, k = [], 0
         for d in docs:
             for index, child in enumerate(d["children"]):
-                rows.append((d["id"], TENANT, d["id"], index, child, vectors[k]))
+                rows.append((d["id"], tenant, d["id"], index, child, vectors[k]))
                 k += 1
         cur.executemany(
             "INSERT INTO child_chunks (parent_id, tenant_id, document_id, chunk_index, content, embedding) VALUES (%s, %s, %s, %s, %s, %s)",
@@ -112,7 +114,7 @@ def insert(svc, docs: list[dict]) -> float:
 
 def cleanup(svc) -> None:
     with svc._connect() as conn:
-        conn.execute("DELETE FROM parent_chunks WHERE tenant_id = %s", (TENANT,))
+        conn.execute("DELETE FROM parent_chunks WHERE tenant_id IN (%s, %s)", (TENANT, BACKGROUND_TENANT))
 
 
 def measure(svc, needles: list[dict], user_level: int, user_id: str) -> dict:
@@ -165,6 +167,46 @@ def concurrency(svc, needles: list[dict], workers: int, total: int = 120) -> dic
             "p50_ms": statistics.median(times) if times else 0.0, "p95_ms": percentile(times, 95)}
 
 
+def explain(svc, question: str) -> str:
+    """Query plans (EXPLAIN ANALYZE) for the vector half and the keyword half of the search, for one question."""
+    from app.services.embedder import embed_texts
+    embedding = embed_texts([question], kind="query")[0]
+    params = {"t": TENANT, "u": str(uuid.uuid4()), "e": embedding, "q": question}
+    allowed = ("SELECT id FROM parent_chunks WHERE tenant_id = %(t)s AND status = 'published' AND classification_level <= 1 "
+               "AND (engagement_id IS NULL OR engagement_id IN (SELECT engagement_id FROM engagement_members WHERE user_id = %(u)s))")
+    vector = (f"EXPLAIN (ANALYZE, BUFFERS) WITH allowed_parents AS ({allowed}) SELECT c.parent_id FROM child_chunks c "
+              "JOIN allowed_parents a ON c.parent_id = a.id WHERE c.tenant_id = %(t)s ORDER BY c.embedding <=> %(e)s LIMIT 20")
+    keyword = (f"EXPLAIN (ANALYZE, BUFFERS) WITH allowed_parents AS ({allowed}) SELECT c.id FROM child_chunks c "
+               "JOIN allowed_parents a ON c.parent_id = a.id WHERE c.tenant_id = %(t)s "
+               "AND c.fts_content @@ plainto_tsquery('english', %(q)s) "
+               "ORDER BY ts_rank(c.fts_content, plainto_tsquery('english', %(q)s)) DESC LIMIT 20")
+    from app.services.vector_store import VectorStoreService
+    sql = "EXPLAIN (ANALYZE, BUFFERS) " + VectorStoreService.SECURE_RRF_SQL
+    args = (TENANT, 1, params["u"], embedding, TENANT, embedding, question, TENANT, question, 60, 60, 5)
+    out = [f"Question: {question}", ""]
+    with svc._connect() as conn:
+        out.append("pgvector version: " + str(conn.execute("SELECT extversion FROM pg_extension WHERE extname = 'vector'").fetchone()[0]))
+        out.append("hnsw.ef_search: " + str(conn.execute("SELECT coalesce(current_setting('hnsw.ef_search', true), 'default (40)')").fetchone()[0]))
+        out.append("rows in child_chunks: " + str(conn.execute("SELECT count(*) FROM child_chunks").fetchone()[0]))
+        out += ["", "== PRODUCTION QUERY (first run) =="] + [r[0] for r in conn.execute(sql, args).fetchall()]
+        out += ["", "== PRODUCTION QUERY (second run) =="] + [r[0] for r in conn.execute(sql, args).fetchall()]
+    return "\n".join(out)
+
+
+def settle(svc, question: str) -> None:
+    """After a bulk load, do what a production database does: vacuum and analyze, then warm up.
+
+    Without this, the first minutes after loading tens of thousands of rows are measured while the database
+    is still catching up in the background, which made one early run look 5-10x slower than it is.
+    """
+    with svc._connect() as conn:
+        conn.autocommit = True
+        conn.execute("VACUUM (ANALYZE) parent_chunks")
+        conn.execute("VACUUM (ANALYZE) child_chunks")
+    for _ in range(3):
+        svc.secure_hybrid_rrf_search(TENANT, str(uuid.uuid4()), VISIBLE_LEVEL, question, top_k=5)
+
+
 def table_sizes(svc) -> dict:
     with svc._connect() as conn:
         row = conn.execute(
@@ -175,10 +217,11 @@ def table_sizes(svc) -> dict:
 
 
 def write_report(results: list[dict], path: Path) -> None:
-    lines = ["# Scale test", "",
+    background = results[0].get("background_documents", 0) if results else 0
+    lines = ["# Scale test" + (f" (with {background:,} documents of other tenants in the same tables)" if background else ""), "",
              f"Machine: {platform.platform()}, Python {platform.python_version()}. Synthetic corpus in its own tenant; retrieval only, no answer model.",
              "Needles are unique facts hidden among noise documents that look like them; 30% of the noise is restricted (level 4). A level-1 user is also asked about restricted needles: finding one is a leak, and recall counts only the questions that user may see.", "",
-             "| Documents | Chunks | Insert (docs/s) | Search p50 / p95 (ms) | Query embed p50 (ms) | Right document in top 5 | Mean results returned | Restricted leaks | Table size (MB) |",
+             "| Documents (this tenant) | Chunks (this tenant) | Insert (docs/s) | Search p50 / p95 (ms) | Query embed p50 (ms) | Right document in top 5 | Mean results returned | Restricted leaks | Table size (MB) |",
              "|---|---|---|---|---|---|---|---|---|"]
     for r in results:
         m = r["level1"]
@@ -201,6 +244,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sizes", default="100,1000,10000", help="comma-separated document counts, run in order")
     parser.add_argument("--needles", type=int, default=30, help="visible needles; half as many restricted ones are added")
+    parser.add_argument("--background", type=int, default=0,
+                        help="documents of OTHER tenants put in the same tables first, so the tested tenant is a small share of the data")
+    parser.add_argument("--explain", action="store_true", help="print and save query plans at the last size (evaluation/scale_explain.txt)")
     parser.add_argument("--keep", action="store_true", help="leave the synthetic tenant in the database")
     args = parser.parse_args()
     sizes = [int(s) for s in args.sizes.split(",")]
@@ -214,6 +260,10 @@ def main() -> int:
     user1, user4 = str(uuid.uuid4()), str(uuid.uuid4())
     results, have, rate = [], 0, 0.0
     try:
+        for offset in range(0, args.background, 500):
+            insert(svc, make_noise(min(500, args.background - offset), seed=99, start=offset, restricted_share=0.0), tenant=BACKGROUND_TENANT)
+        if args.background:
+            print(f"background: {args.background:,} documents of other tenants in the same tables", flush=True)
         insert(svc, needles)
         have = len(needles)
         for size in sizes:
@@ -224,23 +274,28 @@ def main() -> int:
             if todo:
                 rate = todo / (time.perf_counter() - started)
             have = max(have, size)
-            with svc._connect() as conn:
-                conn.execute("ANALYZE child_chunks")
+            settle(svc, needles[0]["question"])
             print(f"== {size:,} documents ==", flush=True)
             level1 = measure(svc, needles, VISIBLE_LEVEL, user1)
             level4 = measure(svc, restricted, RESTRICTED_LEVEL, user4)
             conc = [concurrency(svc, needles, w) for w in (1, 4, 8)]
-            results.append({"documents": size, "insert_docs_per_s": rate, "sizes": table_sizes(svc),
+            results.append({"documents": size, "background_documents": args.background, "insert_docs_per_s": rate, "sizes": table_sizes(svc),
                             "level1": level1, "level4": level4, "concurrency": conc})
             print(f"   recall@5 {level1['recall_at_5']:.0%}, p50 {level1['search_ms_p50']:.0f} ms, results {level1['mean_results']:.1f}, leaks {level1['leaks']}", flush=True)
+        if args.explain:
+            plans = explain(svc, visible[0]["question"])
+            Path("evaluation").mkdir(exist_ok=True)
+            Path("evaluation/scale_explain.txt").write_text(plans + "\n")
+            print(plans, flush=True)
     finally:
         if not args.keep:
             cleanup(svc)
     out = Path("evaluation")
     out.mkdir(exist_ok=True)
-    (out / "scale_results.json").write_text(json.dumps(results, indent=2))
-    write_report(results, out / "SCALE_REPORT.md")
-    print("Report: evaluation/SCALE_REPORT.md")
+    suffix = "_multitenant" if args.background else ""
+    (out / f"scale_results{suffix}.json").write_text(json.dumps(results, indent=2))
+    write_report(results, out / f"SCALE_REPORT{suffix}.md")
+    print(f"Report: evaluation/SCALE_REPORT{suffix}.md")
     return 1 if any(r["level1"]["leaks"] for r in results) else 0
 
 

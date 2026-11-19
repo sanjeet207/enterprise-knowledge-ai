@@ -127,11 +127,7 @@ class VectorStoreService:
                     child_rows,
                 )
 
-    def secure_hybrid_rrf_search(
-        self, tenant_id: str, user_id: str, user_level: int, query: str, top_k: int = 5, k_rrf: int = 60
-    ) -> List[Dict[str, Any]]:
-        query_embedding = embed_texts([query], kind="query")[0]
-        sql_secure_rrf = """
+    SECURE_RRF_SQL = """
         WITH allowed_parents AS (
             SELECT id FROM parent_chunks
             WHERE tenant_id = %s
@@ -176,6 +172,12 @@ class VectorStoreService:
         ORDER BY score DESC
         LIMIT %s;
         """
+
+    def secure_hybrid_rrf_search(
+        self, tenant_id: str, user_id: str, user_level: int, query: str, top_k: int = 5, k_rrf: int = 60
+    ) -> List[Dict[str, Any]]:
+        query_embedding = embed_texts([query], kind="query")[0]
+        sql_secure_rrf = self.SECURE_RRF_SQL
 
         with self._connect() as conn:
             rows = conn.execute(

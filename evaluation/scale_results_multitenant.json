@@ -1,0 +1,58 @@
+[
+  {
+    "documents": 1000,
+    "background_documents": 30000,
+    "insert_docs_per_s": 88.30487602379881,
+    "sizes": {
+      "child_mb": 673.3,
+      "parent_mb": 41.8,
+      "scale_chunks": 2955
+    },
+    "level1": {
+      "questions": 45,
+      "answerable": 30,
+      "recall_at_5": 1.0,
+      "search_ms_p50": 30.46587499557063,
+      "search_ms_p95": 36.788249999517575,
+      "embed_ms_p50": 11.19687499885913,
+      "mean_results": 5,
+      "leaks": 0
+    },
+    "level4": {
+      "questions": 15,
+      "answerable": 15,
+      "recall_at_5": 1.0,
+      "search_ms_p50": 35.42962500068825,
+      "search_ms_p95": 40.48795800190419,
+      "embed_ms_p50": 14.110916992649436,
+      "mean_results": 5,
+      "leaks": 0
+    },
+    "concurrency": [
+      {
+        "workers": 1,
+        "searches": 120,
+        "errors": 0,
+        "per_second": 30.434508725710835,
+        "p50_ms": 31.85397900233511,
+        "p95_ms": 43.66754200600553
+      },
+      {
+        "workers": 4,
+        "searches": 120,
+        "errors": 0,
+        "per_second": 75.92122899949868,
+        "p50_ms": 51.64752050040988,
+        "p95_ms": 63.20608299574815
+      },
+      {
+        "workers": 8,
+        "searches": 120,
+        "errors": 0,
+        "per_second": 93.13655390436774,
+        "p50_ms": 84.5062290027272,
+        "p95_ms": 106.0199169878615
+      }
+    ]
+  }
+]
