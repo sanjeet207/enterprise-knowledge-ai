@@ -86,6 +86,7 @@ generic one), so it tells an attacker nothing about which documents exist. This 
 - SSO is implemented (authorization code flow with PKCE, state, nonce, signature, issuer, audience and expiry checks)
   but has not been tested against a live identity provider and has no group mapping.
 - Answers come from a local 7B model on a laptop; behaviour on a hosted model is not measured.
+- With `LLM_PROVIDER` set to a hosted provider, questions and the access-filtered passages sent to the model are processed by that provider. Access control is unchanged (the passages were already filtered), but the data leaves the deployment, so the provider's terms must suit the documents. API keys are read from environment variables only, are never logged and never appear in error messages (`tests/test_llm_providers.py`).
 
 ## 7. What an independent review should check
 

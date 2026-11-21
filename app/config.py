@@ -44,6 +44,14 @@ EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", "384"))
 # --- LLM and answer-safety settings ---
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+# Hosted models, for deployments (such as Azure) where a local Ollama is not available:
+#   LLM_PROVIDER=anthropic + ANTHROPIC_API_KEY, or LLM_PROVIDER=groq + GROQ_API_KEY,
+#   or LLM_PROVIDER=openai + LLM_API_KEY + LLM_BASE_URL (any OpenAI-compatible endpoint).
+# Then set LLM_MODEL (and optionally <AGENT>_MODEL, ANSWERER_QUICK_MODEL) to that provider's model names.
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+LLM_API_KEY = os.getenv("LLM_API_KEY", "")
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.openai.com/v1")
 LLM_MODEL = os.getenv("LLM_MODEL", "qwen2.5:7b")
 # Below this top rerank score the question is refused without calling the model.
 LLM_NUM_CTX = int(os.getenv("LLM_NUM_CTX", "4096"))
