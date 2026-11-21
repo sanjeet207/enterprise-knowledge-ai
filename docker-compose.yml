@@ -27,6 +27,14 @@ services:
       DATABASE_URL: postgresql://app:app_dev_password@db:5432/knowledge
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       OLLAMA_URL: ${OLLAMA_URL_FOR_DOCKER:-http://host.docker.internal:11434}
+      # Hosted model instead of local Ollama (see docs/DEPLOY_AZURE.md). Empty values keep the local default.
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      LLM_MODEL: ${LLM_MODEL:-qwen2.5:7b}
+      ANSWERER_QUICK_MODEL: ${ANSWERER_QUICK_MODEL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
     ports:
       - "8000:8000"
 
