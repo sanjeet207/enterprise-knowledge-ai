@@ -13,10 +13,10 @@ question is written to an audit log.
 
 - **Access control is in the database query, not in the prompt.** Tenant, classification level and engagement
   membership are filtered in SQL before anything reaches the model, so the model cannot leak what it never receives.
-  Result: 0 access leaks on the 86-question suite and on the 25-question hard set.
+  Result: 0 access leaks on the 86-question suite and on the 45-question hard set.
 - **Answers are checked, not trusted.** The pipeline has a relevance gate, a refusal path, checks on numbers and fit,
   and a validator with retries. See the README for the full flow.
-- **It is measured.** 86-question suite: 100%, 0 leaks. Hard set: 88% (22 of 25), 0 leaks, with the three misses listed.
+- **It is measured.** 86-question suite: 100%, 0 leaks. 45-question hard set: 88% on its 25 answerable questions (22 of 25), 0 leaks, with the three misses listed.
 - **The model is a setting.** Local Ollama by default; Anthropic, Groq or an OpenAI-compatible endpoint with one
   environment variable. 344 unit tests cover the provider code with a faked HTTP layer.
 

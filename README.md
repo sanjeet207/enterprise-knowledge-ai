@@ -183,6 +183,8 @@ Run once after always-refine, the quick model for simple questions (`qwen2.5:3b`
 | 86-question suite | 100% (37/37) | 100% (24/24) | **0** | 9.2 s / 3.5 s |
 | 45-question hard set | 88% (22/25) | 100% (12/12) | **0** | 9.4 s / 4.2 s |
 
+These figures are recomputed from the raw per-question results by `python -m scripts.check_results`, which the unit tests also run, so a published number cannot drift from its data.
+
 The hard set is at the top of its earlier 80-88% range, not above it, and one run is not enough to claim an improvement. The three misses are two "unverified" answers (personal Google Drive; working from a home country) and one "no answer" (who signs off a 40 lakh contract). Neither set was tuned after seeing these results.
 
 A second set of 27 questions (`evaluation/independent_questions.csv`) was written by the AI assistant that helped build the project, from the documents alone, before any results were seen. It is not tuned to the system, but it is not written by an outside person either. It was run twice, before general answers were switched off by default, and both runs are kept so the change is visible. A later run on the current defaults (general answers off, rank fusion on) scored 26/27 with 0 leaks; see evaluation/BLEND_RRF_REPORT.md.
