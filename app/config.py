@@ -59,13 +59,15 @@ PLANNER_MAX_SEARCHES = int(os.getenv("PLANNER_MAX_SEARCHES", "3"))
 
 
 # Refiner: after a question is accepted as being about the company, rewrite it into its clearest form for the
-# answering model (checked by plain code). Off until the evaluation shows it helps; REFINER_ENABLED=true turns it on.
+# answering model (checked by plain code). On by default; it only runs on weak first searches and never changes what the answerer sees. REFINER_ENABLED=false turns it off.
 # How the reranker's order is combined with the search order. "rrf" (default) = rank-fuse both orders, so the
 # reranker cannot drop a passage the search ranked highly. "none" = rerank order only; "guard" = rerank order, but
 # the search's first hit is never dropped. Measured with scripts/retrieval_eval.py (see README).
 RERANK_BLEND = os.getenv("RERANK_BLEND", "rrf").lower()
 
-REFINER_ENABLED = os.getenv("REFINER_ENABLED", "false").lower() in ("1", "true", "yes")
+REFINER_ENABLED = os.getenv("REFINER_ENABLED", "true").lower() in ("1", "true", "yes")
+# true: every question is rewritten first (its rewrite drives one extra search); false: only after a weak first search.
+REFINER_ALWAYS = os.getenv("REFINER_ALWAYS", "true").lower() in ("1", "true", "yes")
 # The refiner runs only when the first search scored below this (a clear question with a strong match is left alone),
 # and its rewrite is used to search, never shown to the answerer.
 # The rewrite only drives a search, so it may reword freely ("holidays" -> "annual leave"); it still may not add or
@@ -79,6 +81,21 @@ ROUTER_MIN_SCORE = float(os.getenv("ROUTER_MIN_SCORE", "0.9"))
 # General-knowledge path: questions the documents cannot answer, answered by the model alone and labelled as such.
 # Company-specific questions are never answered this way (see app/services/question_profile.py).
 GENERAL_ENABLED = os.getenv("GENERAL_ENABLED", "false").lower() in ("1", "true", "yes")
+
+# Deeper pass: when the best passages match but the answer model finds them insufficient, search once more, wider
+# (more passages from the same access-filtered search, plus everything earlier searches found), and answer again with
+# the main model. Every check still applies to that answer. DEEP_SEARCH_ENABLED=false turns it off.
+DEEP_SEARCH_ENABLED = os.getenv("DEEP_SEARCH_ENABLED", "true").lower() in ("1", "true", "yes")
+DEEP_TOP_K = int(os.getenv("DEEP_TOP_K", "8"))
+DEEP_MAX_PASSAGES = int(os.getenv("DEEP_MAX_PASSAGES", "6"))
+DEEP_MAX_CHARS = int(os.getenv("DEEP_MAX_CHARS", "8000"))  # keeps the passages inside the model's context window
+
+# Check that every answer (not only a small model's) addresses the question; one that misses the point is written again once.
+FIT_CHECK_ALL = os.getenv("FIT_CHECK_ALL", "true").lower() in ("1", "true", "yes")
+
+# Say "not related to company documents" (instead of the generic refusal) for a question that is plainly not about
+# the company. Decided from the question alone, by the router, so it never depends on which documents exist.
+OFF_TOPIC_NOTICE = os.getenv("OFF_TOPIC_NOTICE", "true").lower() in ("1", "true", "yes")
 
 
 def answer_model(depth: str) -> str:
@@ -98,6 +115,8 @@ def agent_model(name: str) -> str:
 # Uploads are indexed by a background worker. INGEST_ASYNC=false indexes inside the request (small deployments, tests).
 INGEST_ASYNC = os.getenv("INGEST_ASYNC", "true").lower() in ("1", "true", "yes")
 # true: the web process also runs a worker thread. false: run "python -m scripts.worker" as its own process.
+# Load the embedding and reranking models when the server starts, so the first question is not slow.
+WARM_UP_MODELS = os.getenv("WARM_UP_MODELS", "true").lower() in ("1", "true", "yes")
 INGEST_WORKER_ENABLED = os.getenv("INGEST_WORKER_ENABLED", "true").lower() in ("1", "true", "yes")
 
 # The highest reading level a portal administrator may grant (separation of duties). Higher levels come from IT security.

@@ -14,10 +14,28 @@ from app.services import metrics, worker
 
 STATIC_DIR = Path(__file__).parent / "static"
 
+def _warm_up_models() -> None:
+    """Load the search models now (about 10 seconds the first time) instead of during the first question.
+
+    A failure here must never stop the server: the models still load on first use.
+    """
+    import logging
+    log = logging.getLogger("app.warmup")
+    try:
+        from app.services.embedder import embed_texts
+        embed_texts(["warm up"], kind="query")
+        from app.services.reranker import rerank_passages
+        rerank_passages("warm up", [{"parent_content": "warm up", "parent_id": "0", "document_id": "0", "metadata": {}, "rrf_score": 0.0}], top_k=1)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Model warm-up skipped: %s", exc.__class__.__name__)
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Start the upload worker with the server and stop it cleanly on shutdown."""
     tracing.setup()
+    if config.WARM_UP_MODELS:
+        _warm_up_models()
     if config.INGEST_WORKER_ENABLED:
         worker.start()
     yield
