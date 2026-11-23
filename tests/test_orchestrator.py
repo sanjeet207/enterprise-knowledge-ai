@@ -79,6 +79,13 @@ def test_answered_with_source(env):
     assert [s["agent"] for s in events[0][0][-1]] == ["corrector", "retriever", "analysis", "answerer", "validator"]
 
 
+def test_reply_carries_step_timings_but_no_detail_text(env):
+    """The interface shows a timeline of agent steps. It gets names and times only: the detail text can name documents."""
+    out = run(FakeRetriever())
+    assert [s["agent"] for s in out["trace"]] == ["corrector", "retriever", "analysis", "answerer", "validator"]
+    assert all(set(step) == {"agent", "ms"} for step in out["trace"])
+
+
 def test_weak_retrieval_refuses_without_answering(env):
     events, calls, _ = env
     out = run(FakeRetriever(score=0.0001))

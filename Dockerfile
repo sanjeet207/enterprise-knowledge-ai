@@ -1,5 +1,14 @@
 # Enterprise Knowledge AI Platform: API image.
 # The language model (Ollama) is not inside this image; the app reaches it over OLLAMA_URL.
+# Stage 1: build the React interface. vite.config.ts writes the result to ../app/static.
+FROM node:22-slim AS web
+WORKDIR /web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ ./
+RUN npm run build
+
+# Stage 2: the API image.
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -19,6 +28,8 @@ RUN pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requir
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2'); from flashrank import Ranker; Ranker(model_name='ms-marco-MiniLM-L-12-v2', cache_dir='/opt/flashrank-cache')"
 
 COPY app ./app
+# The built interface replaces whatever copy of app/static the repository holds.
+COPY --from=web /app/static ./app/static
 COPY scripts ./scripts
 
 # Run as a normal user, not root.

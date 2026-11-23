@@ -31,6 +31,23 @@ jobs:
       - name: Run unit tests
         run: python -m pytest -q tests
 
+  web-build:
+    name: Web interface (lint and build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
   access-checks:
     name: Access-control checks (real Postgres + pgvector)
     runs-on: ubuntu-latest

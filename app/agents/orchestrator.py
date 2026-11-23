@@ -100,8 +100,10 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
         audit.log_event(user, query, outcome, top_score, sources, answer, model,
                         int((_now() - started) * 1000), " | ".join(notes) or None, trace.steps)
         corrected = question if question.lower() != query.lower() else None
+        # Step names and timings only. The detail text stays in the audit log (it can name documents).
+        timings = [{"agent": step["agent"], "ms": step["ms"]} for step in trace.steps]
         return {"query": query, "corrected_query": corrected, "outcome": outcome,
-                "answer": answer, "sources": sources}
+                "answer": answer, "sources": sources, "trace": timings}
 
     searches: list[list[dict]] = []  # every result list, in order
 
