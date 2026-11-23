@@ -48,12 +48,16 @@ def list_documents(tenant_id: str, uploaded_by_id: Optional[str] = None) -> List
     return docs
 
 
-def find_by_hash(tenant_id: str, content_hash: str) -> Optional[str]:
+def find_by_hash(tenant_id: str, content_hash: str, user_level: int = 4, user_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """The document already holding this exact content, and whether this person may read it.
+    Callers must show the title only when `readable` is true: a title is itself restricted information."""
     with _connect() as conn:
         row = conn.execute(
-            "SELECT metadata->>'title' FROM parent_chunks WHERE tenant_id = %s AND metadata->>'content_hash' = %s LIMIT 1",
-            (tenant_id, content_hash)).fetchone()
-    return row[0] if row else None
+            "SELECT metadata->>'title', classification_level <= %s AND (engagement_id IS NULL OR engagement_id IN "
+            "(SELECT engagement_id FROM engagement_members WHERE user_id = %s)) "
+            "FROM parent_chunks WHERE tenant_id = %s AND metadata->>'content_hash' = %s LIMIT 1",
+            (user_level, user_id, tenant_id, content_hash)).fetchone()
+    return {"title": row[0], "readable": bool(row[1])} if row else None
 
 
 def document_info(tenant_id: str, document_id: str) -> Optional[Dict[str, Any]]:

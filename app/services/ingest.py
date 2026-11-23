@@ -31,6 +31,13 @@ def status_for(user: User) -> str:
     return "published" if user.is_admin else "pending"
 
 
+def duplicate_message(existing: dict) -> str:
+    """Name the existing document only to someone who may read it; otherwise say nothing about which one it is."""
+    if existing.get("readable"):
+        return f'This content is already in the knowledge base as "{existing["title"]}"'
+    return "This content is already in the knowledge base."
+
+
 def precheck(user: User, content: str, engagement_id: Optional[str]) -> str:
     """The quick checks done while the person waits. Returns the content hash. Nothing is written."""
     if engagement_id and not admin.engagement_exists(user.tenant_id, engagement_id):
@@ -39,9 +46,9 @@ def precheck(user: User, content: str, engagement_id: Optional[str]) -> str:
     if reason:
         raise IngestError(422, f"This document was not added: {reason}. Ask a security reviewer to look at it.")
     content_hash = hashlib.sha256(" ".join(content.split()).encode("utf-8")).hexdigest()
-    existing = admin.find_by_hash(user.tenant_id, content_hash)
+    existing = admin.find_by_hash(user.tenant_id, content_hash, user.level, user.id)
     if existing:
-        raise IngestError(409, f'This content is already in the knowledge base as "{existing}"')
+        raise IngestError(409, duplicate_message(existing))
     if not chunker.chunk_document(content):
         raise IngestError(400, "Document content is empty or invalid.")
     return content_hash
@@ -62,9 +69,9 @@ def index_document(user: User, document_id: str, title: str, content: str, level
     if already:
         return {"document_id": document_id, "title": title, "parents_created": len(chunks), "status": status,
                 "version": (previous["version"] + 1) if previous else 1}
-    existing = admin.find_by_hash(user.tenant_id, content_hash)
+    existing = admin.find_by_hash(user.tenant_id, content_hash, user.level, user.id)
     if existing:
-        raise IngestError(409, f'This content is already in the knowledge base as "{existing}"')
+        raise IngestError(409, duplicate_message(existing))
     if previous:
         current = versions.info(user.tenant_id, previous["document_id"])
         if current is None or current["status"] != "published":

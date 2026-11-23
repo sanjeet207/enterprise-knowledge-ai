@@ -72,7 +72,15 @@ def main() -> int:
             session = {"Authorization": "Bearer " + c.post("/auth/login", data={"username": email, "password": TEST_PASSWORD}).json()["access_token"]}
             q = "performance review promotion rating calibration"
             record("M1a", "Before: a level 2 person finds the level 2 document", has(search(session, q), PERFREV))
+            saved = c.post("/chat/query", headers=session, json={"query": "How are performance reviews and promotions rated?"})
+            saved_id = saved.json().get("conversation_id")
+            saved_before = c.get(f"/chat/conversations/{saved_id}", headers=session) if saved_id else None
+            record("M1c", "Before: the saved conversation shows the level 2 answer and its source",
+                   saved_before is not None and saved_before.status_code == 200 and has(saved_before, PERFREV) and "redacted" not in saved_before.text)
             c.patch(f"/admin/users/{pid}", headers=admin, json={"level": 1})
+            saved_after = c.get(f"/chat/conversations/{saved_id}", headers=session) if saved_id else None
+            record("M1d", "Level lowered: the saved conversation now hides that answer and its source",
+                   saved_after is not None and saved_after.status_code == 200 and not has(saved_after, PERFREV) and "redacted" in saved_after.text)
             after = search(session, q)
             record("M1", "Level lowered mid-session: the SAME token no longer finds it in search", status(after) == 200 and not has(after, PERFREV))
             chat = c.post("/chat/query", headers=session, json={"query": "How are performance reviews and promotions rated?"})

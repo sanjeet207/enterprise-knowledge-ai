@@ -1,8 +1,10 @@
-# Security matrix: latest live run (2026-11-23 06:55 UTC)
+# Security matrix: latest live run (2026-11-23 07:13 UTC)
 
 | Row | Attack | Result | Detail |
 |---|---|---|---|
 | M1a | Before: a level 2 person finds the level 2 document | PASS |  |
+| M1c | Before: the saved conversation shows the level 2 answer and its source | PASS |  |
+| M1d | Level lowered: the saved conversation now hides that answer and its source | PASS |  |
 | M1 | Level lowered mid-session: the SAME token no longer finds it in search | PASS |  |
 | M1b | ...nor in a chat answer | PASS | refused |
 | M2 | A pending access request does not widen what the person can read | PASS | 201 |

@@ -81,3 +81,27 @@ def test_loading_uses_the_persons_current_access(monkeypatch):
     monkeypatch.setattr(conversations, "accessible_documents", lambda u: ({OPEN_ID}, {"leave policy"}))
     out = with_current_access(user, [answer("a", source(OPEN_ID)), answer("b", source(CLOSED_ID, TITAN))])
     assert [m["outcome"] for m in out] == ["answered", "redacted"]
+
+
+def test_one_lost_source_among_five_hides_the_answer():
+    sources = [source(f"d{i}", f"Doc {i}") for i in range(5)]
+    out = show([answer("text", *sources)], ids={f"d{i}" for i in range(4)}, titles=())
+    assert out[0]["outcome"] == "redacted" and out[0]["sources"] == []
+
+
+def test_all_sources_lost_hides_the_answer():
+    out = show([answer("text", source("a"), source("b"))], ids=(), titles=())
+    assert out[0]["outcome"] == "redacted"
+
+
+def test_a_document_replaced_by_a_newer_version_hides_answers_built_on_the_old_one():
+    # the old version is archived (not published), the new one has a different id and is open
+    out = show([answer("20 days [1]", source("old-version-id"))], ids={"new-version-id"}, titles=())
+    assert out[0]["outcome"] == "redacted"
+
+
+def test_nothing_open_at_all_hides_every_sourced_answer_but_not_the_persons_own_words():
+    # a deactivated account or one moved to another company has no open documents
+    question = {"id": 1, "role": "user", "content": "hello", "outcome": None, "sources": None, "rating": None}
+    out = show([question, answer("x", source(OPEN_ID))], ids=(), titles=())
+    assert out[0] == question and out[1]["outcome"] == "redacted"
