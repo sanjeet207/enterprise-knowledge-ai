@@ -6,7 +6,7 @@ A secure internal "company brain". Employees ask questions in plain language and
 
 > **About the data.** Everything in this repository is fictional. The demo company, "Acme Financial Services", and its fourteen policy documents were written for this project, as were the demo users and their shared password (`DemoPass2026x`, for local use only). A second tenant, "Globex" (two documents), exists to test tenant isolation.
 
-> **Status.** Production-oriented, **not deployed**. It runs locally (Docker included) and is tested there. Single sign-on is implemented and unit-tested but **not yet validated against a live Entra tenant**. Results below were measured on a local 7B model; a hosted model has **not been measured**. No independent human has evaluated or security-reviewed it. A production deployment (`APP_ENV=production`) refuses to start while demo accounts exist, unless `ALLOW_DEMO_DATA=1` is set on purpose.
+> **Status.** Production-oriented, **not deployed**. It runs locally (Docker included) and is tested there. Single sign-on is implemented and unit-tested but **not yet validated against a live Entra tenant**. Results below were measured on a local 7B model; a hosted model (Groq, free tier) has been measured only on the small 27-question set (see Limitations). No independent human has evaluated or security-reviewed it. A production deployment (`APP_ENV=production`) refuses to start while demo accounts exist, unless `ALLOW_DEMO_DATA=1` is set on purpose.
 
 ---
 
@@ -315,7 +315,7 @@ Try the same question as different users: for example *"What is the indicative v
 ### Tests and checks
 
 ```bash
-python -m pytest -q tests             # 437 unit tests, no database or model needed
+python -m pytest -q tests             # 459 unit tests, no database or model needed
 python -m scripts.verify_access       # 160 access-control checks (needs the database)
 python -m scripts.check_validator     # planted-error check for the validator (needs Ollama)
 python -m scripts.smoke_test          # end-to-end check of every path against the running server (needs Ollama)

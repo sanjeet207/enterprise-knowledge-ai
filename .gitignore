@@ -8,3 +8,6 @@ evaluation/eval_results_quick.json
 server_error.log
 security-matrix-ci.md
 server.log
+
+# database dumps hold real data
+backups/
