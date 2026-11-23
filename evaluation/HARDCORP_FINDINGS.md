@@ -80,3 +80,13 @@ evaluation/hardcorp_set.json --tag hardcorp`; report `HARDCORP_REPORT.md`, answe
 - The question set and ground truth were written by the AI assistant that built the project; one scoring phrase (above) is known to be too strict.
 - This set is now a development set: anything changed in response to it must be measured on a set the change was not made on.
 - One run, one local model; results vary between runs because the model's output varies.
+
+## Refusal gate: what the sweeps showed (2026-11-23, measured, nothing changed)
+
+`scripts/threshold_sweep.py` and `scripts/signal_check.py` (outputs `THRESHOLD_SWEEP.md`, `SIGNAL_CHECK.md`) ask the application's own retriever for the best relevance of every question, before any model is involved.
+
+- **Lowering the threshold does not help.** On Northwind, 9 of 54 should-answer questions score below 0.1; at 0.005 still 6 do, because the reranker scores several everyday-wording questions at about 0.000 although search ranks the right document first to third.
+- **The reranker score also does not separate answerable from unanswerable questions**: some unsupported questions on the demo company score 0.99.
+- **Correction to the table above:** on Northwind, all 13 should-refuse questions score below the gate, so the "no invented facts 6/6" result was produced by the gate alone. The answer and verification stages were not exercised by those questions on this corpus. They were on the demo company, where 7 of 32 should-refuse questions pass the gate.
+- **A second signal (cosine similarity to the closest readable passage), OR-ed with the reranker, fits Northwind at a cutoff of 0.4** (2 of 54 blocked instead of 9, 0 of 13 should-refuse passing) **but does not transfer**: at the same cutoff the 27-question demo set lets 4 of 13 should-refuse questions through instead of 2, and the 86-question set rescues only 3 of 12. The right cutoff differs by corpus, so no fixed value was adopted. Typo questions are scored raw here, so the demo-set blocked counts are overstated.
+- **Size of the prize:** only 3 of the 18 Northwind failures were refused at the gate. Nine were drafted and then rejected by verification, the larger bucket.
