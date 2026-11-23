@@ -10,7 +10,7 @@ from app.agents import (answerer, corrector, fit_checker, general, general_check
 from app.agents.base import Trace
 from app.services import audit
 from app.services.answer_check import (cited_numbers, is_hollow, is_insufficient, repair_neighbor_citation,
-                                       strip_invalid_citations, titled_passage, uncited_sentences,
+                                       strip_invalid_citations, titled_passage, uncited_sentences, versioned_titles,
                                        unsupported_numbers)
 from app.services import question_profile
 from app.services.llm import LLMUnavailable
@@ -285,8 +285,10 @@ async def answer_question(user, query: str, top_k: int, retriever, on_step=None)
     deep_done = False
     fit_retried = False
     while True:
-        passages = [titled_passage(p["parent_content"], (p.get("metadata") or {}).get("title")) if config.SOURCE_TITLES_ENABLED
-                    else p["parent_content"] for p in reranked]
+        titles = [(p.get("metadata") or {}).get("title") for p in reranked]
+        show = versioned_titles(titles) if config.SOURCE_TITLES_ENABLED else set()
+        passages = [titled_passage(p["parent_content"], t if " ".join(str(t or "").split()) in show else None)
+                    for p, t in zip(reranked, titles)]
         try:
             # 5. Answerer, with one retry if it forgot to cite.
             t = _now()

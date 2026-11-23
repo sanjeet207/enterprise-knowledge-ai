@@ -384,3 +384,23 @@ def titled_passage(content: str, title: str | None) -> str:
     of one policy apart ("Travel and Expense Policy 2023" against "... 2025"). Without a title the passage is unchanged."""
     title = " ".join(str(title or "").split())[:150]
     return f"Document: {title}\n{content}" if title else content
+
+
+def _title_stem(title: str) -> str:
+    """A title with its year and version marks removed: "Travel Policy 2023" and "Travel Policy v2" share a stem."""
+    t = re.sub(r"\bv(?:ersion)?\s*\d+(?:\.\d+)*\b|\d+", " ", str(title or "").lower())
+    return " ".join(re.sub(r"[^a-z]+", " ", t).split())
+
+
+def versioned_titles(titles: list[str | None]) -> set[str]:
+    """Titles that differ from another retrieved title only by a year or version number. Only these need the title
+    shown to the model, because their text is otherwise indistinguishable; for everything else the title line changed
+    answer phrasing and cost a correct answer (see evaluation/HARDCORP_FINDINGS.md)."""
+    clean = {" ".join(str(t or "").split()) for t in titles}
+    clean.discard("")
+    by_stem: dict[str, set[str]] = {}
+    for t in clean:
+        stem = _title_stem(t)
+        if stem:
+            by_stem.setdefault(stem, set()).add(t)
+    return {t for group in by_stem.values() if len(group) > 1 for t in group}

@@ -115,3 +115,26 @@ Nine of the 18 v1 failures now pass (client dinner, travel claim deadline, direc
 Answers read in full for quality: the conflict question now states both rules and which document says which; the version questions name the 2025 policy. One imprecise answer was scored as a pass: "The daily meal allowance for client entertainment is up to INR 4,000 per person" mixes two different allowances (1,500 daily meal, 4,000 client entertainment); the figure is right, the label is not.
 
 Limits: one run on one local 7B model, whose output varies between runs; changes tuned on this set; the two demo question sets have to be re-run to show nothing else got worse (`regress86`, `regress27`).
+
+## v3: document titles only where they separate versions (2026-11-23)
+
+**What happened.** v2 showed every passage's document title to the answer and validator models. It lifted Northwind from 72% to 83%, but the 27-question demo set dropped from 11/12 to 10/12 (three runs out of three). The lost question was "a client gave me a gift worth 8000 rupees": the title line changed the model's phrasing ("According to the Code of Conduct and Whistleblower Policy [1] ... Therefore, you should decline ..."), and the closing sentence fell just under the citation-repair overlap cutoff (0.375 against 0.4). The citation rule was not loosened to rescue one question.
+
+**Isolation.** Same code with `SOURCE_TITLES=0` gave 11/12 on the 27-question set, so the title line was the cause.
+
+**Change.** `versioned_titles()` in `app/services/answer_check.py`: a title is shown only when another retrieved passage has the same title apart from year or version digits ("Travel and Expense Policy 2023" and "... 2025"). Other passages go in plain. 449 unit tests pass.
+
+| Configuration | Northwind (46 answerable) | Multi-part | 27-question set | 86-question set | Leaks |
+|---|---|---|---|---|---|
+| v1, no titles | 70% | 50% | 11/12 | 37/37 | 0 |
+| v2, titles on every passage | 83% | 88% | 10/12 | 37/37 | 0 |
+| v3, titles only for version pairs | 78% | 75% | 11/12 | 37/37 (24/24 refusals) | 0 |
+
+**Reading it honestly.**
+- Against v2, v3 lost three Northwind questions: client dinner per head, MLRO, and conflict-of-interest timing. None was gained.
+- Only the conflict-of-interest question plausibly depended on titles (Code of Conduct against Conflicts Procedure, two different documents that titles used to tell apart). MLRO involves no version pair, so it is probably run-to-run noise from the local model. Client dinner involves a version pair, so titles still apply there; the cause is not established.
+- Each Northwind figure is one run on 46 questions. Run-to-run noise has not been measured, so 83% against 78% is not shown to be a real difference.
+- Northwind is now a development set: this change was chosen while reading its failures. The demo sets are the regression check, and they are unchanged or better under v3.
+- v3 is the default because it keeps both demo sets at their stored baseline. The cost is some of the Northwind gain, recorded above.
+- Still failing on Northwind, unchanged: relevance gate (hotel in Mumbai, password change, stolen laptop), no_answer (taxi receipt, ChatGPT paste, NorthTrip, UK leave plus working abroad), and validator rejections (UK maternity, old hotel limit).
+- The vendor-contract (30 lakh) failure on the 27-question set predates all of this.
