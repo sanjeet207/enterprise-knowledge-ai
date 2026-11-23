@@ -4,7 +4,7 @@ from typing import Any, Dict
 import psycopg
 
 from app.config import DATABASE_URL
-from app.services import conversations
+from app.services import conversations, reports as saved_reports
 from app.services.users import User
 
 ERASED = "[erased]"
@@ -32,7 +32,7 @@ def export_user(user: User) -> Dict[str, Any]:
     return {
         "account": {"email": user.email, "tenant": user.tenant_id, "level": user.level, "administrator": user.is_admin},
         "conversations": [{"id": str(c[0]), "title": c[1], "started": c[2], "messages": by_conv.get(str(c[0]), [])} for c in convs],
-        "research_reports": [{"id": str(r[0]), "created": r[1], "reviewed": r[2], "report": r[3]} for r in reports],
+        "research_reports": [{"id": str(r[0]), "created": r[1], "reviewed": r[2], "report": saved_reports.with_current_access(user, r[3])} for r in reports],
         "questions_in_audit_log": [{"at": a[0], "question": a[1], "outcome": a[2]} for a in audit],
     }
 

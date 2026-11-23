@@ -31,6 +31,7 @@ async def run_research(user, request: str, retriever, budget: float = BUDGET_SEC
     steps.append({"step": "plan", "ms": int((time.perf_counter() - t) * 1000), "detail": " | ".join(questions)})
 
     registry: Dict[str, int] = {}
+    document_ids: Dict[str, str] = {}  # title -> document id, so a saved report can be re-checked against current access
     sections, gaps = [], []
     for q in questions:
         if time.perf_counter() - started > budget:
@@ -42,6 +43,8 @@ async def run_research(user, request: str, retriever, budget: float = BUDGET_SEC
         if result["outcome"] != "answered":
             gaps.append({"question": q, "reason": GAP_REASON})  # refused and not-found look the same on purpose
             continue
+        for source in result["sources"]:
+            document_ids.setdefault(source.get("title") or "Untitled", source.get("document_id"))
         text, used = research_core.renumber(result["answer"], result["sources"], registry)
         sections.append({"question": q, "answer": text, "sources": used})
 
@@ -66,7 +69,8 @@ async def run_research(user, request: str, retriever, budget: float = BUDGET_SEC
     report = {
         "request": request, "title": request[:100], "summary": summary, "sections": sections, "gaps": gaps,
         "inconsistencies": inconsistencies, "limitations": limitations,
-        "sources": [{"number": n, "title": title} for title, n in sorted(registry.items(), key=lambda kv: kv[1])],
+        "sources": [{"number": n, "title": title, "document_id": document_ids.get(title)}
+                    for title, n in sorted(registry.items(), key=lambda kv: kv[1])],
         "status": "draft", "elapsed_s": round(time.perf_counter() - started, 1), "steps": steps,
     }
     outcome = "report" if sections and not gaps else "report_partial"

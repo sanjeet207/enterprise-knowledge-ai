@@ -1,4 +1,4 @@
-# Security matrix: latest live run (2026-11-23 06:48 UTC)
+# Security matrix: latest live run (2026-11-23 06:55 UTC)
 
 | Row | Attack | Result | Detail |
 |---|---|---|---|
@@ -8,10 +8,12 @@
 | M2 | A pending access request does not widen what the person can read | PASS | 201 |
 | M3 | Account switched off mid-session: the SAME token is refused on the next request | PASS |  |
 | M4a | Before: a team member finds the deal memo | PASS |  |
+| M5c | Before: the team member's saved research report cites the deal memo | PASS |  |
 | M5a | Before: the saved conversation shows the answer and its source to the team member | PASS |  |
 | M4 | Removed from the team mid-session: the SAME token no longer finds the memo | PASS |  |
 | M4b | ...nor in a new chat answer | PASS | refused |
 | M5 | Old conversation after losing access: restricted answer and source title are hidden | PASS | answer replaced by a notice |
+| M5r | Saved research report after losing access: restricted findings, summary and source title are hidden | PASS |  |
 | M6 | An analyst gets no document list at all | PASS |  |
 | M7 | A manager's document list holds only their own uploads, no restricted titles | PASS |  |
 | M8 | Search for restricted topics returns no restricted title or text to an analyst | PASS |  |

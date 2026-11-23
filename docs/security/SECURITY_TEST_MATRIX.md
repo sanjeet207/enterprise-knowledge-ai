@@ -49,7 +49,7 @@ First live run: 16 of 17 checks passed, one observation (M5), one failure that t
   replaced by a notice and its sources are emptied. Their own questions, refusals and answers built only on documents
   they can still open are unchanged. The check applies to the chat screen and to the "export my data" download.
   Messages saved before this change carry only a title, so they are matched by title; if it cannot be matched they are
-  hidden (fail closed). Not covered: saved research reports (see below) and the audit log, which holds titles but no text.
+  hidden (fail closed). Saved research reports follow the same rule: a finding that cites a closed document is replaced by a notice, and because the summary and the flagged inconsistencies mix every finding they are removed; closed sources leave the source list (matrix M5c, M5r). Not covered: the audit log, which holds titles and document ids but no document text.
 - **M13, research report (false alarm, check fixed):** the first run failed because the check searched the whole report for
   restricted titles, and the report repeats the request, which contained the words "executive compensation framework". The
   check now looks only at the documents the report cites and the text it wrote, not at the request. Lesson kept here

@@ -99,6 +99,11 @@ def main() -> int:
                 record("M4a", "Before: a team member finds the deal memo", has(search(director_titan, tq), TITAN))
                 conv = c.post("/chat/query", headers=director_titan, json={"query": "What is the Project Titan valuation?"}).json()
                 conv_id = conv.get("conversation_id")
+                made = c.post("/research", headers=director_titan, json={"request": "Summarise how the Titan deal is valued."}, timeout=300)
+                rep_id = made.json().get("id") if made.status_code == 200 else None
+                rep_before = c.get(f"/research/{rep_id}", headers=director_titan) if rep_id else None
+                record("M5c", "Before: the team member's saved research report cites the deal memo",
+                       rep_before is not None and rep_before.status_code == 200 and has(rep_before, TITAN) and "redacted" not in rep_before.text)
                 before = c.get(f"/chat/conversations/{conv_id}", headers=director_titan) if conv_id else None
                 record("M5a", "Before: the saved conversation shows the answer and its source to the team member",
                        before is not None and before.status_code == 200 and has(before, TITAN) and "redacted" not in before.text)
@@ -112,6 +117,11 @@ def main() -> int:
                 record("M5", "Old conversation after losing access: restricted answer and source title are hidden",
                        old is not None and old.status_code == 200 and not has(old, TITAN) and "redacted" in old.text,
                        "answer replaced by a notice" if old is not None and "redacted" in old.text else "still readable")
+                rep_after = c.get(f"/research/{rep_id}", headers=director_titan) if rep_id else None
+                record("M5r", "Saved research report after losing access: restricted findings, summary and source title are hidden",
+                       rep_after is not None and rep_after.status_code == 200 and not has(rep_after, TITAN) and "redacted" in rep_after.text)
+                if rep_id:
+                    c.delete(f"/research/{rep_id}", headers=director_titan)
                 if conv_id:
                     c.delete(f"/chat/conversations/{conv_id}", headers=director_titan)
 
