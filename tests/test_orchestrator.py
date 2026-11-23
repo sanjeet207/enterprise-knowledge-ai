@@ -235,7 +235,8 @@ def test_planner_second_search_merges_both_results(env):
     mp.setattr(answerer, "run", capture)
     out = run(retriever)
     assert out["outcome"] == "answered"
-    assert seen_passages == ["Leave: 24 days.", "Travel claims within 30 days."]  # best first, no duplicates
+    # best first, no duplicates; each passage carries its document title on a first line
+    assert seen_passages == ["Document: Leave Policy\nLeave: 24 days.", "Document: Travel Policy\nTravel claims within 30 days."]
     assert [s["title"] for s in out["sources"]] == ["Leave Policy", "Travel Policy"]
 
 
