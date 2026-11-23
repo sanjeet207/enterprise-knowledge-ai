@@ -1,0 +1,112 @@
+{
+  "paraphrase questions (both sets) | vector only": {
+    "recall@1": 0.8775510204081632,
+    "recall@3": 0.9795918367346939,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "mrr": 0.9326530612244899,
+    "ndcg@10": 0.9498265627569761,
+    "not_found": 0,
+    "p50_ms": 21.244042029138654,
+    "p95_ms": 26.228709029965103
+  },
+  "paraphrase questions (both sets) | keyword AND (today)": {
+    "recall@1": 0.14285714285714285,
+    "recall@3": 0.14285714285714285,
+    "recall@5": 0.14285714285714285,
+    "recall@10": 0.14285714285714285,
+    "mrr": 0.14285714285714285,
+    "ndcg@10": 0.14285714285714285,
+    "not_found": 42,
+    "p50_ms": 20.450791984330863,
+    "p95_ms": 25.08504199795425
+  },
+  "paraphrase questions (both sets) | keyword OR": {
+    "recall@1": 0.7959183673469388,
+    "recall@3": 0.8979591836734694,
+    "recall@5": 0.8979591836734694,
+    "recall@10": 0.8979591836734694,
+    "mrr": 0.8401360544217686,
+    "ndcg@10": 0.8549548828717219,
+    "not_found": 5,
+    "p50_ms": 20.918458001688123,
+    "p95_ms": 24.83583299908787
+  },
+  "paraphrase questions (both sets) | hybrid, AND keyword (today)": {
+    "recall@1": 0.8775510204081632,
+    "recall@3": 0.9795918367346939,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "mrr": 0.9326530612244899,
+    "ndcg@10": 0.9498265627569761,
+    "not_found": 0,
+    "p50_ms": 20.614166976884007,
+    "p95_ms": 24.908791994675994
+  },
+  "paraphrase questions (both sets) | hybrid, OR keyword": {
+    "recall@1": 0.8571428571428571,
+    "recall@3": 0.9795918367346939,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "mrr": 0.9098639455782314,
+    "ndcg@10": 0.9325007360248226,
+    "not_found": 0,
+    "p50_ms": 20.6862089689821,
+    "p95_ms": 23.450082982890308
+  },
+  "exact-term searches | vector only": {
+    "recall@1": 0.8666666666666667,
+    "recall@3": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "mrr": 0.9222222222222223,
+    "ndcg@10": 0.9420619835714306,
+    "not_found": 0,
+    "p50_ms": 20.319957984611392,
+    "p95_ms": 338.68541702395305
+  },
+  "exact-term searches | keyword AND (today)": {
+    "recall@1": 0.9333333333333333,
+    "recall@3": 0.9333333333333333,
+    "recall@5": 0.9333333333333333,
+    "recall@10": 0.9333333333333333,
+    "mrr": 0.9333333333333333,
+    "ndcg@10": 0.9333333333333333,
+    "not_found": 1,
+    "p50_ms": 19.726499973330647,
+    "p95_ms": 21.708959015086293
+  },
+  "exact-term searches | keyword OR": {
+    "recall@1": 1.0,
+    "recall@3": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "mrr": 1.0,
+    "ndcg@10": 1.0,
+    "not_found": 0,
+    "p50_ms": 19.070749985985458,
+    "p95_ms": 20.22495900746435
+  },
+  "exact-term searches | hybrid, AND keyword (today)": {
+    "recall@1": 1.0,
+    "recall@3": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "mrr": 1.0,
+    "ndcg@10": 1.0,
+    "not_found": 0,
+    "p50_ms": 18.966499948874116,
+    "p95_ms": 20.602083997800946
+  },
+  "exact-term searches | hybrid, OR keyword": {
+    "recall@1": 1.0,
+    "recall@3": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "mrr": 1.0,
+    "ndcg@10": 1.0,
+    "not_found": 0,
+    "p50_ms": 19.733249966520816,
+    "p95_ms": 21.570790966507047
+  }
+}

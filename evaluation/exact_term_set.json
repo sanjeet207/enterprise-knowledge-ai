@@ -1,0 +1,17 @@
+[
+ {"category": "answerable", "user": "analyst@acme.test", "question": "VPN", "expect_doc": "Remote and Hybrid Work Policy", "must_contain_any": ["VPN"]},
+ {"category": "answerable", "user": "analyst@acme.test", "question": "multi-factor authentication", "expect_doc": "Information Security Policy", "must_contain_any": ["multi-factor"]},
+ {"category": "answerable", "user": "analyst@acme.test", "question": "ethics hotline", "expect_doc": "Code of Conduct and Whistleblower Policy", "must_contain_any": ["hotline"]},
+ {"category": "answerable", "user": "analyst@acme.test", "question": "gifts 5000 rupees", "expect_doc": "Code of Conduct and Whistleblower Policy", "must_contain_any": ["5000"]},
+ {"category": "answerable", "user": "analyst@acme.test", "question": "itemised receipts", "expect_doc": "Travel and Expense Policy", "must_contain_any": ["receipts"]},
+ {"category": "answerable", "user": "analyst@acme.test", "question": "carried forward unused days", "expect_doc": "Employee Leave Policy", "must_contain_any": ["ten"]},
+ {"category": "answerable", "user": "manager@acme.test", "question": "KYC sanctions screening", "expect_doc": "KYC and AML Procedures", "must_contain_any": ["sanctions"]},
+ {"category": "answerable", "user": "manager@acme.test", "question": "calibration committee", "expect_doc": "Performance Review and Promotion Process", "must_contain_any": ["calibration"]},
+ {"category": "answerable", "user": "manager@acme.test", "question": "three written quotations", "expect_doc": "Vendor Selection and Procurement Policy", "must_contain_any": ["three"]},
+ {"category": "answerable", "user": "manager@acme.test", "question": "crisis call", "expect_doc": "Incident Response Runbook", "must_contain_any": ["crisis"]},
+ {"category": "answerable", "user": "manager@acme.test", "question": "post-incident review", "expect_doc": "Incident Response Runbook", "must_contain_any": ["five working days"]},
+ {"category": "answerable", "user": "manager@acme.test", "question": "reporting threshold monitoring system", "expect_doc": "KYC and AML Procedures", "must_contain_any": ["flagged"]},
+ {"category": "answerable", "user": "director@acme.test", "question": "exit interviews", "expect_doc": "Employee Attrition and Turnover Report", "must_contain_any": ["career growth"]},
+ {"category": "answerable", "user": "director@acme.test", "question": "key person dependency", "expect_doc": "Enterprise Risk Register", "must_contain_any": ["payments"]},
+ {"category": "answerable", "user": "director@acme.test", "question": "bonus pool", "expect_doc": "Executive Compensation Framework", "must_contain_any": ["board"]}
+]

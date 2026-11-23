@@ -17,8 +17,24 @@ Numbers come from `evaluation/RETRIEVAL_ABLATION.md` (regenerate with `python -m
 - Not the value of the keyword half for exact identifiers (policy numbers, codes, names). No question set here targets that.
 - Not multi-document, conflicting-version or outdated-document questions.
 
+## Follow-up experiment: a more forgiving keyword query
+
+Full tables: `evaluation/KEYWORD_EXPERIMENT.md` (regenerate with `python -m scripts.keyword_experiment`). Only the keyword half changed: OR (any word may match) instead of AND (every word must appear). 49 paraphrase questions plus 15 exact-term searches.
+
+| | Paraphrase, recall@1 / MRR | Exact terms, recall@1 / MRR |
+|---|---|---|
+| vector only | 88% / 0.933 | 87% / 0.922 |
+| keyword AND (today) | 14% / 0.143 | 93% / 0.933 |
+| keyword OR | 80% / 0.840 | 100% / 1.000 |
+| hybrid, AND keyword (today) | 88% / 0.933 | 100% / 1.000 |
+| hybrid, OR keyword | 86% / 0.910 | 100% / 1.000 |
+
+1. **The OR query is a far better keyword search on its own** (14% to 80% on paraphrases; no missed question on exact terms). The AND query was the weak part.
+2. **It does not improve the hybrid.** On paraphrases the OR hybrid is slightly worse (5 questions better, 6 worse; MRR 0.933 to 0.910, within noise), and on exact terms both hybrids already reach 100%. My rule was to change the search only if the OR hybrid beat today's on both question types. It beat it on neither, so **the application is not changed**.
+3. **Correction to finding 1 above:** the keyword half does earn its place on exact terms. Vector alone ranks 2 of the 15 exact-term searches lower than today's hybrid does; the hybrid fixes both. On paraphrases it still adds nothing here.
+4. **Why the experiment cannot settle more:** 14 short documents are too easy. Meaning search alone already finds 100% within five results, and today's hybrid scores 100% on the exact-term set, so there is no headroom to show an improvement. A bigger, harder corpus is needed to separate these options.
+
 ## What I would do next
 
-- Try `websearch_to_tsquery` or an OR-style query for the keyword half and re-run. Expect keyword-only to improve; the open question is whether hybrid then beats vector-only.
-- Add about 15 questions that hinge on an exact term (codes, section numbers, names) so the keyword half is tested on what it is for.
-- Grow the independent set (the existing plan) before drawing conclusions from any difference this small.
+- Build a larger corpus (long documents, near-duplicate policies, several versions of the same policy) and a harder independent question set, then re-run both experiments. That is where the choices between vector, keyword and reranker can actually show up.
+- Until then, keep today's hybrid search and the fused reranker, and report these numbers as "measured on a small demo corpus".
