@@ -10,6 +10,29 @@ A secure internal "company brain". Employees ask questions in plain language and
 
 ---
 
+## Two-minute overview
+
+**What it does.** Employees ask questions in plain language and get cited answers from their own company's documents. A person never gets text from a document they may not read. A question the documents cannot answer is refused, and an answer that cannot be verified is not shown.
+
+**The one design decision to know.** Access control is part of the SQL query (tenant, clearance level, engagement team), not an instruction in a prompt. The model only ever receives passages the person may read, so it cannot leak anything else.
+
+**What is measured** (local `qwen2.5:7b`; every question set was written by me or by the AI assistant that helped build this, not by an independent person):
+
+| Check | Result |
+|---|---|
+| Access checks against real Postgres | 160/160 |
+| Live security matrix (rights removed mid-session, saved material, route authorization) | 34/34 |
+| Live attack probe | 57/57 |
+| 86-question suite | 37/37 answerable, 24/24 refused, 0 leaks |
+| Northwind (messier company, development set) | 78% (36/46) answerable, 0 leaks |
+| Unit tests | 459 |
+
+**What is not done.** Not deployed to Azure, single sign-on not tried against a live tenant, no independent review. See [Limitations](#honest-limitations).
+
+**Where to look next:** [architecture diagrams](docs/ARCHITECTURE.md) · [security model](docs/SECURITY_MODEL.md) · [what was tested in operations](docs/OPERATIONS.md) · [interview notes](docs/INTERVIEW_NOTES.md) · [run it locally](#quick-start-local)
+
+---
+
 ## What makes it different from a basic RAG demo
 
 | Concern | How it is handled |
