@@ -42,6 +42,8 @@ curl -fs http://127.0.0.1:8000/health >/dev/null || { echo "Start the server fir
 
 run unit_tests            python -m pytest -q tests
 run access_checks         python -m scripts.verify_access
+# verify_access rebuilds the demo accounts without passwords; give them back before the checks that log in.
+run seed_demo             python -m scripts.seed_demo
 run validator_check       python -m scripts.check_validator
 run inspector_check       python -m scripts.check_inspector
 run crash_test            python -m scripts.crash_test

@@ -343,9 +343,11 @@ def main() -> int:
             record(label, bool(check(resp)), f"{resp['outcome']}, {took:.1f}s; expected {expected}")
             if resp["outcome"].startswith(("http", "no response")):
                 print("      The server could not answer. Look at /tmp/uvicorn.log for the error.", flush=True)
-            if resp["outcome"] == "refused":
+            # The off-topic notice is chosen from the question alone and never looks at documents, so it cannot
+            # reveal that a document exists. Every other refusal (restricted, missing, weak match) must be identical.
+            if resp["outcome"] == "refused" and not resp["answer"].startswith("That question isn't related to"):
                 refusals.add(resp["answer"])
-        record("Every refusal says the same thing", len(refusals) == 1, f"{len(refusals)} distinct text(s)")
+        record("Every document-related refusal says the same thing", len(refusals) == 1, f"{len(refusals)} distinct text(s)")
 
         events = client.get("/audit/events", headers=tokens["partner_titan"])
         logged = {e["query"] for e in events.json().get("events", [])} if events.status_code == 200 else set()
