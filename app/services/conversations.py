@@ -34,6 +34,11 @@ def recent_questions(conversation_id: str, limit: int = 3) -> List[str]:
     return [r[0] for r in reversed(rows)]
 
 
+def without_excerpts(sources: list) -> list:
+    """Sources as stored with a saved conversation: title, number and score, never the passage text."""
+    return [{key: value for key, value in source.items() if key != "excerpt"} for source in sources or []]
+
+
 def add_exchange(conversation_id: str, question: str, answer: str, outcome: str, sources: list) -> int:
     """Store the question and the answer together. Returns the answer's message id (for feedback)."""
     with _connect() as conn:

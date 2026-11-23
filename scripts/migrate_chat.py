@@ -64,6 +64,23 @@ STATEMENTS = [
     """,
     "CREATE INDEX IF NOT EXISTS ingest_jobs_queue_idx ON ingest_jobs (status, run_after, created_at)",
     "CREATE INDEX IF NOT EXISTS ingest_jobs_user_idx ON ingest_jobs (tenant_id, user_id, created_at DESC)",
+    """
+    CREATE TABLE IF NOT EXISTS access_requests (
+        id UUID PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        user_email TEXT NOT NULL,
+        question TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        decided_by TEXT,
+        decided_at TIMESTAMPTZ,
+        decision_note TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS access_requests_queue_idx ON access_requests (tenant_id, status, created_at DESC)",
+    "CREATE INDEX IF NOT EXISTS access_requests_user_idx ON access_requests (user_id, created_at DESC)",
 ]
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import config, observability, tracing
-from app.routers import admin, documents, retrieval, auth, chat, audit, me, research, sso
+from app.routers import access, admin, documents, retrieval, auth, chat, audit, me, research, sso
 from app.services import metrics, worker
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -64,6 +64,7 @@ app.include_router(chat.router)
 app.include_router(research.router)
 app.include_router(audit.router)
 app.include_router(admin.router)
+app.include_router(access.router)
 app.include_router(me.router)
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

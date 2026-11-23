@@ -28,6 +28,8 @@ def _now() -> float:
     return time.perf_counter()
 
 
+EXCERPT_CHARS = 500  # how much of a cited section is shown next to the answer
+
 async def general_path(question: str, prof: dict, trace: Trace, finish, top_score: float):
     """Answer a non-company question from general knowledge, or return None so the caller refuses.
 
@@ -225,7 +227,9 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
             return general_result
         if await off_topic(question, trace):
             return finish("refused", OFF_TOPIC, top_score=top_score)
-        return finish("refused", REFUSAL, top_score=top_score)
+        result = finish("refused", REFUSAL, top_score=top_score)
+        result["can_request_access"] = True  # about the company, but nothing this person may see covers it
+        return result
     trace.add("analysis", _now(), f"depth {prof['depth']}, format {prof['format']}")
     style = question_profile.style_for(prof["format"])
     style_kw = {"style": style} if style else {}
@@ -409,4 +413,11 @@ async def answer_question(user, query: str, top_k: int, retriever) -> dict:
          "score": round(reranked[n - 1]["rerank_score"], 4)}
         for n in cited
     ]
-    return finish("answered", answer, sources, top_score, model)
+    result = finish("answered", answer, sources, top_score, model)
+    # The passage each citation points to, for the reader. Added after the audit record is written, so the audit
+    # log never holds document text, and removed again before the reply is stored (see conversations.without_excerpts).
+    result["sources"] = [
+        dict(source, excerpt=" ".join(str(reranked[source["number"] - 1].get("parent_content", "")).split())[:EXCERPT_CHARS])
+        for source in result["sources"]
+    ]
+    return result

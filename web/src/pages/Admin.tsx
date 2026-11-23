@@ -4,6 +4,7 @@ import { LEVELS, type Me } from '../lib/types'
 import { Note, PageHead } from '../components/Bits'
 import { fmtDateTime } from '../lib/format'
 import { useLoad } from '../lib/hooks'
+import { StatusTag, type AccessRequest } from './Requests'
 
 interface User { id: string; email: string; level: number; is_admin: boolean; is_active: boolean; locked?: boolean }
 interface Team { id: string; name: string; members: { user_id: string; email: string }[] }
@@ -51,11 +52,14 @@ export default function Admin({ me }: { me: Me }) {
   const [ok, setOk] = useState(true)
   const [nu, setNu] = useState({ email: '', password: '', level: '1', admin: 'no' })
   const [teamName, setTeamName] = useState('')
+  const [requests, setRequests] = useState<AccessRequest[]>([])
+  const [notes, setNotes] = useState<Record<string, string>>({})
 
   const say = (text: string, good: boolean) => { setMsg(text); setOk(good) }
 
   const load = useCallback(async () => {
-    const [u, t, e, i] = await Promise.all([api('/admin/users'), api('/admin/teams'), api('/admin/events'), api('/admin/insights')])
+    const [u, t, e, i, q] = await Promise.all([api('/admin/users'), api('/admin/teams'), api('/admin/events'), api('/admin/insights'), api('/admin/access-requests?status=all')])
+    if (q.ok) setRequests((await q.json()).requests as AccessRequest[])
     if (i.ok) setInsights((await i.json()) as Insights)
     if (!u.ok) { say(await errText(u), false); return }
     setUsers((await u.json()).users as User[])
@@ -63,6 +67,13 @@ export default function Admin({ me }: { me: Me }) {
     if (e.ok) setEvents((await e.json()).events as AdminEvent[])
   }, [])
   useLoad(load)
+
+  async function decide(id: string, decision: 'approved' | 'denied') {
+    const res = await send(`/admin/access-requests/${id}/decision`, 'POST', { decision, note: notes[id] ?? '' })
+    if (!res.ok) { say(await errText(res), false); return }
+    say(decision === 'approved' ? 'Approved. Now grant the level or team in People or Engagement teams below.' : 'Denied.', true)
+    await load()
+  }
 
   async function patch(id: string, change: Partial<User> & { password?: string }) {
     const r = await send('/admin/users/' + id, 'PATCH', change)
@@ -118,6 +129,27 @@ export default function Admin({ me }: { me: Me }) {
           </div>
         </section>
       )}
+
+      <section className="card gap">
+        <h2>Access requests</h2>
+        {requests.length === 0 ? <p className="muted">No one has asked for access yet.</p> : (
+          <ul className="reqs">{requests.map((r) => (
+            <li key={r.id} className="req">
+              <StatusTag status={r.status} />
+              <strong>{r.user_email}</strong>
+              <span>{r.question}</span>
+              <span className="muted">Reason: {r.reason} ({fmtDateTime(r.created_at)})</span>
+              {r.status === 'pending' ? (
+                <span className="actions">
+                  <input aria-label={`Note for ${r.user_email}`} placeholder="Note (required to deny)" maxLength={500} value={notes[r.id] ?? ''} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} />
+                  <button type="button" className="primary" onClick={() => void decide(r.id, 'approved')}>Approve</button>
+                  <button type="button" onClick={() => void decide(r.id, 'denied')}>Deny</button>
+                </span>
+              ) : <span className="muted">Decided by {r.decided_by}{r.decision_note ? `: ${r.decision_note}` : ''}</span>}
+            </li>))}</ul>
+        )}
+        <p className="muted small">Approving records the decision. Changing someone's level or team is a separate step below, so a request alone never widens what anyone can read.</p>
+      </section>
 
       <section className="card gap">
         <h2>People</h2>

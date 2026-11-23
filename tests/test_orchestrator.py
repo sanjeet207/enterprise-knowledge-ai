@@ -86,6 +86,15 @@ def test_reply_carries_step_timings_but_no_detail_text(env):
     assert all(set(step) == {"agent", "ms"} for step in out["trace"])
 
 
+def test_sources_carry_the_cited_passage_but_the_audit_record_does_not(env):
+    events, calls, _ = env
+    out = run(FakeRetriever())
+    assert out["sources"][0]["excerpt"] and len(out["sources"][0]["excerpt"]) <= orchestrator.EXCERPT_CHARS
+    from app.services import conversations
+    assert "excerpt" not in conversations.without_excerpts(out["sources"])[0]
+    assert all("excerpt" not in s for s in events[0][0][4])  # the sources handed to the audit log
+
+
 def test_weak_retrieval_refuses_without_answering(env):
     events, calls, _ = env
     out = run(FakeRetriever(score=0.0001))

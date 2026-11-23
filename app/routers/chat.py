@@ -59,7 +59,8 @@ async def rag_query(payload: ChatRequest, user: User = Depends(get_current_user)
         conversation_id = conversations.create(user, payload.query)
     result["conversation_id"] = conversation_id
     result["message_id"] = conversations.add_exchange(
-        conversation_id, payload.query, result.get("answer") or "", result["outcome"], result.get("sources") or [])
+        conversation_id, payload.query, result.get("answer") or "", result["outcome"],
+        conversations.without_excerpts(result.get("sources")))
     return result
 
 

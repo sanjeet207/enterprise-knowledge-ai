@@ -3,6 +3,7 @@ import { api, errText, send } from '../lib/api'
 import { LEVELS, type ChatMessage, type ChatReply, type Me, type Source } from '../lib/types'
 import { Tag, Trace } from '../components/Bits'
 import { useLoad } from '../lib/hooks'
+import RequestAccess from '../components/RequestAccess'
 
 const SUGGESTIONS = [
   'How many days of annual leave do I get?',
@@ -67,7 +68,7 @@ function Feedback({ messageId, current }: { messageId: string; current?: number 
   )
 }
 
-function Bot({ m, onCite }: { m: ChatMessage; onCite: (key: number, n: number) => void }) {
+function Bot({ m, question, onCite }: { m: ChatMessage; question: string; onCite: (key: number, n: number) => void }) {
   const [showTrace, setShowTrace] = useState(false)
   if (m.pending) return <div className="msg bot thinking" role="status">Searching the documents you are allowed to see…</div>
   const r = m.reply
@@ -82,6 +83,7 @@ function Bot({ m, onCite }: { m: ChatMessage; onCite: (key: number, n: number) =
           ? <AnswerText text={r.answer} sources={r.sources ?? []} onCite={(n) => onCite(m.key, n)} />
           : r.answer}
       </span>
+      {r.outcome === 'refused' && r.can_request_access && <RequestAccess question={question} />}
       {r.outcome === 'general' && <span className="note">General knowledge, not from company documents. Check it before relying on it.</span>}
       {r.trace && r.trace.length > 0 && (
         <div className="how">
@@ -213,10 +215,10 @@ export default function Chat({ me }: { me: Me }) {
               </div>
             </div>
           )}
-          {messages.map((m) =>
+          {messages.map((m, i) =>
             m.role === 'user'
               ? <div key={m.key} className="msg user">{m.text}</div>
-              : <Bot key={m.key} m={m} onCite={(key, n) => { setActiveKey(key); setHighlight(n) }} />)}
+              : <Bot key={m.key} m={m} question={messages[i - 1]?.text ?? ''} onCite={(key, n) => { setActiveKey(key); setHighlight(n) }} />)}
           <div ref={endRef} />
         </div>
         <form className="composer" onSubmit={submit}>
@@ -244,6 +246,7 @@ export default function Chat({ me }: { me: Me }) {
                   <div><span className="n">{s.number}</span><span className="t">{s.title}</span></div>
                   <div className="bar"><span style={{ width: Math.max(2, Math.min(100, Math.round((s.score || 0) * 100))) + '%' }} /></div>
                   <div className="s">Relevance {(s.score || 0).toFixed(2)}</div>
+                  {s.excerpt && <blockquote className="excerpt">{s.excerpt}</blockquote>}
                 </li>
               ))}
             </ul>

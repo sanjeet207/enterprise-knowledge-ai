@@ -10,6 +10,7 @@ import Docs from './pages/Docs'
 import Admin from './pages/Admin'
 import Audit from './pages/Audit'
 import Quality from './pages/Quality'
+import Requests from './pages/Requests'
 
 // Single sign-on returns here with a session token (or an error flag) in the address fragment.
 // Read it once when the page loads, so React re-rendering can never lose it.
@@ -23,7 +24,7 @@ function readSso(): { token: string | null; failed: boolean } {
 }
 const START = readSso()
 
-type Tab = 'chat' | 'research' | 'docs' | 'quality' | 'admin' | 'audit'
+type Tab = 'chat' | 'requests' | 'research' | 'docs' | 'quality' | 'admin' | 'audit'
 
 export default function App() {
   const [me, setMe] = useState<Me | null>(null)
@@ -55,6 +56,7 @@ export default function App() {
   const tabs: { id: Tab; label: string; show: boolean }[] = [
     { id: 'chat', label: 'Ask', show: true },
     { id: 'research', label: 'Research', show: true },
+    { id: 'requests', label: 'Access requests', show: true },
     { id: 'docs', label: 'Documents', show: me.is_admin || me.level >= 2 },
     { id: 'quality', label: 'Quality', show: true },
     { id: 'admin', label: 'Administration', show: me.is_admin },
@@ -101,6 +103,7 @@ export default function App() {
       <main className="main">
         {tab === 'chat' && <Chat me={me} />}
         {tab === 'research' && <Research />}
+        {tab === 'requests' && <Requests />}
         {tab === 'docs' && <Docs me={me} />}
         {tab === 'quality' && <Quality />}
         {tab === 'admin' && <Admin me={me} />}

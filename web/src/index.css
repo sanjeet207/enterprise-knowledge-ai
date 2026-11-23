@@ -245,3 +245,19 @@ ul.plain li { margin: 4px 0; }
 #root { min-height: 100vh; }
 .login { min-height: 100vh; }
 .composer textarea { min-height: 46px; line-height: 1.4; }
+.trace { flex-wrap: wrap; }
+.trace .step { min-width: 74px; }
+.trace .step b { overflow-wrap: normal; word-break: normal; }
+.excerpt { margin: 8px 0 0; padding: 6px 10px; border-left: 3px solid var(--line-strong); color: var(--muted); font: 13px/1.5 var(--serif); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.source.hl .excerpt { display: block; -webkit-line-clamp: unset; border-left-color: var(--accent); color: var(--text); }
+
+.request { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; font-family: var(--sans); font-size: 13px; max-width: 520px; }
+.request textarea { width: 100%; resize: vertical; }
+.request .actions { display: flex; gap: 8px; align-items: center; }
+.request .thanks { color: var(--muted); font-size: 12.5px; }
+.request .link { align-self: flex-start; padding: 2px 0; font-size: 12.5px; }
+.req { display: flex; flex-direction: column; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line); align-items: flex-start; }
+.req:first-child { border-top: 0; }
+.req .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.req .actions input { width: 260px; }
+ul.reqs { list-style: none; margin: 0; padding: 0; }

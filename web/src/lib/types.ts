@@ -1,5 +1,5 @@
 export interface Me { email: string; level: number; is_admin: boolean }
-export interface Source { number: number; title: string; score: number }
+export interface Source { number: number; title: string; score: number; excerpt?: string }
 export interface TraceStep { agent: string; ms: number; detail?: string | null }
 export interface ChatReply {
   outcome: string
@@ -10,6 +10,7 @@ export interface ChatReply {
   conversation_id?: string
   rating?: number | null
   trace?: TraceStep[]
+  can_request_access?: boolean
 }
 export interface ChatMessage {
   key: number

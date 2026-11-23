@@ -12,7 +12,7 @@ export default defineConfig(({ command }) => ({
   server: {
     proxy: {
       '/auth': api, '/chat': api, '/audit': api, '/documents': api,
-      '/admin': api, '/research': api, '/me': api, '/health': api,
+      '/admin': api, '/research': api, '/me': api, '/health': api, '/access-requests': api,
     },
   },
 }))
