@@ -9,6 +9,7 @@ import json
 import re
 import secrets
 import time
+from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 
 COOKIE_SECONDS = 600
@@ -92,3 +93,45 @@ def choose_account(by_subject, unlinked_by_email):
     if unlinked_by_email is not None:
         return unlinked_by_email, True
     return None, False
+
+
+@dataclass(frozen=True)
+class Identity:
+    subject: str
+    email: str
+    groups: Tuple[str, ...] = ()
+    groups_overage: bool = False
+
+
+def identity_from_claims(claims: Dict[str, Any], **checks) -> Identity:
+    """Verified claims to an Identity. Group ids are lower-cased. Entra omits the group list for people in too many
+    groups and points to a lookup instead (`_claim_names`); we never follow that, so the list is marked unreliable."""
+    subject, email = validate_claims(claims, **checks)
+    raw = claims.get("groups")
+    groups = tuple(str(g).strip().lower() for g in raw if str(g).strip()) if isinstance(raw, list) else ()
+    overage = "groups" in (claims.get("_claim_names") or {})
+    return Identity(subject, email, groups, overage)
+
+
+def parse_group_map(text: str) -> Dict[str, int]:
+    """'<group-id>:<level>,...' to {group-id: level}. A malformed setting is an error, never a silent default."""
+    mapping: Dict[str, int] = {}
+    for part in (p.strip() for p in text.split(",") if p.strip()):
+        group, _, level = part.rpartition(":")
+        if not group.strip() or not level.strip().isdigit() or not 1 <= int(level) <= 4:
+            raise OidcError(f"bad OIDC_GROUP_LEVELS entry: {part!r}")
+        mapping[group.strip().lower()] = int(level)
+    return mapping
+
+
+def directory_access(identity: Identity, level_map: Dict[str, int], admin_group: str = "") -> Optional[Tuple[int, bool]]:
+    """(reading level, is administrator) from the person's groups, or None when they have no mapped group.
+    The highest mapped level wins. The administrator group alone gives level 1: running the portal is not the right to
+    read restricted documents. An unreliable group list (overage) gives nothing."""
+    if identity.groups_overage:
+        return None
+    levels = [level_map[g] for g in identity.groups if g in level_map]
+    is_admin = bool(admin_group) and admin_group.lower() in identity.groups
+    if not levels and not is_admin:
+        return None
+    return (max(levels) if levels else 1), is_admin

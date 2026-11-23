@@ -6,7 +6,7 @@ from fastapi.responses import RedirectResponse
 
 from app import config
 from app.security import create_access_token
-from app.services import admin, oidc, oidc_core, users
+from app.services import oidc, oidc_core, sso_accounts
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 logger = logging.getLogger("eka.sso")
@@ -51,20 +51,10 @@ def sso_callback(request: Request, code: str = "", state: str = "", error: str =
         saved = oidc_core.read_cookie(config.JWT_SECRET, eka_sso)
         if not secrets.compare_digest(saved["state"], state):
             raise oidc_core.OidcError("state mismatch")
-        subject, email = oidc.verify_id_token(oidc.exchange_code(code, saved["verifier"]), saved["nonce"])
+        identity = oidc.verify_identity(oidc.exchange_code(code, saved["verifier"]), saved["nonce"])
+        user = sso_accounts.sign_in(identity)
     except Exception as exc:
         return _failed(f"{exc.__class__.__name__}: {exc}")
-    by_subject = users.get_by_sso(config.OIDC_ISSUER, subject)
-    by_email = users.get_unlinked_by_email(email)
-    user, first_time = oidc_core.choose_account(by_subject, by_email)
-    if user is None:
-        return _failed("no provisioned account for this identity")
-    if not user.is_active:
-        return _failed("account is switched off")
-    if first_time and not users.link_sso(user.id, config.OIDC_ISSUER, subject):
-        return _failed("account was linked by someone else")
-    if first_time:
-        admin.record(user, "sso.link", user.email)
     response = RedirectResponse("/#sso_token=" + create_access_token(user.id), status_code=303)
     response.delete_cookie(COOKIE, path="/auth/sso")
     return response

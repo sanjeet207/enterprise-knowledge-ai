@@ -46,8 +46,8 @@ def exchange_code(code: str, verifier: str) -> str:
     return token
 
 
-def verify_id_token(id_token: str, nonce: str) -> Tuple[str, str]:
-    """Verify the signature (RS256, keys from the provider) and every claim. Returns (subject, email)."""
+def verify_identity(id_token: str, nonce: str) -> oidc_core.Identity:
+    """Verify the signature (RS256, keys from the provider) and every claim."""
     import jwt
     global _jwks_client
     if _jwks_client is None:
@@ -58,4 +58,10 @@ def verify_id_token(id_token: str, nonce: str) -> Tuple[str, str]:
                             issuer=config.OIDC_ISSUER, options={"require": ["exp", "iat", "iss", "aud"]})
     except jwt.PyJWTError as exc:
         raise oidc_core.OidcError(f"invalid id_token: {exc.__class__.__name__}") from exc
-    return oidc_core.validate_claims(claims, issuer=config.OIDC_ISSUER, client_id=config.OIDC_CLIENT_ID, nonce=nonce)
+    return oidc_core.identity_from_claims(claims, issuer=config.OIDC_ISSUER, client_id=config.OIDC_CLIENT_ID, nonce=nonce)
+
+
+def verify_id_token(id_token: str, nonce: str) -> Tuple[str, str]:
+    """Same checks, returning only (subject, email)."""
+    identity = verify_identity(id_token, nonce)
+    return identity.subject, identity.email

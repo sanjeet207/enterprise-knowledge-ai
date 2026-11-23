@@ -32,7 +32,40 @@ OIDC_REDIRECT_URI=https://<your-host>/auth/sso/callback
   well-known "nOAuth" email-claim takeover.
 - A switched-off account cannot sign in. Every sign-in uses the same short-lived session token as password login.
 
+## Let the company directory decide access (group mapping)
+
+By default an administrator sets each person's level in the portal. In a company that is the wrong place for it: people
+join, move and leave in the directory, and access should follow. With group mapping the Entra groups decide.
+
+1. App registration, **Token configuration**, **Add groups claim**, choose *Security groups* and *Group ID* for the ID token.
+2. Create (or reuse) one security group per reading level and one for portal administrators. Copy their object ids.
+3. Set in `.env`:
+
+```
+OIDC_GROUP_LEVELS=<analyst-group-id>:1,<manager-group-id>:2,<director-group-id>:3,<partner-group-id>:4
+OIDC_ADMIN_GROUP=<portal-admins-group-id>
+# Optional: create the account on first sign-in for anyone in a mapped group
+OIDC_AUTO_PROVISION=true
+OIDC_PROVISION_TENANT=<company id used in the portal, e.g. acme>
+```
+
+Rules, all covered by `tests/test_sso_groups.py`:
+
+- On **every** sign-in the person's level and administrator flag are set from their groups. Moving someone to a
+  different group changes what they can read the next time they sign in; every change is written to the change history
+  (`sso.sync`), as are links (`sso.link`) and created accounts (`sso.provision`).
+- The **highest** mapped level wins. The administrator group alone gives level 1: running the portal is not the right
+  to read restricted documents.
+- **No mapped group, no sign-in.** The portal never invents access.
+- A **switched-off** account stays off whatever the groups say.
+- **Too many groups:** Entra leaves the group list out of the token for people in more than about 200 groups. The portal
+  does not follow the lookup link; it refuses the sign-in (fail closed). Fix by filtering the claim to groups assigned to
+  the application (*Groups assigned to the application* in Token configuration).
+- Engagement teams (who may see a client's sensitive documents) stay managed in the portal.
+- A removed person's existing session lasts until its token expires (`ACCESS_TOKEN_MINUTES`, 60 by default). Lower it
+  if you need faster cut-off.
+
 ## Not done yet
 
-Group-to-level mapping (for example an Entra group "Directors" becoming level 3) and automatic account creation
-(SCIM) are the next steps. Today an administrator sets each person's level in the Administration tab.
+Automatic **de-provisioning** between sign-ins (SCIM, so a leaver is switched off without waiting for their next
+sign-in attempt) and syncing engagement teams from directory groups.

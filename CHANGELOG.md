@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Single sign-on can let the company directory decide access: Entra groups map to reading levels and the administrator flag on every sign-in (`OIDC_GROUP_LEVELS`, `OIDC_ADMIN_GROUP`), with optional account creation on first sign-in (`OIDC_AUTO_PROVISION`). No mapped group means no sign-in; an incomplete group list (overage) fails closed. See docs/SSO.md.
+
 ### Changed
 - The reranker's order is fused with the search order by default (`RERANK_BLEND=rrf`; `none` restores the old behaviour). Retrieval check: right document in the top 5 92% -> 100% on the 86-question set; full evaluations unchanged or better. The relevance gate now uses the best rerank score among the kept passages.
 

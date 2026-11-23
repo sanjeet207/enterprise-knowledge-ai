@@ -26,6 +26,14 @@ OIDC_CLIENT_ID = os.getenv("OIDC_CLIENT_ID", "").strip()
 OIDC_CLIENT_SECRET = os.getenv("OIDC_CLIENT_SECRET", "").strip()
 OIDC_REDIRECT_URI = os.getenv("OIDC_REDIRECT_URI", "http://127.0.0.1:8000/auth/sso/callback").strip()
 OIDC_ENABLED = bool(OIDC_ISSUER and OIDC_CLIENT_ID)
+# Directory groups decide access (Entra "groups" claim, group object ids). Format: "<group-id>:<level>,<group-id>:<level>".
+# When set, the reading level and administrator flag are re-synced from the person's groups on every sign-in, and a person
+# with no mapped group cannot sign in. Leave empty to keep levels managed inside the portal.
+OIDC_GROUP_LEVELS = os.getenv("OIDC_GROUP_LEVELS", "").strip()
+OIDC_ADMIN_GROUP = os.getenv("OIDC_ADMIN_GROUP", "").strip().lower()
+# Create the account on first sign-in for anyone in a mapped group (needs the company id below). Off by default.
+OIDC_AUTO_PROVISION = os.getenv("OIDC_AUTO_PROVISION", "false").lower() in ("1", "true", "yes")
+OIDC_PROVISION_TENANT = os.getenv("OIDC_PROVISION_TENANT", "").strip()
 # Turn off to require SSO for everyone (the demo keeps password sign-in on).
 PASSWORD_LOGIN_ENABLED = os.getenv("PASSWORD_LOGIN_ENABLED", "true").lower() in ("1", "true", "yes")
 
