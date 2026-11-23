@@ -13,6 +13,7 @@ Metrics
   leaks              denied questions whose answer contains a forbidden fact (must be 0)
 """
 import argparse
+import unicodedata
 import json
 import statistics
 import time
@@ -38,7 +39,8 @@ def score_case(case: dict, response: dict) -> dict:
     """Pure scoring of one response. Returns flags used by the report."""
     outcome = response.get("outcome")
     answer = (response.get("answer") or "")
-    text = answer.lower()
+    # Hosted models sometimes write a narrow no-break space ("1.2\u202fbillion"); NFKC turns it into a plain space.
+    text = unicodedata.normalize("NFKC", answer).lower()
     titles = {s.get("title") for s in response.get("sources", [])}
 
     if case["category"] == "answerable":

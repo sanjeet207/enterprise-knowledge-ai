@@ -79,3 +79,9 @@ def test_general_switched_off_expects_a_refusal(monkeypatch):
     monkeypatch.setattr("scripts.evaluate.general_enabled", lambda: False)
     assert score_case(GENERAL, resp("refused", "I can only answer from company documents"))["passed"]
     assert not score_case(GENERAL, resp("general", "Paris is the capital of France."))["passed"]
+
+
+def test_narrow_no_break_space_does_not_hide_a_right_answer_or_a_leak():
+    case = {"category": "answerable", "expect_doc": "Memo", "must_contain_any": ["1.2 billion"]}
+    assert score_case(case, resp("answered", "It is 1.2 billion [1].", ["Memo"]))["passed"]
+    assert score_case({"category": "restricted", "forbidden": ["1.2 billion"]}, resp("answered", "1.2 billion"))["leaked"]

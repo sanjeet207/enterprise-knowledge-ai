@@ -45,6 +45,12 @@ def api_key(provider: str) -> str:
     return key
 
 
+def normalize_citations(text: str) -> str:
+    """Some hosted models (gpt-oss) write citation markers as full-width brackets, 【1】 or 【1†L3-L5】. The pipeline
+    reads [1], so convert them; text without such markers is returned unchanged."""
+    return re.sub(r"【\s*(\d+)[^】]*】", r"[\1]", text)
+
+
 def strip_fences(text: str) -> str:
     """Hosted models sometimes wrap JSON in a code fence; the parsers expect bare JSON."""
     match = re.fullmatch(r"\s*```(?:json)?\s*(.*?)\s*```\s*", text, flags=re.S)
@@ -130,6 +136,7 @@ async def chat(system: str, user: str, *, model: str | None = None, num_ctx: int
             sp.set(**{"http.status": response.status_code})
             choices = response.json().get("choices") or [{}]
             text = (choices[0].get("message") or {}).get("content") or ""
+            text = normalize_citations(text)
         text = text.strip()
         return strip_fences(text).strip() if schema else text
 

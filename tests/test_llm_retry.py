@@ -78,3 +78,8 @@ def test_a_rate_limit_is_retried_until_it_works(monkeypatch):
 def test_a_rate_limit_that_never_clears_gives_up(monkeypatch):
     with pytest.raises(llm.LLMUnavailable):
         run([FakeResponse(429)], monkeypatch)
+
+
+def test_full_width_citation_brackets_are_converted():
+    assert llm.normalize_citations("Up to ten days【1】. More【2†L3-L5】 here.") == "Up to ten days[1]. More[2] here."
+    assert llm.normalize_citations("Plain [1] text") == "Plain [1] text"
