@@ -1,0 +1,23 @@
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 9480.84it/s]
+Seeded demo tenants, users, a deal team and documents.
+
+Leak sweep: 144/144 passed
+
+PASS  analyst           travel reimbursement for international confe   -> ['Travel and Expense Policy', 'Code of Conduct and Whistleblower Policy', 'Employee Leave Policy']
+PASS  analyst           client entertainment expense limit             -> ['Travel and Expense Policy', 'Code of Conduct and Whistleblower Policy', 'Information Security Policy']
+PASS  analyst           annual leave carry forward                     -> ['Employee Leave Policy', 'Travel and Expense Policy', 'Code of Conduct and Whistleblower Policy']
+PASS  analyst           report a suspected security incident           -> ['Information Security Policy', 'Code of Conduct and Whistleblower Policy', 'Remote and Hybrid Work Policy']
+PASS  analyst           employee attrition turnover rate by departme   -> ['Employee Leave Policy', 'Remote and Hybrid Work Policy', 'Code of Conduct and Whistleblower Policy']
+PASS  manager           customer onboarding identity verification sa   -> ['KYC and AML Procedures', 'Information Security Policy', 'Code of Conduct and Whistleblower Policy']
+PASS  manager           performance review promotion rating calibrat   -> ['Performance Review and Promotion Process', 'KYC and AML Procedures', 'Incident Response Runbook']
+PASS  director          employee attrition turnover rate by departme   -> ['Employee Attrition and Turnover Report', 'Employee Leave Policy', 'Executive Compensation Framework']
+PASS  director          executive bonus pool compensation              -> ['Executive Compensation Framework', 'Travel and Expense Policy', 'Employee Attrition and Turnover Report']
+PASS  manager_titan     Project Titan valuation                        -> ['Vendor Selection and Procurement Policy', 'Travel and Expense Policy', 'Code of Conduct and Whistleblower Policy']
+PASS  partner_outsider  Project Titan valuation                        -> ['Vendor Selection and Procurement Policy', 'Travel and Expense Policy', 'Code of Conduct and Whistleblower Policy']
+PASS  director_titan    Project Titan valuation                        -> ['Project Titan Acquisition Valuation Memo', 'Vendor Selection and Procurement Policy', 'Travel and Expense Policy']
+PASS  partner_titan     Project Titan valuation                        -> ['Project Titan Acquisition Valuation Memo', 'Vendor Selection and Procurement Policy', 'Travel and Expense Policy']
+PASS  partner_outsider  board strategy expansion acquisition decisio   -> ['Board Strategy Minutes', 'Executive Compensation Framework', 'Vendor Selection and Procurement Policy']
+PASS  globex_analyst    quarterly revenue growth operating costs       -> ['Globex Parental Leave Policy']
+PASS  globex_partner    parental leave weeks                           -> ['Globex Parental Leave Policy', 'Globex Quarterly Financial Summary']
+
+160/160 access checks passed

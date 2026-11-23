@@ -1,0 +1,85 @@
+PASS  Server is healthy
+PASS  Chat page is served
+PASS  Wrong password is rejected
+PASS  No token is rejected
+PASS  Administrator account
+PASS  Login and identity  (level 1)
+PASS  Document answer with citation  (answered, 8.6s; expected answered, cites Employee Leave Policy)
+PASS  Typos are fixed  (answered, 6.2s; expected answered)
+PASS  Restricted for this level  (refused, 3.5s; expected refused)
+PASS  Not about the company  (refused, 3.5s; expected refused, no sources)
+PASS  Off topic  (refused, 4.0s; expected refused)
+PASS  Prompt injection  (refused, 2.8s; expected refused)
+PASS  Engagement team: not on the team  (refused, 3.0s; expected refused)
+PASS  Engagement team: on the team  (answered, 14.4s; expected answered with a source)
+PASS  Tenant isolation  (no_answer, 5.2s; expected no Acme leave figure)
+PASS  Every document-related refusal says the same thing  (1 distinct text(s))
+PASS  Partner can read the audit log
+PASS  Analyst cannot read the audit log
+PASS  The sign-in page learns what is offered  ({'sso': False, 'password': True})
+PASS  SSO is refused cleanly when not configured
+PASS  A forged SSO callback is refused
+PASS  Readiness probe checks the database
+PASS  A caller's request id is kept
+PASS  A request id is created when missing
+PASS  Metrics are off without a token
+PASS  A person can download their own data
+PASS  Erasing needs the right password
+PASS  A person can erase their data
+PASS  Their questions are gone afterwards  (refused)
+PASS  A question starts a saved conversation
+PASS  A follow-up question is understood  (searched for: How many days of annual leave can be carried forward?)
+PASS  The conversation is saved in order
+PASS  Another person cannot read it
+PASS  Another person cannot continue it
+PASS  Another person cannot rate its answers
+PASS  The owner can rate an answer
+PASS  Ratings only accept 1 or -1
+PASS  The owner can delete it
+PASS  Analyst cannot open the admin area
+PASS  Analyst cannot upload
+PASS  Manager cannot publish company-wide
+PASS  Administrator lists the company's people  (8 people)
+PASS  Administrator publishes a level 3 document  (3.3s)
+PASS  The same content is not added twice
+PASS  A director can read it
+PASS  An analyst cannot
+PASS  A manager cannot add to a team they are not in
+PASS  A team manager adds to their own team
+PASS  It waits for approval
+PASS  A pending document is not searchable
+PASS  A manager cannot approve
+PASS  An administrator approves it
+PASS  After approval the team can find it
+PASS  A manager cannot classify above their own level
+PASS  A deleted document is no longer found
+PASS  Administrator creates an account  (http 201)
+PASS  Five wrong passwords lock the account
+PASS  A password reset by an administrator unlocks it
+PASS  Usage insights are available to administrators
+PASS  Administrator activity is logged
+PASS  An upload is accepted into the queue  (0.02s)
+PASS  Another person cannot see the job
+PASS  The job finishes  (done)
+PASS  The same content queued twice makes one document
+PASS  Only one copy exists
+PASS  The job list shows it to the uploader
+PASS  An unknown job id is a plain 404
+PASS  Version 1 is published
+PASS  Version 2 is published
+PASS  The old version is archived
+PASS  The new version keeps the old level  (asked for level 1, kept level 2)
+PASS  An old version cannot be replaced twice
+PASS  Search finds only the new figure
+PASS  A manager can compare the versions  (2.4s, ['added', 'changed'])
+PASS  The summary uses only figures from the changes
+PASS  An analyst cannot compare them
+PASS  Team member gets a cited report  (27s, 1 findings, 2 gaps)
+PASS  The report is saved
+PASS  Another person cannot open it
+PASS  It can be marked as reviewed
+PASS  It can be deleted
+PASS  An analyst's report holds no Titan material  (http 200)
+PASS  An override request is refused
+
+83/83 checks passed

@@ -1,0 +1,11 @@
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 10542.57it/s]
+PASS  the simulated crash happened
+PASS  a half-written document exists on disk
+PASS  none of it is visible to search
+PASS  search does not return it
+PASS  the retry completes the document
+PASS  one complete copy, no duplicates
+PASS  all of it is published now
+PASS  cleaned up
+
+8/8 checks passed

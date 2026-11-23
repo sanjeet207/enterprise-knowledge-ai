@@ -4,14 +4,14 @@
 
 | Task | Expected documents | Report cites | Single question cites | Leaks | Gaps | Seconds |
 |---|---|---|---|---|---|---|
-| titan-team | 1 | 1 | 1 | 0 | 2 | 19 |
-| titan-outsider | 0 | 0 | 0 | 0 | 3 | 13 |
-| leave-work | 2 | 1 | 0 | 0 | 1 | 43 |
-| expenses | 1 | 1 | 1 | 0 | 3 | 38 |
-| pay-analyst | 0 | 0 | 0 | 0 | 4 | 15 |
-| security | 2 | 1 | 0 | 0 | 3 | 46 |
+| titan-team | 1 | 1 | 0 | 0 | 2 | 31 |
+| titan-outsider | 0 | 0 | 0 | 0 | 3 | 18 |
+| leave-work | 2 | 1 | 0 | 0 | 1 | 45 |
+| expenses | 1 | 1 | 0 | 0 | 3 | 43 |
+| pay-analyst | 0 | 0 | 0 | 0 | 4 | 18 |
+| security | 2 | 2 | 1 | 0 | 3 | 54 |
 
-**Coverage of expected documents:** report 4/6, single question 2/6.
+**Coverage of expected documents:** report 5/6, single question 1/6.
 **Leaks (forbidden documents cited):** 0.
 
 Coverage only counts which documents were cited; it does not judge the quality of the writing.

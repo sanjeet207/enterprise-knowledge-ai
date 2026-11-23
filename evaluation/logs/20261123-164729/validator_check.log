@@ -1,0 +1,9 @@
+ok  correct, cited               expected SUPPORTED   got: 1 claim(s) supported
+ok  correct, two sources         expected SUPPORTED   got: 2 claim(s) supported
+ok  wrong number                 expected UNSUPPORTED got: Employees get thirty days of annual leave
+ok  wrong carry-forward          expected UNSUPPORTED got: Up to twenty unused days may be carried forward
+ok  invented fact                expected UNSUPPORTED got: Employees receive a yearly travel allowance of 50000.
+ok  wrong citation               expected UNSUPPORTED got: citation mismatch: Travel claims must be submitted within 30 days [1].
+ok  mixed true and invented      expected UNSUPPORTED got: Free hotel stays on all trips [2]
+
+7/7 as expected

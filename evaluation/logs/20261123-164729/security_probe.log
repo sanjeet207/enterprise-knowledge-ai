@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/sanjeet/enterprise-knowledge-ai/scripts/security_probe.py", line 221, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/Users/sanjeet/enterprise-knowledge-ai/scripts/security_probe.py", line 71, in main
+    t = {u: login(c, f"{u}@{'globex' if u.startswith('globex') else 'acme'}.test") for u in users}
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sanjeet/enterprise-knowledge-ai/scripts/security_probe.py", line 36, in login
+    r.raise_for_status()
+  File "/Users/sanjeet/enterprise-knowledge-ai/venv/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '401 Unauthorized' for url 'http://127.0.0.1:8000/auth/login'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401

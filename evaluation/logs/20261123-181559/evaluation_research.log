@@ -1,0 +1,8 @@
+titan-team       report 1/1  single question 0/1  leaks 0  31s  http 200
+titan-outsider   report 0/0  single question 0/0  leaks 0  18s  http 200
+leave-work       report 1/2  single question 0/2  leaks 0  45s  http 200
+expenses         report 1/1  single question 0/1  leaks 0  43s  http 200
+pay-analyst      report 0/0  single question 0/0  leaks 0  18s  http 200
+security         report 2/2  single question 1/2  leaks 0  54s  http 200
+
+Coverage: report 5/6, single question 1/6. Leaks: 0. Wrote evaluation/RESEARCH_EVAL.md

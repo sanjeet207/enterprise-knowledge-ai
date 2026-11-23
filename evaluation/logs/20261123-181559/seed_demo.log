@@ -1,0 +1,11 @@
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 19127.48it/s]
+Demo users created (password for all: DemoPass2026x)
+  analyst@acme.test   level 1
+  manager@acme.test   level 2
+  director@acme.test   level 3
+  manager_titan@acme.test   level 2
+  director_titan@acme.test   level 3
+  partner_titan@acme.test   level 4
+  partner_outsider@acme.test   level 4
+  globex_analyst@globex.test   level 1
+  globex_partner@globex.test   level 4

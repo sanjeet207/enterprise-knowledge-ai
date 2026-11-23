@@ -1,0 +1,75 @@
+
+-- Tokens --
+PASS  No token is refused
+PASS  A garbage token is refused
+PASS  An unsigned token ("alg: none") is refused
+PASS  A token signed with the wrong secret is refused
+PASS  A token with a swapped identity is refused
+PASS  SQL in the login form is just a wrong password
+
+-- Other companies and other people --
+PASS  Another company cannot read an Acme document's versions
+PASS  Another company cannot delete it
+PASS  Another company cannot compare it
+PASS  A forbidden document looks exactly like a missing one  (404 vs 404)
+PASS  An analyst cannot delete a document
+PASS  Another person cannot read a conversation
+PASS  Another person cannot continue it
+PASS  Another person cannot delete it
+PASS  Another person cannot rate its answers
+
+-- Role escalation --
+PASS  An analyst is refused GET /admin/users
+PASS  An analyst is refused GET /admin/events
+PASS  An analyst is refused GET /admin/insights
+PASS  An analyst is refused GET /admin/teams
+PASS  A director cannot read the audit log
+PASS  A manager cannot approve documents
+PASS  An administrator can create an ordinary account
+PASS  An administrator cannot create a level 4 account
+PASS  An administrator cannot promote an account to level 4
+PASS  Nor to level 3
+PASS  Extra fields cannot smuggle in a company
+PASS  Nor a level under another name
+PASS  An administrator cannot change their own access
+
+-- Malicious uploads --
+PASS  A zip bomb disguised as a Word file is refused  (59 KB file)
+PASS  A file over 5 MB is refused
+PASS  An empty file is refused
+PASS  A program is refused
+PASS  Binary data named .txt is refused
+PASS  A fake PDF is refused
+PASS  Text that orders the AI around is refused
+PASS  Text that fakes the prompt format is refused
+PASS  A path-traversal filename and an HTML title are accepted as plain text  (202)
+PASS  It is stored and listed as a harmless string
+PASS  The page never writes untrusted text as HTML
+
+-- Instructions planted in documents --
+PASS  A planted instruction (worded like a house style) does not work  (refused at upload: 422)
+PASS  A planted instruction (worded as a polite note) does not work  (refused at upload: 422)
+
+-- Injection and odd input --
+PASS  SQL in a search is only text: '; DROP TABLE user  (200)
+PASS  SQL in a search is only text: " OR 1=1 --  (200)
+PASS  SQL in a search is only text: %' UNION SELECT pa  (200)
+PASS  SQL in a question is only text  (200)
+PASS  The database is intact afterwards
+PASS  An overlong question is refused
+PASS  An absurd top_k is refused
+PASS  An unknown field is refused
+PASS  The wrong type is refused
+PASS  Restricted material stays hidden from a French override  (refused)
+PASS  Restricted material stays hidden from a role-play  (refused)
+
+-- Browser protections and errors --
+PASS  Security headers are sent
+PASS  API answers are not cacheable
+PASS  No cross-origin access is granted
+PASS  Errors do not expose internals  (422)
+
+-- Abuse --
+PASS  Hammering search is slowed down  (10 of 30 refused)
+
+57/57 attacks defended
