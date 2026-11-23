@@ -66,7 +66,7 @@ The **orchestrator is plain code**. It calls model "agents" for narrow jobs and 
 8. **Outcomes:** `answered`, `refused`, `no_answer`, `unverified` (fail closed, nothing shown), `general` (optional), `error`.
 9. **Audit:** every question is logged with outcome, sources, timings and the agent trace.
 
-**Fail closed** means: when unsure, show nothing rather than a guess. That is why your 3 hard-set misses are safe failures.
+**Fail closed** means: when unsure, show nothing rather than a guess. That is why most misses on the hard sets are safe failures (`unverified` or `no_answer`) rather than wrong answers; the cost is that some correct answers are rejected too (see evaluation/HARDCORP_FINDINGS.md).
 
 **Refusals reveal nothing:** "no results" and "not relevant" give the identical text, so a refusal cannot be used to learn that
 a restricted document exists.
@@ -78,7 +78,7 @@ a restricted document exists.
 - On **every request** the user is re-read from the database, so deactivation or a level change applies immediately.
 - The token algorithm is pinned, so algorithm-switching attacks fail.
 - Unknown email, wrong password, locked or disabled account all give the same answer, and a dummy hash check hides timing.
-- **Lockout** and **rate limits** slow guessing; both are per process (so one replica only).
+- **Lockout** (failed-login count stored in the `users` table, so it survives restarts and works across replicas) and the **question rate limit** (in memory, per process, so one replica only) slow guessing and abuse.
 - **Admin is separate from reading level:** managing documents does not grant reading them.
 - Optional **OIDC single sign-on** (README) with PKCE and token verification.
 
@@ -87,7 +87,7 @@ a restricted document exists.
 - A question set is sent to the running API as real demo users, and each response is scored.
 - Metrics: answer accuracy (right phrase present), citation accuracy (expected document cited), refusal accuracy,
   no-answer guard (no invented facts), multi-part completeness, and **leaks** (a forbidden fact in an answer; must be 0).
-- Results: 86-question suite 100% with 0 leaks; 45-question hard set 22 of 25 answerable with 0 leaks.
+- Results (local model, all with 0 leaks): 86-question suite 37/37 answerable; 27-question set 11/12; Northwind development set 78% (36/46). Hosted Groq model on the 27-question set: 7/12, 10/12, then 12/12 across three runs. Also: 160 access checks, 34 live security-matrix checks, 57 attack-probe checks, 459 unit tests.
 - **Why independent questions matter:** you wrote (or an AI wrote) these questions, so they match how you think. A stranger's
   questions test whether the system works outside your assumptions.
 - `scripts/check_results.py` recomputes published numbers from the raw results so they cannot drift.
@@ -97,6 +97,8 @@ a restricted document exists.
 One setting, `LLM_PROVIDER`, chooses where the model runs: local **Ollama** by default, or **Anthropic**, **Groq** or any
 OpenAI-compatible endpoint. Only `llm.py` knows about providers, so checks and access control are identical. Local model
 names are never sent to a hosted provider. With a hosted provider, questions and passages leave your environment.
+
+Operations drills that were run locally (docs/OPERATIONS.md): backup and restore into a scratch database, and a model-outage drill. Diagrams: docs/ARCHITECTURE.md.
 
 Deployment path (docs/DEPLOY_AZURE.md, not yet run): container image, Azure Container Apps (one replica), PostgreSQL Flexible
 Server with the `vector` extension, secrets for keys.
