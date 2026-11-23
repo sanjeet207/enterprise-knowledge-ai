@@ -90,3 +90,28 @@ evaluation/hardcorp_set.json --tag hardcorp`; report `HARDCORP_REPORT.md`, answe
 - **Correction to the table above:** on Northwind, all 13 should-refuse questions score below the gate, so the "no invented facts 6/6" result was produced by the gate alone. The answer and verification stages were not exercised by those questions on this corpus. They were on the demo company, where 7 of 32 should-refuse questions pass the gate.
 - **A second signal (cosine similarity to the closest readable passage), OR-ed with the reranker, fits Northwind at a cutoff of 0.4** (2 of 54 blocked instead of 9, 0 of 13 should-refuse passing) **but does not transfer**: at the same cutoff the 27-question demo set lets 4 of 13 should-refuse questions through instead of 2, and the 86-question set rescues only 3 of 12. The right cutoff differs by corpus, so no fixed value was adopted. Typo questions are scored raw here, so the demo-set blocked counts are overstated.
 - **Size of the prize:** only 3 of the 18 Northwind failures were refused at the gate. Nine were drafted and then rejected by verification, the larger bucket.
+
+## Version 2 run (2026-11-23, same model and 67 questions; two changes made after reading the v1 failures)
+
+Changes, both made while looking at this question set, so this set is a development set and the gain below is not an independent result:
+1. Plain-code citation rules (`answer_check.py`): an uncited sentence right after a cited one takes that citation only if at least 60% of its content words are in the cited passage; a first sentence that only says the answer varies by place ("This depends on your location") with no figure is no longer flagged. Every other uncited sentence still fails.
+2. Document title: each passage the answer model and the validator read now starts with `Document: <title>` (switch off with `SOURCE_TITLES=0`). Before, neither could tell the 2023 from the 2025 travel policy.
+3. One scoring phrase fixed ("compliance at 5.1" to "5.1"); v1 re-scored with the fix is 72% (33/46), not 70%.
+
+| Metric | v1 as run | v1 with the scorer fix | v2 |
+|---|---|---|---|
+| Answer accuracy (answerable) | 70% (32/46) | 72% (33/46) | **83% (38/46)** |
+| Citation accuracy | 72% (33/46) | 72% (33/46) | 83% (38/46) |
+| Multi-part questions | 50% (4/8) | 50% (4/8) | **88% (7/8)** |
+| Restricted refused / no-answer guard / off-topic | 6/6, 6/6, 1/1 | same | 6/6, 6/6, 1/1 |
+| **Access leaks** | 0 | 0 | **0** |
+| Median latency, answered | 17.6 s | | 18.0 s |
+
+Nine of the 18 v1 failures now pass (client dinner, travel claim deadline, director approval, latest meal allowance, MLRO, annual leave, carry-forward limit, the conflict of interest question, attrition via the scorer fix); nothing that passed in v1 failed in v2. Nine still fail:
+- refused at the relevance gate: hotel limit in Mumbai, password change, stolen laptop (reranker score about 0; see the gate section above);
+- the answer model said the documents do not contain it: taxi receipt, pasting client data into ChatGPT, the bare term NorthTrip, UK leave plus working abroad (the second half needs a separate search);
+- drafted but rejected: UK maternity leave, old hotel limit (the title line did not fix the old-version question).
+
+Answers read in full for quality: the conflict question now states both rules and which document says which; the version questions name the 2025 policy. One imprecise answer was scored as a pass: "The daily meal allowance for client entertainment is up to INR 4,000 per person" mixes two different allowances (1,500 daily meal, 4,000 client entertainment); the figure is right, the label is not.
+
+Limits: one run on one local 7B model, whose output varies between runs; changes tuned on this set; the two demo question sets have to be re-run to show nothing else got worse (`regress86`, `regress27`).
