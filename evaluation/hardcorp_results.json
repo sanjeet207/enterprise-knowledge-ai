@@ -1,0 +1,1318 @@
+[
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "by when do i need to put in my expense claim after coming back from a trip",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "30 days"
+  ],
+  "outcome": "answered",
+  "answer": "According to the Travel and Expense Policy 2025 (NW-TRV-025), expense claims must be submitted within 30 days of the end of the trip [1]. Claims submitted later are paid only with the approval of the finance controller [1].",
+  "latency_s": 34.32,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "what is the most I can spend on a hotel per night in Mumbai",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "8,000"
+  ],
+  "outcome": "refused",
+  "answer": "That question isn't related to your company's documents, so I can't answer it here.",
+  "latency_s": 6.86,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "can I fly business class to Frankfurt",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "9 hours",
+   "director"
+  ],
+  "outcome": "answered",
+  "answer": "According to the Travel and Expense Policy 2025 (NW-TRV-025), business class is allowed only for flights longer than 9 hours and needs a director's sign-off [1]. Since Frankfurt is typically within a 6 to 9 hour flight, you cannot fly business class to Frankfurt without a director's sign-off [1]. For flights of 6 to 9 hours, premium economy may be booked instead [1].",
+  "latency_s": 36.69,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "do I need a receipt for a small taxi fare",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "500"
+  ],
+  "outcome": "no_answer",
+  "answer": "The documents available to you don't contain enough information to answer this.",
+  "latency_s": 6.5,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "how much can I spend on a client dinner per head",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "4,000"
+  ],
+  "outcome": "unverified",
+  "answer": "I couldn't produce an answer that is backed by your documents, so I'm not showing one.",
+  "latency_s": 35.08,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "How do I get my home internet paid for when I work from home",
+  "expect_doc": "Remote and Hybrid Work Policy",
+  "expect_docs": [
+   "Remote and Hybrid Work Policy"
+  ],
+  "must_contain_any": [
+   "1,200"
+  ],
+  "outcome": "answered",
+  "answer": "1. Hybrid employees receive a home internet stipend of INR 1,200 a month [1].",
+  "latency_s": 27.51,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "how long can I work from another country in a year",
+  "expect_doc": "Remote and Hybrid Work Policy",
+  "expect_docs": [
+   "Remote and Hybrid Work Policy"
+  ],
+  "must_contain_any": [
+   "45 days"
+  ],
+  "outcome": "answered",
+  "answer": "Work from outside the country of employment needs written approval from People Operations and Information Security and is limited to 45 days in a calendar year, according to the Remote and Hybrid Work Policy [1].",
+  "latency_s": 18.12,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "what are the hours when I must be online if I work remotely",
+  "expect_doc": "Remote and Hybrid Work Policy",
+  "expect_docs": [
+   "Remote and Hybrid Work Policy"
+  ],
+  "must_contain_any": [
+   "11:00"
+  ],
+  "outcome": "answered",
+  "answer": "- [1] Core hours are 11:00 to 16:00 India time when everyone is expected to be reachable.",
+  "latency_s": 17.16,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "how long does a password have to be",
+  "expect_doc": "Password and Access Standard",
+  "expect_docs": [
+   "Password and Access Standard"
+  ],
+  "must_contain_any": [
+   "14 characters"
+  ],
+  "outcome": "answered",
+  "answer": "According to the Password and Access Standard (NW-SEC-PWD-02), passwords must be at least 14 characters long [1].",
+  "latency_s": 18.86,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "when do I have to change my password",
+  "expect_doc": "Password and Access Standard",
+  "expect_docs": [
+   "Password and Access Standard"
+  ],
+  "must_contain_any": [
+   "not changed on a schedule",
+   "compromise"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 5.31,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "my laptop got stolen, how fast do I tell IT",
+  "expect_doc": "Mobile Device Policy",
+  "expect_docs": [
+   "Mobile Device Policy"
+  ],
+  "must_contain_any": [
+   "2 hours"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 5.19,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "can i paste client data into chatgpt",
+  "expect_doc": "Acceptable Use Policy",
+  "expect_docs": [
+   "Acceptable Use Policy"
+  ],
+  "must_contain_any": [
+   "never be entered",
+   "public ai tool"
+  ],
+  "outcome": "no_answer",
+  "answer": "The documents available to you don't contain enough information to answer this.",
+  "latency_s": 8.17,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "which encryption is required for stored data",
+  "expect_doc": "Encryption Standard",
+  "expect_docs": [
+   "Encryption Standard"
+  ],
+  "must_contain_any": [
+   "AES-256"
+  ],
+  "outcome": "answered",
+  "answer": "Data at rest must be encrypted with AES-256 [1].",
+  "latency_s": 9.92,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "how long do we keep client files after they leave",
+  "expect_doc": "Data Retention Schedule",
+  "expect_docs": [
+   "Data Retention Schedule"
+  ],
+  "must_contain_any": [
+   "8 years"
+  ],
+  "outcome": "answered",
+  "answer": "According to the Data Retention Schedule [1], client records are kept for 8 years after the relationship ends.",
+  "latency_s": 16.52,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "what is the value of a gift I must report to compliance",
+  "expect_doc": "Code of Conduct",
+  "expect_docs": [
+   "Code of Conduct"
+  ],
+  "must_contain_any": [
+   "7,500"
+  ],
+  "outcome": "answered",
+  "answer": "The value of a gift that must be reported to Compliance is more than INR 7,500 [1].",
+  "latency_s": 16.12,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "how quickly will the ethics team respond when I report something",
+  "expect_doc": "Whistleblower Procedure",
+  "expect_docs": [
+   "Whistleblower Procedure"
+  ],
+  "must_contain_any": [
+   "3 working days"
+  ],
+  "outcome": "answered",
+  "answer": "The ethics team acknowledges every report within 3 working days [1].",
+  "latency_s": 14.72,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "How long is the probation period and how much notice do I give during it",
+  "expect_doc": "Onboarding and Probation Policy",
+  "expect_docs": [
+   "Onboarding and Probation Policy"
+  ],
+  "must_contain_any": [
+   "6 months",
+   "15 days"
+  ],
+  "outcome": "answered",
+  "answer": "The probation period lasts 6 months, and either side may end employment with 15 days' notice [1].",
+  "latency_s": 19.34,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "manager@northwind.test",
+  "question": "who has to approve a purchase of 40 lakh rupees",
+  "expect_doc": "Procurement Policy",
+  "expect_docs": [
+   "Procurement Policy"
+  ],
+  "must_contain_any": [
+   "director approval"
+  ],
+  "outcome": "answered",
+  "answer": "A purchase of INR 30 lakh or more needs director approval [1]. Therefore, a purchase of INR 40 lakh would require director approval [1].",
+  "latency_s": 21.87,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "manager@northwind.test",
+  "question": "how many days do we have to finish the security check on a new supplier",
+  "expect_doc": "Vendor Onboarding and Due Diligence Procedure",
+  "expect_docs": [
+   "Vendor Onboarding and Due Diligence Procedure"
+  ],
+  "must_contain_any": [
+   "20 working days"
+  ],
+  "outcome": "answered",
+  "answer": "A security assessment must be completed within 20 working days of the request [1].",
+  "latency_s": 11.63,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "manager@northwind.test",
+  "question": "how fast must a suspicious customer transaction be escalated",
+  "expect_doc": "KYC and AML Procedure",
+  "expect_docs": [
+   "KYC and AML Procedure"
+  ],
+  "must_contain_any": [
+   "24 hours"
+  ],
+  "outcome": "answered",
+  "answer": "According to the KYC and AML Procedure [1], suspicious activity must be escalated to the MLRO within 24 hours.",
+  "latency_s": 16.78,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "manager@northwind.test",
+  "question": "within how long must a system outage affecting Tier 1 be fixed",
+  "expect_doc": "Business Continuity Plan",
+  "expect_docs": [
+   "Business Continuity Plan"
+  ],
+  "must_contain_any": [
+   "4 hours"
+  ],
+  "outcome": "answered",
+  "answer": "Tier 1 systems must be recovered within 4 hours [1].",
+  "latency_s": 17.08,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "manager@northwind.test",
+  "question": "how many days does a performance improvement plan last",
+  "expect_doc": "Performance Management Process",
+  "expect_docs": [
+   "Performance Management Process"
+  ],
+  "must_contain_any": [
+   "90 days"
+  ],
+  "outcome": "answered",
+  "answer": "A performance improvement plan lasts 90 days. [1]",
+  "latency_s": 17.15,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "director@northwind.test",
+  "question": "what percent of profit goes into the bonus pool",
+  "expect_doc": "Compensation Bands and Bonus Framework",
+  "expect_docs": [
+   "Compensation Bands and Bonus Framework"
+  ],
+  "must_contain_any": [
+   "15 percent"
+  ],
+  "outcome": "answered",
+  "answer": "The variable pay pool is 15 percent of profit before tax, as stated in document [1].",
+  "latency_s": 14.44,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "director@northwind.test",
+  "question": "which function has the lowest attrition",
+  "expect_doc": "Attrition and Engagement Report 2025",
+  "expect_docs": [
+   "Attrition and Engagement Report 2025"
+  ],
+  "must_contain_any": [
+   "compliance at 5.1"
+  ],
+  "outcome": "answered",
+  "answer": "The compliance function has the lowest attrition, with a rate of 5.1 percent [1].",
+  "latency_s": 13.77,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "region",
+  "user": "analyst@northwind.test",
+  "question": "how many days of annual leave do staff in Singapore get",
+  "expect_doc": "Leave Policy Singapore",
+  "expect_docs": [
+   "Leave Policy Singapore"
+  ],
+  "must_contain_any": [
+   "18 days"
+  ],
+  "outcome": "answered",
+  "answer": "Full-time employees in Singapore receive 18 days of paid annual leave, rising to 21 days after 5 years of service [1].",
+  "latency_s": 18.4,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "region",
+  "user": "analyst@northwind.test",
+  "question": "how much maternity leave in the UK",
+  "expect_doc": "Leave Policy United Kingdom",
+  "expect_docs": [
+   "Leave Policy United Kingdom"
+  ],
+  "must_contain_any": [
+   "39 weeks"
+  ],
+  "outcome": "unverified",
+  "answer": "I couldn't produce an answer that is backed by your documents, so I'm not showing one.",
+  "latency_s": 37.61,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "region",
+  "user": "analyst@northwind.test",
+  "question": "how many unused leave days can I carry over in India",
+  "expect_doc": "Leave Policy India",
+  "expect_docs": [
+   "Leave Policy India"
+  ],
+  "must_contain_any": [
+   "10 unused days",
+   "up to 10"
+  ],
+  "outcome": "answered",
+  "answer": "In India, up to 10 unused days of annual leave may be carried forward to the next year [1].",
+  "latency_s": 17.55,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "region",
+  "user": "analyst@northwind.test",
+  "question": "what is the paternity leave in Singapore",
+  "expect_doc": "Leave Policy Singapore",
+  "expect_docs": [
+   "Leave Policy Singapore"
+  ],
+  "must_contain_any": [
+   "2 weeks"
+  ],
+  "outcome": "answered",
+  "answer": "Paternity leave in Singapore is 2 weeks. [3]",
+  "latency_s": 15.71,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "region",
+  "user": "analyst@northwind.test",
+  "question": "sick leave rules for self certification in the UK",
+  "expect_doc": "Leave Policy United Kingdom",
+  "expect_docs": [
+   "Leave Policy United Kingdom"
+  ],
+  "must_contain_any": [
+   "7 calendar days"
+  ],
+  "outcome": "answered",
+  "answer": "Employees may self-certify sickness for up to 7 calendar days [1].",
+  "latency_s": 12.8,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "region",
+  "user": "analyst@northwind.test",
+  "question": "how much bereavement leave do employees in India get",
+  "expect_doc": "Leave Policy India",
+  "expect_docs": [
+   "Leave Policy India"
+  ],
+  "must_contain_any": [
+   "5 days"
+  ],
+  "outcome": "answered",
+  "answer": "According to the Leave Policy India [1], employees in India get 5 days of bereavement leave.",
+  "latency_s": 15.23,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "current-version",
+  "user": "analyst@northwind.test",
+  "question": "what is the current deadline to submit travel claims",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "30 days"
+  ],
+  "outcome": "unverified",
+  "answer": "I couldn't produce an answer that is backed by your documents, so I'm not showing one.",
+  "latency_s": 21.4,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "current-version",
+  "user": "analyst@northwind.test",
+  "question": "what is the flight class rule for a 7 hour flight now",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "premium economy"
+  ],
+  "outcome": "answered",
+  "answer": "For a 7-hour flight, the flight class rule is premium economy [1].",
+  "latency_s": 13.19,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "current-version",
+  "user": "analyst@northwind.test",
+  "question": "at what trip cost does a director need to approve before booking",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "150,000"
+  ],
+  "outcome": "unverified",
+  "answer": "I couldn't produce an answer that is backed by your documents, so I'm not showing one.",
+  "latency_s": 43.64,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "current-version",
+  "user": "analyst@northwind.test",
+  "question": "what is the daily meal allowance under the latest travel policy",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "1,500"
+  ],
+  "outcome": "unverified",
+  "answer": "I couldn't produce an answer that is backed by your documents, so I'm not showing one.",
+  "latency_s": 31.24,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "old-version",
+  "user": "analyst@northwind.test",
+  "question": "what was the travel claim deadline in the 2023 policy",
+  "expect_doc": "Travel and Expense Policy 2023",
+  "expect_docs": [
+   "Travel and Expense Policy 2023"
+  ],
+  "must_contain_any": [
+   "45 days"
+  ],
+  "outcome": "answered",
+  "answer": "According to the Travel and Expense Policy 2023 (NW-TRV-023), expense claims must be submitted within 45 days of the end of the trip [1].",
+  "latency_s": 14.97,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "old-version",
+  "user": "analyst@northwind.test",
+  "question": "under the old travel policy, what hotel limit applied in metro cities",
+  "expect_doc": "Travel and Expense Policy 2023",
+  "expect_docs": [
+   "Travel and Expense Policy 2023"
+  ],
+  "must_contain_any": [
+   "9,000"
+  ],
+  "outcome": "unverified",
+  "answer": "I couldn't produce an answer that is backed by your documents, so I'm not showing one.",
+  "latency_s": 31.05,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "manager@northwind.test",
+  "question": "form PR-7",
+  "expect_doc": "Procurement Policy",
+  "expect_docs": [
+   "Procurement Policy"
+  ],
+  "must_contain_any": [
+   "PR-7"
+  ],
+  "outcome": "answered",
+  "answer": "A single-source purchase needs the justification form PR-7 [1].",
+  "latency_s": 11.45,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "analyst@northwind.test",
+  "question": "1800-555-0142",
+  "expect_doc": "Whistleblower Procedure",
+  "expect_docs": [
+   "Whistleblower Procedure"
+  ],
+  "must_contain_any": [
+   "1800-555-0142"
+  ],
+  "outcome": "answered",
+  "answer": "1800-555-0142 is the number for the ethics line, where concerns can be reported anonymously [1].",
+  "latency_s": 36.95,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "analyst@northwind.test",
+  "question": "VaultPlus",
+  "expect_doc": "Password and Access Standard",
+  "expect_docs": [
+   "Password and Access Standard"
+  ],
+  "must_contain_any": [
+   "VaultPlus"
+  ],
+  "outcome": "answered",
+  "answer": "VaultPlus is a tool used for issuing privileged accounts, and the access for these accounts is reviewed every quarter [1].",
+  "latency_s": 21.96,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "manager@northwind.test",
+  "question": "IR-HIGH-3",
+  "expect_doc": "Incident Response Runbook",
+  "expect_docs": [
+   "Incident Response Runbook"
+  ],
+  "must_contain_any": [
+   "IR-HIGH-3"
+  ],
+  "outcome": "answered",
+  "answer": "IR-HIGH-3 is the playbook for a high incident in the Northwind Capital Incident Response Runbook (NW-SEC-IR-04). [1]",
+  "latency_s": 19.93,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "analyst@northwind.test",
+  "question": "legal hold LH-2",
+  "expect_doc": "Data Retention Schedule",
+  "expect_docs": [
+   "Data Retention Schedule"
+  ],
+  "must_contain_any": [
+   "LH-2"
+  ],
+  "outcome": "answered",
+  "answer": "A legal hold notice, such as LH-2, overrides every retention period until Legal lifts it. [1]",
+  "latency_s": 15.24,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "manager@northwind.test",
+  "question": "KYC-EDD-2",
+  "expect_doc": "KYC and AML Procedure",
+  "expect_docs": [
+   "KYC and AML Procedure"
+  ],
+  "must_contain_any": [
+   "KYC-EDD-2"
+  ],
+  "outcome": "answered",
+  "answer": "Politically exposed persons need enhanced due diligence on form KYC-EDD-2 [1].",
+  "latency_s": 45.91,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "manager@northwind.test",
+  "question": "MLRO",
+  "expect_doc": "KYC and AML Procedure",
+  "expect_docs": [
+   "KYC and AML Procedure"
+  ],
+  "must_contain_any": [
+   "MLRO"
+  ],
+  "outcome": "no_answer",
+  "answer": "The documents available to you don't contain enough information to answer this.",
+  "latency_s": 8.85,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "manager@northwind.test",
+  "question": "alternate site Pune",
+  "expect_doc": "Business Continuity Plan",
+  "expect_docs": [
+   "Business Continuity Plan"
+  ],
+  "must_contain_any": [
+   "Pune"
+  ],
+  "outcome": "answered",
+  "answer": "The alternate site in Pune is mentioned in the Business Continuity Plan [1].",
+  "latency_s": 33.67,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "analyst@northwind.test",
+  "question": "NorthTrip",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "NorthTrip"
+  ],
+  "outcome": "no_answer",
+  "answer": "The documents available to you don't contain enough information to answer this.",
+  "latency_s": 9.77,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "analyst@northwind.test",
+  "question": "NW-SEC-ENC-01",
+  "expect_doc": "Encryption Standard",
+  "expect_docs": [
+   "Encryption Standard"
+  ],
+  "must_contain_any": [
+   "NW-SEC-ENC-01"
+  ],
+  "outcome": "answered",
+  "answer": "Encryption Standard (NW-SEC-ENC-01) specifies that data at rest must be encrypted with AES-256 [1]. Data in transit must use TLS 1.2 or higher, with TLS 1.3 being preferred [1].",
+  "latency_s": 35.05,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "kind": "multi-document",
+  "user": "manager@northwind.test",
+  "question": "Who must approve a vendor contract worth 2 crore rupees and how long does the security assessment of the vendor take?",
+  "expect_docs": [
+   "Procurement Policy",
+   "Vendor Onboarding and Due Diligence Procedure"
+  ],
+  "must_contain_groups": [
+   [
+    "chief financial officer",
+    "cfo"
+   ],
+   [
+    "20 working days"
+   ]
+  ],
+  "outcome": "answered",
+  "answer": "A vendor contract worth 2 crore rupees requires the approval of the chief financial officer and the Procurement Committee [3]. The security assessment of a vendor must be completed within 20 working days of the request [1].",
+  "latency_s": 24.0,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "kind": "multi-document",
+  "user": "analyst@northwind.test",
+  "question": "How many days of leave do UK employees get and how long can I work abroad in a year?",
+  "expect_docs": [
+   "Leave Policy United Kingdom",
+   "Remote and Hybrid Work Policy"
+  ],
+  "must_contain_groups": [
+   [
+    "25 days"
+   ],
+   [
+    "45 days"
+   ]
+  ],
+  "outcome": "no_answer",
+  "answer": "The documents available to you don't contain enough information to answer this.",
+  "latency_s": 36.29,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "kind": "multi-document",
+  "user": "manager@northwind.test",
+  "question": "How quickly must a confirmed sanctions match be reported and how quickly must a suspicious transaction be escalated?",
+  "expect_docs": [
+   "Sanctions Screening Standard",
+   "KYC and AML Procedure"
+  ],
+  "must_contain_groups": [
+   [
+    "1 hour"
+   ],
+   [
+    "24 hours"
+   ]
+  ],
+  "outcome": "answered",
+  "answer": "A confirmed sanctions match must be reported within 1 hour [1]. Suspicious activity must be escalated to the MLRO within 24 hours [3].",
+  "latency_s": 22.81,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "kind": "two-part",
+  "user": "analyst@northwind.test",
+  "question": "What encryption is required for laptops and how long are encryption keys used before rotation?",
+  "expect_docs": [
+   "Encryption Standard"
+  ],
+  "must_contain_groups": [
+   [
+    "full-disk"
+   ],
+   [
+    "365 days"
+   ]
+  ],
+  "outcome": "answered",
+  "answer": "Laptops must have full-disk encryption switched on [1]. Encryption keys must be rotated every 365 days [1].",
+  "latency_s": 17.83,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "kind": "multi-document",
+  "user": "manager@northwind.test",
+  "question": "How long do I have to tell the regulator about a confirmed incident and what is the recovery time for Tier 1 systems?",
+  "expect_docs": [
+   "Incident Response Runbook",
+   "Business Continuity Plan"
+  ],
+  "must_contain_groups": [
+   [
+    "6 hours"
+   ],
+   [
+    "4 hours"
+   ]
+  ],
+  "outcome": "answered",
+  "answer": "You have 6 hours to report a confirmed incident to the regulator after it has been classified as high [2]. The recovery time for Tier 1 systems is within 4 hours [1].",
+  "latency_s": 24.08,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "kind": "ambiguous",
+  "user": "analyst@northwind.test",
+  "question": "how many days of annual leave do I get",
+  "expect_docs": [
+   "Leave Policy India",
+   "Leave Policy United Kingdom",
+   "Leave Policy Singapore"
+  ],
+  "must_contain_groups": [
+   [
+    "24 days"
+   ],
+   [
+    "25 days"
+   ],
+   [
+    "18 days"
+   ]
+  ],
+  "outcome": "unverified",
+  "answer": "I couldn't produce an answer that is backed by your documents, so I'm not showing one.",
+  "latency_s": 36.67,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "kind": "ambiguous",
+  "user": "analyst@northwind.test",
+  "question": "what is the carry forward limit for leave",
+  "expect_docs": [
+   "Leave Policy India",
+   "Leave Policy United Kingdom",
+   "Leave Policy Singapore"
+  ],
+  "must_contain_groups": [
+   [
+    "10 unused days"
+   ],
+   [
+    "5 unused days"
+   ],
+   [
+    "7 unused days"
+   ]
+  ],
+  "outcome": "unverified",
+  "answer": "I couldn't produce an answer that is backed by your documents, so I'm not showing one.",
+  "latency_s": 30.36,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "multi_part",
+  "kind": "conflict",
+  "user": "manager@northwind.test",
+  "question": "how soon must I declare a conflict of interest",
+  "expect_docs": [
+   "Code of Conduct",
+   "Conflicts of Interest Procedure"
+  ],
+  "must_contain_groups": [
+   [
+    "7 calendar days"
+   ],
+   [
+    "5 working days"
+   ]
+  ],
+  "outcome": "unverified",
+  "answer": "I couldn't produce an answer that is backed by your documents, so I'm not showing one.",
+  "latency_s": 44.13,
+  "passed": false,
+  "answered_ok": false,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "restricted",
+  "kind": "restricted",
+  "user": "analyst@northwind.test",
+  "question": "how big is the bonus pool for the company",
+  "forbidden": [
+   "15 percent",
+   "40 crore"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 6.08,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "restricted",
+  "kind": "restricted",
+  "user": "analyst@northwind.test",
+  "question": "which department has the highest attrition and what is the rate",
+  "forbidden": [
+   "19.8"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 6.45,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "restricted",
+  "kind": "restricted",
+  "user": "analyst@northwind.test",
+  "question": "what are the top operational risks and who owns the cloud risk",
+  "forbidden": [
+   "concentration",
+   "chief technology officer"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 5.76,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "restricted",
+  "kind": "restricted",
+  "user": "analyst@northwind.test",
+  "question": "what is the target bonus at grade G5",
+  "forbidden": [
+   "30 percent"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 3.76,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "restricted",
+  "kind": "restricted",
+  "user": "analyst@northwind.test",
+  "question": "how often does the board risk committee meet and what is the quorum",
+  "forbidden": [
+   "quorum is 3"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 5.32,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "restricted",
+  "kind": "restricted",
+  "user": "manager@northwind.test",
+  "question": "what is the deferred share of bonus for grade G5",
+  "forbidden": [
+   "40 percent"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 4.78,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "unsupported",
+  "kind": "not-in-documents",
+  "user": "analyst@northwind.test",
+  "question": "what is the dress code for client meetings",
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 5.85,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "unsupported",
+  "kind": "not-in-documents",
+  "user": "analyst@northwind.test",
+  "question": "how many stock options do new joiners get and when do they vest",
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 6.97,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "unsupported",
+  "kind": "not-in-documents",
+  "user": "analyst@northwind.test",
+  "question": "is there a parking allowance at the Pune office",
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 6.37,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "unsupported",
+  "kind": "not-in-documents",
+  "user": "analyst@northwind.test",
+  "question": "what is the relocation allowance when moving cities",
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "That question isn't related to your company's documents, so I can't answer it here.",
+  "latency_s": 4.09,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "unsupported",
+  "kind": "not-in-documents",
+  "user": "analyst@northwind.test",
+  "question": "what is the policy on sabbaticals",
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 4.43,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "unsupported",
+  "kind": "not-in-documents",
+  "user": "analyst@northwind.test",
+  "question": "how much is the learning and development budget per employee",
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 3.69,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "off_topic",
+  "kind": "off-topic",
+  "user": "analyst@northwind.test",
+  "question": "who won the cricket match yesterday",
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "That question isn't related to your company's documents, so I can't answer it here.",
+  "latency_s": 5.11,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ }
+]

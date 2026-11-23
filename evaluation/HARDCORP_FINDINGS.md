@@ -39,3 +39,44 @@ FAQ, two documents that disagree, and codes and form numbers asked as bare searc
 - One run, local embeddings, one machine. Latency is retrieval only, with no answer model.
 - This measures finding the right document. Whether the answer is correct and cited is measured separately by the full-pipeline run
   (`python -m scripts.evaluate --eval-set evaluation/hardcorp_set.json --tag hardcorp`).
+
+## Full pipeline on the same corpus (run of 2026-11-23, qwen2.5:7b via Ollama, refusal threshold 0.1)
+
+All 67 questions asked through the running application, as the user each names (`python -m scripts.evaluate --eval-set
+evaluation/hardcorp_set.json --tag hardcorp`; report `HARDCORP_REPORT.md`, answers `hardcorp_results.json`). 0 model errors.
+
+| Metric | Result |
+|---|---|
+| Answer accuracy (answerable) | 70% (32/46) |
+| Citation accuracy (answerable) | 72% (33/46) |
+| Multi-part questions (every part answered and cited) | 50% (4/8) |
+| Restricted questions refused | 6/6 |
+| Questions with no document answer: no invented facts | 6/6 |
+| Off-topic refused | 1/1 |
+| **Access leaks** | **0** |
+| Median latency, answered / refused | 17.6 s / 5.3 s |
+
+### What the 18 failures look like
+
+17 of the 18 failures are the system declining to answer; none shows a wrong answer. The outcome tells which stage stopped it:
+
+| Outcome | Count | Questions |
+|---|---|---|
+| refused (best passage scored below the 0.1 gate) | 3 | hotel limit in Mumbai (answered "not related to your company"), when to change a password, stolen laptop |
+| no_answer (the model said the documents do not contain enough) | 5 | taxi receipt, pasting client data into ChatGPT, the bare terms "MLRO" and "NorthTrip", UK leave plus working abroad |
+| unverified (an answer was drafted but not shown) | 9 | four of the six version questions (current deadline, director approval, meal allowance, old hotel limit), client dinner, UK maternity leave, both ambiguous leave questions, the conflict question |
+| answered, scored as a miss | 1 | "which function has the lowest attrition": the answer "The compliance function has the lowest attrition, with a rate of 5.1 percent [1]" is correct; the expected phrase was "compliance at 5.1", which is too rigid. This is a flaw in the question set, not in the system. |
+
+### What this says
+
+- **Safety held on the hard corpus**: no leaks, every restricted question refused, no invented facts on questions the documents do not cover.
+- **Usefulness is the weak side**: about 70% of answerable questions get a correct, cited answer; the system prefers silence to a doubtful answer. That is the intended trade, but 3 of the 18 refusals happen at the relevance gate even though search had put the right document first to third. The gate threshold was chosen on the 14-document demo company; on long documents the best passage scores lower. A threshold sweep (`scripts/threshold_sweep.py`) is the next measurement.
+- **Retrieval is not the bottleneck**: recall@3 was 100%. The losses come after retrieval: the relevance gate, the 7B model on paraphrases and on questions that need several sources, and the answer verification step rejecting answers that mix an old and a new policy.
+- **Versions, ambiguity and conflicts fail closed**: 7 of the 9 "unverified" outcomes are version, ambiguous or conflict questions, where the right behaviour is to name every variant or the newest one. The system declines instead. Better handling is a product change, not a tuning change.
+- **Bare keywords are not questions**: "MLRO" and "NorthTrip" were found by search (10/10 exact-term at rank 1) but a lone term gives the model nothing to answer. Whether to count them as answer failures is a question-design choice; they are reported as scored.
+
+### Caveats
+
+- The question set and ground truth were written by the AI assistant that built the project; one scoring phrase (above) is known to be too strict.
+- This set is now a development set: anything changed in response to it must be measured on a set the change was not made on.
+- One run, one local model; results vary between runs because the model's output varies.
