@@ -88,6 +88,28 @@ jobs:
       # The script exits non-zero if any check fails, which fails the build.
       - name: Verify access control
         run: python -m scripts.verify_access
+      # The live security matrix against a real server. CI has no language model, so rows that need one (chat answers,
+      # research reports, saved-answer hiding) are skipped and shown as NOTE; they run locally before a release.
+      # Uploads are indexed with the embedding model but without the reviewer model (INSPECT_UPLOADS=false).
+      # Any FAIL makes the matrix exit non-zero, which fails the build.
+      - name: Security matrix (rows that need no language model)
+        env:
+          INSPECT_UPLOADS: "false"
+        run: |
+          python -m scripts.seed_demo
+          uvicorn app.main:app --port 8000 > server.log 2>&1 &
+          for i in $(seq 1 90); do curl -sf http://127.0.0.1:8000/health > /dev/null && break; sleep 2; done
+          curl -sf http://127.0.0.1:8000/health
+          python -m scripts.security_matrix --no-model --report security-matrix-ci.md
+      - name: Keep the matrix report and server log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-matrix-ci
+          path: |
+            security-matrix-ci.md
+            server.log
+          if-no-files-found: ignore
 
   docker-build:
     name: Docker image builds

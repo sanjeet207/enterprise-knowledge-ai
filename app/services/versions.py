@@ -26,6 +26,15 @@ def info(tenant_id: str, document_id: str) -> Optional[Dict[str, Any]]:
             "doc_key": row[4] or document_id, "version": int(row[5] or 1), "uploaded_by_id": row[6]}
 
 
+def can_read(user: User, document_id: str) -> bool:
+    """Level and team rule only, whatever state the document is in (a pending upload has no readers but its owner)."""
+    with _connect() as conn:
+        return conn.execute(
+            "SELECT 1 FROM parent_chunks WHERE document_id = %s AND tenant_id = %s AND classification_level <= %s "
+            "AND (engagement_id IS NULL OR engagement_id IN (SELECT engagement_id FROM engagement_members WHERE user_id = %s)) LIMIT 1",
+            (document_id, user.tenant_id, user.level, user.id)).fetchone() is not None
+
+
 def promote(tenant_id: str, document_id: str, status: str) -> int:
     """Make a fully written document visible in one statement. Until then its chunks are 'indexing', which no
     search, listing or comparison reads, so a worker that dies half way never leaves half a document in search."""

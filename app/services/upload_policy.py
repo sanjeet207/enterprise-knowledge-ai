@@ -21,5 +21,7 @@ def check_upload(is_admin: bool, user_level: int, level: int, engagement_id: Opt
         raise PermissionError("You cannot classify a document above your own level")
 
 
-def can_delete(is_admin: bool, user_id: str, uploaded_by_id: Optional[str]) -> bool:
-    return is_admin or (uploaded_by_id is not None and uploaded_by_id == user_id)
+def can_delete(is_admin: bool, user_id: str, uploaded_by_id: Optional[str], has_access: bool) -> bool:
+    """An administrator, or the uploader while they can still read the document (level and team, as in search).
+    Ownership alone does not keep the right to delete after access is taken away."""
+    return is_admin or (uploaded_by_id is not None and uploaded_by_id == user_id and has_access)

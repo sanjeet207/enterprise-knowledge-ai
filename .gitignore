@@ -6,3 +6,5 @@ __pycache__/
 evaluation/EVAL_REPORT_quick.md
 evaluation/eval_results_quick.json
 server_error.log
+security-matrix-ci.md
+server.log

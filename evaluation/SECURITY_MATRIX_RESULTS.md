@@ -1,4 +1,4 @@
-# Security matrix: latest live run (2026-11-23 07:13 UTC)
+# Security matrix: latest live run (2026-11-23 07:25 UTC)
 
 | Row | Attack | Result | Detail |
 |---|---|---|---|
@@ -23,6 +23,16 @@
 | M10 | A manager cannot delete a restricted document, and it is still there afterwards | PASS |  |
 | M11 | A manager cannot raise their own level | PASS |  |
 | M12 | A manager cannot create teams, add members or read the audit log | PASS |  |
+| M15 | Only an administrator approves a pending document (manager, analyst and the uploader get 403) | PASS | [403, 403, 403], admin 200 |
+| M16 | Version history: visible to the team member, 404 for an outsider, another company, and a missing id alike | PASS | {'owner': 200, 'analyst': 404, 'globex': 404, 'missing': 404} |
+| M17 | Compare: works for the team member, 404 for an outsider, another company, and a missing id alike | PASS | {'owner': 200, 'analyst': 404, 'globex': 404, 'missing': 404} |
+| M18 | Upload jobs: seen by the uploader and an administrator, not by another manager or another company | PASS | {'owner': 200, 'admin': 200, 'manager': 404, 'globex': 404} {'owner': True, 'manager': False, 'globex': False} |
+| M19 | Uploading the same text as a level 3 document refuses it but does not name that document | PASS | 409 |
+| M19a | Control: duplicating a document the uploader can read does name it | PASS | 409 |
+| M20 | An uploader removed from the team can no longer delete their own document, and it is still there | PASS | 404 |
+| M20a | Control: while still on the team the uploader can delete their own document | PASS | 200 |
+| M21 | Another person cannot delete someone's conversation, and it is still there | PASS |  |
+| M22 | Another person cannot rate someone's answer (404); the owner can (control) | PASS |  |
 | M13 | A research report by an analyst cites no restricted document | PASS | 0 sources cited |
 | M13a | Control: on an allowed topic the same assistant does cite documents (so M13 is not passing by citing nothing) | PASS | 2 sources cited |
 | M14 | Another person cannot read that report, nor another company | PASS |  |

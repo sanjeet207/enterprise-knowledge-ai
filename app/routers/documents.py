@@ -96,7 +96,8 @@ def upload_document(
             raise HTTPException(status_code=422, detail="Invalid document")
         found = versions.info(user.tenant_id, previous_id)
         # Same rule as managing a document: an administrator, or the person who uploaded it.
-        if found is None or not upload_policy.can_delete(user.is_admin, user.id, found["uploaded_by_id"]):
+        if found is None or not upload_policy.can_delete(user.is_admin, user.id, found["uploaded_by_id"],
+                                                         user.is_admin or versions.can_read(user, previous_id)):
             raise HTTPException(status_code=404, detail="Document not found")
         if found["status"] != "published":
             raise HTTPException(status_code=409, detail="Only a live document can get a new version")
@@ -155,7 +156,8 @@ def list_documents(user: User = Depends(get_current_user)):
 @router.delete("/{document_id}")
 def delete_document(document_id: UUID, user: User = Depends(get_current_user)):
     info = admin.document_info(user.tenant_id, str(document_id))
-    if info is None or not upload_policy.can_delete(user.is_admin, user.id, info["uploaded_by_id"]):
+    if info is None or not upload_policy.can_delete(user.is_admin, user.id, info["uploaded_by_id"],
+                                                    user.is_admin or versions.can_read(user, str(document_id))):
         raise HTTPException(status_code=404, detail="Document not found")
     removed = admin.delete_document(user.tenant_id, str(document_id))
     admin.record(user, "document.delete", info["title"] or str(document_id), {"document_id": str(document_id), "sections": removed})

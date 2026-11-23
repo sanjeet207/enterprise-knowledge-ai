@@ -1,8 +1,8 @@
 # Revocation test results
 
 What happens to things a person created or saw earlier when their access is taken away later.
-Results below are from a run on 2026-11-23: **436 unit tests passed, security matrix 24/24** (server restarted
-after the last code change).
+Results below are from a run on 2026-11-23: **437 unit tests passed, security matrix 34/34** (24 earlier checks plus M15 to M22
+for routes and deletion; server restarted after the last code change).
 
 ## Rule
 
@@ -36,7 +36,7 @@ Older rows with only a title are matched by title; a source with neither id nor 
 | Data export (`/me/data`) | uses the same re-check | same functions; **no test calls the endpoint** |
 
 Test files: `tests/test_conversation_access.py` (15 tests), `tests/test_report_access.py` (9),
-`scripts/security_matrix.py` (live, 24 checks).
+`scripts/security_matrix.py` (live, 34 checks).
 
 ## Not applicable (features do not exist)
 
@@ -52,7 +52,7 @@ revocation test before release.
 3. **Export endpoint not directly tested** (see table).
 4. **Audit log keeps the person's original question text** after access is lost. This is by design for audit; the
    audit endpoints are level 4 only.
-5. **Uploader keeps delete rights** on their own document after losing access to it
-   (see `docs/security/AUTHORIZATION_COVERAGE.md`, gap 3). Undecided.
+5. **Deletion after losing access:** decided. An uploader who lost access can no longer delete their own document
+   (matrix M20); an administrator still can, and every deletion is audited.
 6. **Matrix uses one demo company and one throwaway user**, with a local model. It proves the behaviour exists,
    not that every configuration is covered.

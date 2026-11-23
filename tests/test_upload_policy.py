@@ -39,7 +39,12 @@ def test_manager_may_add_to_own_team_up_to_own_level():
 
 
 def test_delete_rights():
-    assert can_delete(True, "u1", "someone-else")
-    assert can_delete(False, "u1", "u1")
-    assert not can_delete(False, "u1", "u2")
-    assert not can_delete(False, "u1", None)
+    assert can_delete(True, "u1", "someone-else", False)
+    assert can_delete(False, "u1", "u1", True)
+    assert not can_delete(False, "u1", "u2", True)
+    assert not can_delete(False, "u1", None, True)
+
+
+def test_the_uploader_loses_the_right_to_delete_when_they_lose_access():
+    assert not can_delete(False, "u1", "u1", False)
+    assert can_delete(True, "u1", "u1", False)  # an administrator manages without reading
