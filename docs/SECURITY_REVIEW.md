@@ -37,6 +37,7 @@ Each finding below was confirmed in the code first, then fixed, then given a tes
   document that tells staff what to do) it flagged about 1 in 6 of the cases I tried. A flag only holds the upload for a second
   administrator, who sees the quoted sentence, so the cost is a delay, not a lost document. It was tuned on cases written by the
   author, so its real miss rate against a determined, unseen attacker is unknown (10 of 11 known cases pass, see
-  `scripts/check_inspector.py`).
+  `scripts/check_inspector.py`). The one failing case is listed there as a known false alarm so that the reproducibility run
+  shows a real regression as a failure; the prompt was deliberately not changed to fit that single case.
 - **Number words.** A question that gives an amount ("30 lakh") is not reliably compared with a threshold the document writes in words ("twenty-five lakh"); the assistant says it cannot answer rather than guessing. This is a safe failure, recorded in `evaluation/INDEPENDENT_REPORT.md`.
 - The demo accounts and password are for local use only.
