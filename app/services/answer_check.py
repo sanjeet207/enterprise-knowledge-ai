@@ -323,19 +323,64 @@ def citation_mismatches(answer: str, passages: list[str], threshold: float = 0.4
     return bad
 
 
+_SCOPE_LEAD = re.compile(r"\b(depends?|varies|vary|differs?|different)\b", re.IGNORECASE)
+
+
+def repair_neighbor_citation(answer: str, passages: list[str], min_overlap: float = 0.6) -> str:
+    """An uncited sentence right after a cited one takes that citation if the cited passage really contains it.
+
+    Models often write one cited sentence and then a second sentence from the same passage without repeating the
+    number ("Claims are due in 30 days [2]. Later claims need the finance controller's approval."). The second
+    sentence is checked in code: at least `min_overlap` of its content words must appear in a passage the sentence
+    before it cites, so a sentence that is not in that passage stays uncited and still fails. The claim validator and
+    the citation overlap check judge it afterwards. The answer is returned unchanged when nothing qualifies.
+    """
+    parts = re.split(r"(?<=[.!?])[ \t]+", (answer or "").strip())
+    n = len(passages)
+    changed = False
+    for i in range(1, len(parts)):
+        prev, cur = parts[i - 1], parts[i]
+        marks_prev = cited_numbers(prev, n)
+        if cited_numbers(cur, n) or not marks_prev:
+            continue
+        words = _content_words(cur)
+        if len(words) < 3:
+            continue
+        best = max(len(words & _content_words(passages[k - 1])) / len(words) for k in marks_prev)
+        if best >= min_overlap:
+            marks = "".join(f"[{k}]" for k in marks_prev)
+            end = re.search(r"[.!?]+$", cur)
+            parts[i] = (cur[:end.start()] + " " + marks + cur[end.start():]) if end else f"{cur} {marks}"
+            changed = True
+    return " ".join(parts) if changed else answer
+
+
 def uncited_sentences(answer: str, source_count: int, min_words: int = 3) -> list[str]:
     """Factual-looking sentences that carry no valid [n] citation. Plain code, no model.
 
     A sentence counts as factual if it has at least `min_words` content words, so short lead-ins and
     closers do not trigger it. A citation written after the full stop ("... week. [1]") is moved back
-    onto its sentence first.
+    onto its sentence first. The first sentence is also let through when it only announces that the answer
+    varies ("This depends on your location.") has no figure in it, and the next sentence is cited: it asserts
+    nothing that a source could confirm, and the facts that follow carry the citations.
     """
     text = re.sub(r"([.!?])\s*((?:\[\d+\]\s*)+)(?=\s|$)", r" \2\1", answer)
+    sentences = [x.strip() for x in re.split(r"(?<=[.!?])\s+|\n+", text)]
+    sentences = [x for x in sentences if x]
     bad = []
-    for sentence in re.split(r"(?<=[.!?])\s+|\n+", text):
-        sentence = sentence.strip()
-        if not sentence or cited_numbers(sentence, source_count):
+    for i, sentence in enumerate(sentences):
+        if cited_numbers(sentence, source_count):
+            continue
+        if (i == 0 and len(sentences) > 1 and not re.search(r"\d", sentence) and _SCOPE_LEAD.search(sentence)
+                and cited_numbers(sentences[1], source_count)):
             continue
         if len(_content_words(sentence)) >= min_words:
             bad.append(sentence)
     return bad
+
+
+def titled_passage(content: str, title: str | None) -> str:
+    """The passage with its document title on a first line, so the model and the validator can tell two versions
+    of one policy apart ("Travel and Expense Policy 2023" against "... 2025"). Without a title the passage is unchanged."""
+    title = " ".join(str(title or "").split())[:150]
+    return f"Document: {title}\n{content}" if title else content

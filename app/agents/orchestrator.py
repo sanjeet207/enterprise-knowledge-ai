@@ -9,8 +9,9 @@ from app.agents import (answerer, corrector, fit_checker, general, general_check
                         validator)
 from app.agents.base import Trace
 from app.services import audit
-from app.services.answer_check import (cited_numbers, is_hollow, is_insufficient, strip_invalid_citations,
-                                       uncited_sentences, unsupported_numbers)
+from app.services.answer_check import (cited_numbers, is_hollow, is_insufficient, repair_neighbor_citation,
+                                       strip_invalid_citations, titled_passage, uncited_sentences,
+                                       unsupported_numbers)
 from app.services import question_profile
 from app.services.llm import LLMUnavailable
 
@@ -284,7 +285,8 @@ async def answer_question(user, query: str, top_k: int, retriever, on_step=None)
     deep_done = False
     fit_retried = False
     while True:
-        passages = [p["parent_content"] for p in reranked]
+        passages = [titled_passage(p["parent_content"], (p.get("metadata") or {}).get("title")) if config.SOURCE_TITLES_ENABLED
+                    else p["parent_content"] for p in reranked]
         try:
             # 5. Answerer, with one retry if it forgot to cite.
             t = _now()
@@ -343,7 +345,9 @@ async def answer_question(user, query: str, top_k: int, retriever, on_step=None)
                 for attempt in range(config.VALIDATOR_MAX_RETRIES + 1):
                     if is_insufficient(answer) or not cited_numbers(answer, len(passages)):
                         break
-                    # Plain-code rule first: every factual sentence must carry a citation.
+                    # Plain-code rule first: every factual sentence must carry a citation. A sentence that the cited
+                    # passage itself contains takes the citation of the sentence before it (checked in code).
+                    answer = repair_neighbor_citation(answer, passages)
                     missing = uncited_sentences(answer, len(passages))
                     if missing:
                         trace.add("validator", _now(), f"uncited: {missing[0][:150]}")

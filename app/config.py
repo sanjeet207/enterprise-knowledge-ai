@@ -66,6 +66,8 @@ LLM_MODEL = os.getenv("LLM_MODEL", "qwen2.5:7b")
 # Below this top rerank score the question is refused without calling the model.
 LLM_NUM_CTX = int(os.getenv("LLM_NUM_CTX", "4096"))
 REFUSAL_THRESHOLD = float(os.getenv("REFUSAL_THRESHOLD", "0.1"))
+# Put each source's document title on the first line of the passage the models read (set SOURCE_TITLES=0 to turn off).
+SOURCE_TITLES_ENABLED = os.getenv("SOURCE_TITLES", "1") == "1"
 
 # Second-pass check: a separate model call confirms every claim is supported by the sources.
 VALIDATOR_ENABLED = os.getenv("VALIDATOR_ENABLED", "true").lower() in ("1", "true", "yes")

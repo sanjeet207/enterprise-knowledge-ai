@@ -367,7 +367,7 @@ def build_questions() -> List[Dict]:
         q("lookup", M, "within how long must a system outage affecting Tier 1 be fixed", "Business Continuity Plan", "4 hours"),
         q("lookup", M, "how many days does a performance improvement plan last", "Performance Management Process", "90 days"),
         q("lookup", D, "what percent of profit goes into the bonus pool", "Compensation Bands and Bonus Framework", "15 percent"),
-        q("lookup", D, "which function has the lowest attrition", "Attrition and Engagement Report 2025", "compliance at 5.1"),
+        q("lookup", D, "which function has the lowest attrition", "Attrition and Engagement Report 2025", "5.1"),
     ]
     # --- region: same question, near-identical documents; the country decides
     s += [
