@@ -18,8 +18,9 @@ anything that fails gets fixed here and recorded in the CHANGELOG. The applicati
 
 Container Apps cannot run a local Ollama model, so the deployment uses a hosted one (`LLM_PROVIDER=groq|anthropic|openai`).
 **Questions and the passages sent to the model leave Azure and go to that provider.** Only fictional documents are loaded
-in this run. The README numbers were measured on the local model; the hosted model gets its own evaluation run, recorded
-separately, before any claim is made about it.
+in this run. The README numbers were measured on the local model; the hosted model has its own, smaller evaluation
+(27-question set, see the README limitations). Groq's free tier allows 30 requests and 200,000 tokens per day per model,
+so keep any public test to a handful of questions; when the limit is hit the app waits and retries, then returns an error.
 
 ## What gets created
 
@@ -99,7 +100,7 @@ az containerapp create -g eka-rg -n eka-api --environment eka-env \
   --secrets jwt="$JWT" db="$DATABASE_URL" llmkey="$GKEY" \
   --env-vars JWT_SECRET=secretref:jwt DATABASE_URL=secretref:db \
              LLM_PROVIDER=groq GROQ_API_KEY=secretref:llmkey \
-             LLM_MODEL=<model> ANSWERER_QUICK_MODEL=<small model> \
+             LLM_MODEL=openai/gpt-oss-120b ANSWERER_QUICK_MODEL=openai/gpt-oss-20b \
              APP_ENV=production
 # If the image pull is refused ("unauthorized"), grant the app's identity pull access:
 #   az role assignment create --assignee <principalId from: az containerapp show ... --query identity.principalId -o tsv> \

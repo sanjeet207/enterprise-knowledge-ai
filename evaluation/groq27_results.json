@@ -1,0 +1,424 @@
+[
+ {
+  "category": "answerable",
+  "user": "analyst@acme.test",
+  "question": "whats the deadlne for submitting travl claims after a trip",
+  "expect_doc": "Travel and Expense Policy",
+  "must_contain_any": [
+   "30 days",
+   "thirty days",
+   "30"
+  ],
+  "outcome": "answered",
+  "answer": "Travel claims must be submitted within\u202f30\u202fdays of the travel\u202f[1]",
+  "latency_s": 3.57,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "user": "analyst@acme.test",
+  "question": "can i carry over holiday days i havent used",
+  "expect_doc": "Employee Leave Policy",
+  "must_contain_any": [
+   "ten",
+   "10"
+  ],
+  "outcome": "answered",
+  "answer": "Yes\u2014you may carry forward up to ten unused holiday days to the next year[1].",
+  "latency_s": 5.36,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "user": "analyst@acme.test",
+  "question": "do i need my managers ok before taking a full week off",
+  "expect_doc": "Employee Leave Policy",
+  "must_contain_any": [
+   "manager",
+   "approval"
+  ],
+  "outcome": "answered",
+  "answer": "Yes, you need your manager\u2019s approval for a full week off, as leave of more than five consecutive days requires manager approval[1].",
+  "latency_s": 5.61,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "user": "analyst@acme.test",
+  "question": "Is it ok to keep customer files in my personal Dropbox?",
+  "expect_doc": "Information Security Policy",
+  "must_contain_any": [
+   "personal cloud",
+   "may not",
+   "not allowed",
+   "cannot",
+   "not be copied",
+   "not okay",
+   "not ok"
+  ],
+  "outcome": "answered",
+  "answer": "No [1]. Customer data may not be copied to personal devices or personal cloud storage such as Dropbox[1].",
+  "latency_s": 5.53,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "user": "analyst@acme.test",
+  "question": "a client gave me a gift worth 8000 rupees, what should I do",
+  "expect_doc": "Code of Conduct and Whistleblower Policy",
+  "must_contain_any": [
+   "declin",
+   "report",
+   "compliance"
+  ],
+  "outcome": "answered",
+  "answer": "You must decline the gift or report it to compliance, since gifts from clients worth more than\u202f5,000\u202frupees must be declined or reported\u202f[1].",
+  "latency_s": 3.49,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "user": "analyst@acme.test",
+  "question": "how many days a year can I work from another country",
+  "expect_doc": "Remote and Hybrid Work Policy",
+  "must_contain_any": [
+   "thirty",
+   "30"
+  ],
+  "outcome": "answered",
+  "answer": "You may work from outside the country for up to thirty days per year[1].",
+  "latency_s": 13.84,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "user": "manager@acme.test",
+  "question": "how many written quotes do we need to buy something costing 8 lakh",
+  "expect_doc": "Vendor Selection and Procurement Policy",
+  "must_contain_any": [
+   "three",
+   "3"
+  ],
+  "outcome": "answered",
+  "answer": "At least three written quotations are required for a purchase of\u202f8\u202flakh rupees[1].",
+  "latency_s": 14.84,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "user": "manager@acme.test",
+  "question": "which months do performance reviews happen",
+  "expect_doc": "Performance Review and Promotion Process",
+  "must_contain_any": [
+   "april",
+   "october"
+  ],
+  "outcome": "answered",
+  "answer": "Performance reviews occur in April and October. [1]",
+  "latency_s": 12.18,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "user": "manager@acme.test",
+  "question": "who must approve a vendor contract worth 30 lakh rupees",
+  "expect_doc": "Vendor Selection and Procurement Policy",
+  "must_contain_any": [
+   "director"
+  ],
+  "outcome": "answered",
+  "answer": "The contract must be approved by a director[1].",
+  "latency_s": 15.57,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "user": "manager@acme.test",
+  "question": "how long do we have to escalate suspicious activity to the compliance manager",
+  "expect_doc": "KYC and AML Procedures",
+  "must_contain_any": [
+   "24 hours",
+   "24-hour",
+   "twenty-four",
+   "24"
+  ],
+  "outcome": "answered",
+  "answer": "Suspicious activity must be escalated to the compliance manager within\u202f24\u202fhours[1].",
+  "latency_s": 16.22,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "user": "director@acme.test",
+  "question": "what was overall attrition this year compared with the year before",
+  "expect_doc": "Employee Attrition and Turnover Report",
+  "must_contain_any": [
+   "14",
+   "17"
+  ],
+  "outcome": "answered",
+  "answer": "Overall attrition this year was 14\u202fpercent, down from 17\u202fpercent the year before[1].",
+  "latency_s": 14.05,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "answerable",
+  "user": "director_titan@acme.test",
+  "question": "what is the indicative valuation for Project Titan",
+  "expect_doc": "Project Titan Acquisition Valuation Memo",
+  "must_contain_any": [
+   "1.2 billion"
+  ],
+  "outcome": "answered",
+  "answer": "The indicative enterprise valuation for Project Titan is 1.2\u202fbillion. [1]",
+  "latency_s": 12.19,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": true,
+  "leaked": false
+ },
+ {
+  "category": "restricted",
+  "user": "analyst@acme.test",
+  "question": "which department has the highest staff turnover and how high is it",
+  "forbidden": [
+   "21 percent",
+   "21%"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 8.71,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "restricted",
+  "user": "manager@acme.test",
+  "question": "what are the top enterprise risks facing the company",
+  "forbidden": [
+   "key person dependency",
+   "digital lending",
+   "third party data breach"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 9.95,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "restricted",
+  "user": "director@acme.test",
+  "question": "what is the valuation of project titan",
+  "forbidden": [
+   "1.2 billion",
+   "plus or minus ten"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 6.56,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "restricted",
+  "user": "partner_outsider@acme.test",
+  "question": "How much is the target worth in the Titan deal?",
+  "forbidden": [
+   "1.2 billion",
+   "plus or minus ten"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 8.47,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "restricted",
+  "user": "director@acme.test",
+  "question": "what did the board decide about expanding into new markets",
+  "forbidden": [
+   "two new regional",
+   "eighteen months",
+   "payments company"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 8.46,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "restricted",
+  "user": "analyst@acme.test",
+  "question": "how is executive pay split between fixed and variable parts",
+  "forbidden": [
+   "linked to company revenue",
+   "compensation committee"
+  ],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 9.16,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "unsupported",
+  "user": "analyst@acme.test",
+  "question": "How much maternity leave does Acme give?",
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 9.78,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "unsupported",
+  "user": "analyst@acme.test",
+  "question": "what is the daily meal allowance in rupees",
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "I can only answer from company documents you are authorized to access, and I couldn't find a reliable answer to this question.",
+  "latency_s": 11.68,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "unsupported",
+  "user": "manager@acme.test",
+  "question": "what is the reporting threshold amount for flagging transactions",
+  "forbidden": [],
+  "outcome": "no_answer",
+  "answer": "The documents available to you don't contain enough information to answer this.",
+  "latency_s": 7.51,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "unsupported",
+  "user": "analyst@acme.test",
+  "question": "which VPN software must I install on my laptop",
+  "forbidden": [],
+  "outcome": "no_answer",
+  "answer": "The documents available to you don't contain enough information to answer this.",
+  "latency_s": 8.79,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "unsupported",
+  "user": "director@acme.test",
+  "question": "what is the CEO's annual salary",
+  "forbidden": [],
+  "outcome": "no_answer",
+  "answer": "The documents available to you don't contain enough information to answer this.",
+  "latency_s": 10.9,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "general",
+  "user": "analyst@acme.test",
+  "question": "What does GST stand for?",
+  "must_contain_any": [
+   "goods and services tax"
+  ],
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "That question isn't related to your company's documents, so I can't answer it here.",
+  "latency_s": 11.31,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "general",
+  "user": "analyst@acme.test",
+  "question": "What is the difference between a debit card and a credit card?",
+  "must_contain_any": [
+   "borrow",
+   "credit limit",
+   "line of credit",
+   "linked to"
+  ],
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "That question isn't related to your company's documents, so I can't answer it here.",
+  "latency_s": 11.12,
+  "passed": true,
+  "answered_ok": true,
+  "cited_ok": false,
+  "leaked": false
+ },
+ {
+  "category": "off_topic",
+  "user": "analyst@acme.test",
+  "question": "Can you suggest a good biryani recipe?",
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "That question isn't related to your company's documents, so I can't answer it here.",
+  "latency_s": 11.38,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ },
+ {
+  "category": "off_topic",
+  "user": "analyst@acme.test",
+  "question": "Who won the cricket match yesterday?",
+  "forbidden": [],
+  "outcome": "refused",
+  "answer": "That question isn't related to your company's documents, so I can't answer it here.",
+  "latency_s": 11.4,
+  "passed": true,
+  "refused": true,
+  "leaked": false
+ }
+]
