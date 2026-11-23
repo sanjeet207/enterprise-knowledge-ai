@@ -68,3 +68,13 @@ def test_a_timeout_is_not_retried(monkeypatch):
     with pytest.raises(llm.LLMUnavailable):
         asyncio.run(llm.chat("s", "u"))
     assert len(calls) == 1
+
+
+def test_a_rate_limit_is_retried_until_it_works(monkeypatch):
+    text, calls = run([FakeResponse(429), FakeResponse(429), FakeResponse(200, "ok")], monkeypatch)
+    assert text == "ok" and len(calls) == 3
+
+
+def test_a_rate_limit_that_never_clears_gives_up(monkeypatch):
+    with pytest.raises(llm.LLMUnavailable):
+        run([FakeResponse(429)], monkeypatch)

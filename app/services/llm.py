@@ -17,6 +17,9 @@ from app import config, tracing
 
 
 RETRY_PAUSE = 1.0
+RATE_LIMIT_ATTEMPTS = 4      # a 429 is retried up to three times, waiting as long as the provider asks
+RATE_LIMIT_MAX_WAIT = 30.0
+REASONING_HEADROOM = 1024   # hosted reasoning models spend max_tokens on hidden thinking before the answer
 HOSTED = ("anthropic", "groq", "openai")
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
@@ -48,11 +51,20 @@ def strip_fences(text: str) -> str:
     return match.group(1) if match else text
 
 
+def _retry_after(response) -> float:
+    """Seconds the provider asks us to wait after a 429 (Retry-After header), kept between RETRY_PAUSE and 30."""
+    try:
+        wait = float((getattr(response, "headers", None) or {}).get("retry-after", RETRY_PAUSE))
+    except (TypeError, ValueError):
+        wait = RETRY_PAUSE
+    return min(max(wait, RETRY_PAUSE), RATE_LIMIT_MAX_WAIT) if RETRY_PAUSE else 0
+
+
 async def _post(url: str, payload: dict, headers: dict | None, timeout: float):
     # The model server sometimes drops a request while it unloads or reloads a model (seen twice in 86 evaluation
     # questions). One quick retry on a refused connection or a 5xx answer hides that; a timeout is not retried,
     # because the model was working and a second wait would only double the delay.
-    for attempt in (1, 2):
+    for attempt in range(1, RATE_LIMIT_ATTEMPTS + 1):
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(url, json=payload, headers=headers) if headers else await client.post(url, json=payload)
@@ -63,7 +75,11 @@ async def _post(url: str, payload: dict, headers: dict | None, timeout: float):
             raise LLMUnavailable(f"Could not reach the model server: {exc.__class__.__name__}") from exc
         except httpx.HTTPError as exc:
             raise LLMUnavailable(f"Could not reach the model server: {exc.__class__.__name__}") from exc
-        if (response.status_code >= 500 or response.status_code == 429) and attempt == 1:
+        if response.status_code == 429 and attempt < RATE_LIMIT_ATTEMPTS:
+            # A hosted model's per-minute limit: wait as long as the provider says, then try again.
+            await asyncio.sleep(_retry_after(response))
+            continue
+        if response.status_code >= 500 and attempt == 1:
             await asyncio.sleep(RETRY_PAUSE)
             continue
         break
@@ -103,6 +119,10 @@ async def chat(system: str, user: str, *, model: str | None = None, num_ctx: int
                                     {"role": "user", "content": user}]}
             if num_predict:
                 payload["max_tokens"] = num_predict
+            if provider == "groq" and name.startswith("openai/gpt-oss"):
+                payload["reasoning_effort"] = "low"
+                if num_predict:
+                    payload["max_tokens"] = num_predict + REASONING_HEADROOM
             if schema:
                 payload["response_format"] = {"type": "json_object"}
             url = GROQ_URL if provider == "groq" else f"{config.LLM_BASE_URL.rstrip('/')}/chat/completions"
