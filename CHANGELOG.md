@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Production start guard: with `APP_ENV=production` the server refuses to start while accounts on demo domains (`acme.test`, `northwind.test`, `example.test`) exist, unless `ALLOW_DEMO_DATA=1`.
+- Northwind hard corpus and benchmark (67 questions). Passages show their document title only when retrieved passages are versions of one document (`SOURCE_TITLES`, on by default). Results and what was learned: evaluation/HARDCORP_FINDINGS.md.
+
 - Saved conversations now respect access taken away later (security matrix finding M5). When a conversation is loaded or
   exported, an answer built on a document the person can no longer open is replaced by a notice and its sources are
   emptied. New answers store the document id with each source; older ones are matched by title and hidden if unsure.

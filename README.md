@@ -6,6 +6,8 @@ A secure internal "company brain". Employees ask questions in plain language and
 
 > **About the data.** Everything in this repository is fictional. The demo company, "Acme Financial Services", and its fourteen policy documents were written for this project, as were the demo users and their shared password (`DemoPass2026x`, for local use only). A second tenant, "Globex" (two documents), exists to test tenant isolation.
 
+> **Status.** Production-oriented, **not deployed**. It runs locally (Docker included) and is tested there. Single sign-on is implemented and unit-tested but **not yet validated against a live Entra tenant**. Results below were measured on a local 7B model; a hosted model has **not been measured**. No independent human has evaluated or security-reviewed it. A production deployment (`APP_ENV=production`) refuses to start while demo accounts exist, unless `ALLOW_DEMO_DATA=1` is set on purpose.
+
 ---
 
 ## What makes it different from a basic RAG demo
@@ -227,6 +229,18 @@ After the fixes the 86-question suite was run again on the final code: 100% in e
 
 A set of 45 harder questions (`evaluation/hard_set.json`: paraphrases, typos, figures to compare with a threshold, restricted and unanswerable questions) was written by the same AI assistant, so it is also not independent. The 25 answerable questions scored 80% to 88% across earlier runs; the latest run, with the refiner always on, scored 22/25 (88%), with 0 access leaks and 100% on refusing restricted, off-topic and injection questions and on the no-invented-facts guard. The misses are mostly right answers that the checks reject (for example, "Can I work on customer records from my personal Google Drive" is rejected because the checks do not treat Google Drive as personal cloud storage), plus one question that flips between answered and no-answer from run to run. They are reported as they are, not tuned away. Reports: `evaluation/HARD_*_REPORT.md`, `evaluation/FIX*_REPORT.md`.
 
+### A fourth set: Northwind (a harder, messier company)
+
+"Northwind Capital" (`python -m scripts.hardcorp_seed`; 31 documents, 183 passages) has what the small demo lacks: the same policy in 2023 and 2025 versions, per-country rules, an FAQ that contradicts the policy, abbreviations and restricted material. `evaluation/hardcorp_set.json` holds 67 questions (46 answerable, 8 of them multi-part). It is a **development set**: I tuned the pipeline against it, so its numbers are not a clean measure. The 86- and 27-question sets are the regression check.
+
+| Configuration | Northwind answers | Multi-part | 27-question set | 86-question set | Access leaks |
+|---|---|---|---|---|---|
+| v1: no document titles shown to the model | 70% (72% after a scorer fix) | 50% | 11/12 | 37/37 | 0 |
+| v2: document title on every passage | 83% | 88% | 10/12 | 37/37 | 0 |
+| v3 (current): title only when passages are versions of one document | 78% (36/46) | 75% (6/8) | 11/12 | 37/37, 24/24 refusals | 0 |
+
+Showing titles everywhere fixed "which version" questions but changed answer wording and cost one question on the 27 set, so titles are now shown only for version pairs (`SOURCE_TITLES=0` turns the line off). Whether 83% against 78% is more than run-to-run noise has not been measured. The remaining misses are the relevance gate refusing answerable questions, answers rejected by the claim validator even when correct (hand-written correct answers were still rejected for figures in older and newer versions), and short keyword questions. Details: `evaluation/HARDCORP_FINDINGS.md`.
+
 ### Scale test
 
 `python -m scripts.scale_test` builds a synthetic corpus in its own tenant (100, 1,000 and 10,000 documents, about 30,000 chunks at the top size), hides 30 unique "needle" facts and 15 restricted ones among look-alike noise (30% of it restricted), and asks the same secure hybrid search the application uses. On a MacBook Pro (M3) with local Postgres and pgvector: search took 19 ms (median) at 100 documents, 24 ms at 1,000 and 61 ms at 10,000 (95th percentile 70 ms), the right document was in the top 5 for 100% of questions at every size, 5 results came back every time, and no restricted document ever reached a level-1 user (0 leaks). Eight simultaneous searches ran at about 83 per second with no errors at 10,000 documents. Report: `evaluation/SCALE_REPORT.md`.
@@ -239,6 +253,7 @@ What this does not show: the needles contain made-up words, so keyword search fi
 
 - The 86 questions were written by the author against the same demo documents, so 100% means "no regressions on this suite", not "perfect in general". A second set of 27 questions (evaluation/independent_questions.csv) was written by the AI assistant that helped build the project, from the documents alone and before seeing any results, so it is not tuned to the system but it is not written by an outside person either. A set written by a human outside the project (brief in evaluation/QUESTION_BRIEF.md) is still wanted. Results are published as they come, whatever they are.
 - The demo corpus is small and fictional (22 chunks). The scale test above covers retrieval on a synthetic corpus of up to 10,000 documents; no claim is made about larger corpora, a corpus where one tenant is a small part of a large table, or model latency at scale.
+- **Hosted-model accuracy is unmeasured.** Every number here is from `qwen2.5:7b` on a laptop.
 - **Local or hosted model is one setting.** `LLM_PROVIDER=ollama` (default) runs everything on a local Ollama model and nothing leaves the machine. For a deployment where a local model cannot run (Azure App Service or Container Apps), set `LLM_PROVIDER=anthropic` with `ANTHROPIC_API_KEY`, or `groq` with `GROQ_API_KEY`, or `openai` with `LLM_API_KEY` and `LLM_BASE_URL` (any OpenAI-compatible endpoint), and set `LLM_MODEL` (and optionally `ANSWERER_QUICK_MODEL` and the `<AGENT>_MODEL` settings) to that provider's model names. Only `app/services/llm.py` knows about providers, so prompts, checks and access control are identical. **With a hosted provider, questions and the passages sent to the model leave your environment and go to that provider**, so check its data terms before using real company documents; the evaluation numbers in this file were measured on the local model only, and a hosted model needs its own run (`python -m scripts.evaluate`) before any claim is made about it. Embeddings and reranking stay local either way.
 
 Azure deployment steps (written, not yet run against a subscription): [docs/DEPLOY_AZURE.md](docs/DEPLOY_AZURE.md).
@@ -366,7 +381,7 @@ evaluation/      reports from the evaluation runs, FAILURE_ANALYSIS.md, the ques
 
 **Planned**
 - Broader adversarial security tests, including an outside review
-- Azure deployment with a spending cap, which also gives SSO its first test against a live Entra tenant
+- Azure deployment on a free trial (spending limit on, no upgrade), which also gives SSO its first test against a live Entra tenant; hosted-model evaluation recorded separately
 - Group-to-level mapping and SCIM, OCR for scanned PDFs
 
 ## Tech
