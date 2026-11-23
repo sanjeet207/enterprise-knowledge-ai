@@ -1,0 +1,68 @@
+{
+  "Northwind hard corpus | vector only": {
+    "recall@1": 0.6739130434782609,
+    "recall@3": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "mrr": 0.8369565217391305,
+    "ndcg@10": 0.8796510065993884,
+    "not_found": 0,
+    "p50_ms": 30.500166467390954,
+    "p95_ms": 320.46208303654566
+  },
+  "Northwind hard corpus | keyword only": {
+    "recall@1": 0.2391304347826087,
+    "recall@3": 0.2391304347826087,
+    "recall@5": 0.2391304347826087,
+    "recall@10": 0.2391304347826087,
+    "mrr": 0.2391304347826087,
+    "ndcg@10": 0.2391304347826087,
+    "not_found": 35,
+    "p50_ms": 21.9357919995673,
+    "p95_ms": 25.79124999465421
+  },
+  "Northwind hard corpus | hybrid (RRF)": {
+    "recall@1": 0.717391304347826,
+    "recall@3": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "mrr": 0.8586956521739131,
+    "ndcg@10": 0.8956975390528032,
+    "not_found": 0,
+    "p50_ms": 19.746853969991207,
+    "p95_ms": 23.407958971802145
+  },
+  "Northwind hard corpus | hybrid + rerank (reranker order only)": {
+    "recall@1": 0.8913043478260869,
+    "recall@3": 0.9782608695652174,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "mrr": 0.9402173913043478,
+    "ndcg@10": 0.9555303385295484,
+    "not_found": 0,
+    "p50_ms": 225.02266650553793,
+    "p95_ms": 271.53104200260714
+  },
+  "Northwind hard corpus | hybrid + rerank (guarded)": {
+    "recall@1": 0.8913043478260869,
+    "recall@3": 0.9782608695652174,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "mrr": 0.9402173913043478,
+    "ndcg@10": 0.9555303385295484,
+    "not_found": 0,
+    "p50_ms": 236.6516244946979,
+    "p95_ms": 337.0989160030149
+  },
+  "Northwind hard corpus | hybrid + rerank, fused with search order (default)": {
+    "recall@1": 0.8913043478260869,
+    "recall@3": 1.0,
+    "recall@5": 1.0,
+    "recall@10": 1.0,
+    "mrr": 0.9420289855072465,
+    "ndcg@10": 0.9570373698757789,
+    "not_found": 0,
+    "p50_ms": 233.6804789956659,
+    "p95_ms": 285.7014579931274
+  }
+}

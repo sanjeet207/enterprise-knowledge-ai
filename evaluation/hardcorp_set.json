@@ -1,0 +1,862 @@
+[
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "by when do i need to put in my expense claim after coming back from a trip",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "30 days"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "what is the most I can spend on a hotel per night in Mumbai",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "8,000"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "can I fly business class to Frankfurt",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "9 hours",
+   "director"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "do I need a receipt for a small taxi fare",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "500"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "how much can I spend on a client dinner per head",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "4,000"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "How do I get my home internet paid for when I work from home",
+  "expect_doc": "Remote and Hybrid Work Policy",
+  "expect_docs": [
+   "Remote and Hybrid Work Policy"
+  ],
+  "must_contain_any": [
+   "1,200"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "how long can I work from another country in a year",
+  "expect_doc": "Remote and Hybrid Work Policy",
+  "expect_docs": [
+   "Remote and Hybrid Work Policy"
+  ],
+  "must_contain_any": [
+   "45 days"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "what are the hours when I must be online if I work remotely",
+  "expect_doc": "Remote and Hybrid Work Policy",
+  "expect_docs": [
+   "Remote and Hybrid Work Policy"
+  ],
+  "must_contain_any": [
+   "11:00"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "how long does a password have to be",
+  "expect_doc": "Password and Access Standard",
+  "expect_docs": [
+   "Password and Access Standard"
+  ],
+  "must_contain_any": [
+   "14 characters"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "when do I have to change my password",
+  "expect_doc": "Password and Access Standard",
+  "expect_docs": [
+   "Password and Access Standard"
+  ],
+  "must_contain_any": [
+   "not changed on a schedule",
+   "compromise"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "my laptop got stolen, how fast do I tell IT",
+  "expect_doc": "Mobile Device Policy",
+  "expect_docs": [
+   "Mobile Device Policy"
+  ],
+  "must_contain_any": [
+   "2 hours"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "can i paste client data into chatgpt",
+  "expect_doc": "Acceptable Use Policy",
+  "expect_docs": [
+   "Acceptable Use Policy"
+  ],
+  "must_contain_any": [
+   "never be entered",
+   "public ai tool"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "which encryption is required for stored data",
+  "expect_doc": "Encryption Standard",
+  "expect_docs": [
+   "Encryption Standard"
+  ],
+  "must_contain_any": [
+   "AES-256"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "how long do we keep client files after they leave",
+  "expect_doc": "Data Retention Schedule",
+  "expect_docs": [
+   "Data Retention Schedule"
+  ],
+  "must_contain_any": [
+   "8 years"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "what is the value of a gift I must report to compliance",
+  "expect_doc": "Code of Conduct",
+  "expect_docs": [
+   "Code of Conduct"
+  ],
+  "must_contain_any": [
+   "7,500"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "how quickly will the ethics team respond when I report something",
+  "expect_doc": "Whistleblower Procedure",
+  "expect_docs": [
+   "Whistleblower Procedure"
+  ],
+  "must_contain_any": [
+   "3 working days"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "analyst@northwind.test",
+  "question": "How long is the probation period and how much notice do I give during it",
+  "expect_doc": "Onboarding and Probation Policy",
+  "expect_docs": [
+   "Onboarding and Probation Policy"
+  ],
+  "must_contain_any": [
+   "6 months",
+   "15 days"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "manager@northwind.test",
+  "question": "who has to approve a purchase of 40 lakh rupees",
+  "expect_doc": "Procurement Policy",
+  "expect_docs": [
+   "Procurement Policy"
+  ],
+  "must_contain_any": [
+   "director approval"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "manager@northwind.test",
+  "question": "how many days do we have to finish the security check on a new supplier",
+  "expect_doc": "Vendor Onboarding and Due Diligence Procedure",
+  "expect_docs": [
+   "Vendor Onboarding and Due Diligence Procedure"
+  ],
+  "must_contain_any": [
+   "20 working days"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "manager@northwind.test",
+  "question": "how fast must a suspicious customer transaction be escalated",
+  "expect_doc": "KYC and AML Procedure",
+  "expect_docs": [
+   "KYC and AML Procedure"
+  ],
+  "must_contain_any": [
+   "24 hours"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "manager@northwind.test",
+  "question": "within how long must a system outage affecting Tier 1 be fixed",
+  "expect_doc": "Business Continuity Plan",
+  "expect_docs": [
+   "Business Continuity Plan"
+  ],
+  "must_contain_any": [
+   "4 hours"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "manager@northwind.test",
+  "question": "how many days does a performance improvement plan last",
+  "expect_doc": "Performance Management Process",
+  "expect_docs": [
+   "Performance Management Process"
+  ],
+  "must_contain_any": [
+   "90 days"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "director@northwind.test",
+  "question": "what percent of profit goes into the bonus pool",
+  "expect_doc": "Compensation Bands and Bonus Framework",
+  "expect_docs": [
+   "Compensation Bands and Bonus Framework"
+  ],
+  "must_contain_any": [
+   "15 percent"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "lookup",
+  "user": "director@northwind.test",
+  "question": "which function has the lowest attrition",
+  "expect_doc": "Attrition and Engagement Report 2025",
+  "expect_docs": [
+   "Attrition and Engagement Report 2025"
+  ],
+  "must_contain_any": [
+   "compliance at 5.1"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "region",
+  "user": "analyst@northwind.test",
+  "question": "how many days of annual leave do staff in Singapore get",
+  "expect_doc": "Leave Policy Singapore",
+  "expect_docs": [
+   "Leave Policy Singapore"
+  ],
+  "must_contain_any": [
+   "18 days"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "region",
+  "user": "analyst@northwind.test",
+  "question": "how much maternity leave in the UK",
+  "expect_doc": "Leave Policy United Kingdom",
+  "expect_docs": [
+   "Leave Policy United Kingdom"
+  ],
+  "must_contain_any": [
+   "39 weeks"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "region",
+  "user": "analyst@northwind.test",
+  "question": "how many unused leave days can I carry over in India",
+  "expect_doc": "Leave Policy India",
+  "expect_docs": [
+   "Leave Policy India"
+  ],
+  "must_contain_any": [
+   "10 unused days",
+   "up to 10"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "region",
+  "user": "analyst@northwind.test",
+  "question": "what is the paternity leave in Singapore",
+  "expect_doc": "Leave Policy Singapore",
+  "expect_docs": [
+   "Leave Policy Singapore"
+  ],
+  "must_contain_any": [
+   "2 weeks"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "region",
+  "user": "analyst@northwind.test",
+  "question": "sick leave rules for self certification in the UK",
+  "expect_doc": "Leave Policy United Kingdom",
+  "expect_docs": [
+   "Leave Policy United Kingdom"
+  ],
+  "must_contain_any": [
+   "7 calendar days"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "region",
+  "user": "analyst@northwind.test",
+  "question": "how much bereavement leave do employees in India get",
+  "expect_doc": "Leave Policy India",
+  "expect_docs": [
+   "Leave Policy India"
+  ],
+  "must_contain_any": [
+   "5 days"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "current-version",
+  "user": "analyst@northwind.test",
+  "question": "what is the current deadline to submit travel claims",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "30 days"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "current-version",
+  "user": "analyst@northwind.test",
+  "question": "what is the flight class rule for a 7 hour flight now",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "premium economy"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "current-version",
+  "user": "analyst@northwind.test",
+  "question": "at what trip cost does a director need to approve before booking",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "150,000"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "current-version",
+  "user": "analyst@northwind.test",
+  "question": "what is the daily meal allowance under the latest travel policy",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "1,500"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "old-version",
+  "user": "analyst@northwind.test",
+  "question": "what was the travel claim deadline in the 2023 policy",
+  "expect_doc": "Travel and Expense Policy 2023",
+  "expect_docs": [
+   "Travel and Expense Policy 2023"
+  ],
+  "must_contain_any": [
+   "45 days"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "old-version",
+  "user": "analyst@northwind.test",
+  "question": "under the old travel policy, what hotel limit applied in metro cities",
+  "expect_doc": "Travel and Expense Policy 2023",
+  "expect_docs": [
+   "Travel and Expense Policy 2023"
+  ],
+  "must_contain_any": [
+   "9,000"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "manager@northwind.test",
+  "question": "form PR-7",
+  "expect_doc": "Procurement Policy",
+  "expect_docs": [
+   "Procurement Policy"
+  ],
+  "must_contain_any": [
+   "PR-7"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "analyst@northwind.test",
+  "question": "1800-555-0142",
+  "expect_doc": "Whistleblower Procedure",
+  "expect_docs": [
+   "Whistleblower Procedure"
+  ],
+  "must_contain_any": [
+   "1800-555-0142"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "analyst@northwind.test",
+  "question": "VaultPlus",
+  "expect_doc": "Password and Access Standard",
+  "expect_docs": [
+   "Password and Access Standard"
+  ],
+  "must_contain_any": [
+   "VaultPlus"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "manager@northwind.test",
+  "question": "IR-HIGH-3",
+  "expect_doc": "Incident Response Runbook",
+  "expect_docs": [
+   "Incident Response Runbook"
+  ],
+  "must_contain_any": [
+   "IR-HIGH-3"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "analyst@northwind.test",
+  "question": "legal hold LH-2",
+  "expect_doc": "Data Retention Schedule",
+  "expect_docs": [
+   "Data Retention Schedule"
+  ],
+  "must_contain_any": [
+   "LH-2"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "manager@northwind.test",
+  "question": "KYC-EDD-2",
+  "expect_doc": "KYC and AML Procedure",
+  "expect_docs": [
+   "KYC and AML Procedure"
+  ],
+  "must_contain_any": [
+   "KYC-EDD-2"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "manager@northwind.test",
+  "question": "MLRO",
+  "expect_doc": "KYC and AML Procedure",
+  "expect_docs": [
+   "KYC and AML Procedure"
+  ],
+  "must_contain_any": [
+   "MLRO"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "manager@northwind.test",
+  "question": "alternate site Pune",
+  "expect_doc": "Business Continuity Plan",
+  "expect_docs": [
+   "Business Continuity Plan"
+  ],
+  "must_contain_any": [
+   "Pune"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "analyst@northwind.test",
+  "question": "NorthTrip",
+  "expect_doc": "Travel and Expense Policy 2025",
+  "expect_docs": [
+   "Travel and Expense Policy 2025"
+  ],
+  "must_contain_any": [
+   "NorthTrip"
+  ]
+ },
+ {
+  "category": "answerable",
+  "kind": "exact-term",
+  "user": "analyst@northwind.test",
+  "question": "NW-SEC-ENC-01",
+  "expect_doc": "Encryption Standard",
+  "expect_docs": [
+   "Encryption Standard"
+  ],
+  "must_contain_any": [
+   "NW-SEC-ENC-01"
+  ]
+ },
+ {
+  "category": "multi_part",
+  "kind": "multi-document",
+  "user": "manager@northwind.test",
+  "question": "Who must approve a vendor contract worth 2 crore rupees and how long does the security assessment of the vendor take?",
+  "expect_docs": [
+   "Procurement Policy",
+   "Vendor Onboarding and Due Diligence Procedure"
+  ],
+  "must_contain_groups": [
+   [
+    "chief financial officer",
+    "cfo"
+   ],
+   [
+    "20 working days"
+   ]
+  ]
+ },
+ {
+  "category": "multi_part",
+  "kind": "multi-document",
+  "user": "analyst@northwind.test",
+  "question": "How many days of leave do UK employees get and how long can I work abroad in a year?",
+  "expect_docs": [
+   "Leave Policy United Kingdom",
+   "Remote and Hybrid Work Policy"
+  ],
+  "must_contain_groups": [
+   [
+    "25 days"
+   ],
+   [
+    "45 days"
+   ]
+  ]
+ },
+ {
+  "category": "multi_part",
+  "kind": "multi-document",
+  "user": "manager@northwind.test",
+  "question": "How quickly must a confirmed sanctions match be reported and how quickly must a suspicious transaction be escalated?",
+  "expect_docs": [
+   "Sanctions Screening Standard",
+   "KYC and AML Procedure"
+  ],
+  "must_contain_groups": [
+   [
+    "1 hour"
+   ],
+   [
+    "24 hours"
+   ]
+  ]
+ },
+ {
+  "category": "multi_part",
+  "kind": "two-part",
+  "user": "analyst@northwind.test",
+  "question": "What encryption is required for laptops and how long are encryption keys used before rotation?",
+  "expect_docs": [
+   "Encryption Standard"
+  ],
+  "must_contain_groups": [
+   [
+    "full-disk"
+   ],
+   [
+    "365 days"
+   ]
+  ]
+ },
+ {
+  "category": "multi_part",
+  "kind": "multi-document",
+  "user": "manager@northwind.test",
+  "question": "How long do I have to tell the regulator about a confirmed incident and what is the recovery time for Tier 1 systems?",
+  "expect_docs": [
+   "Incident Response Runbook",
+   "Business Continuity Plan"
+  ],
+  "must_contain_groups": [
+   [
+    "6 hours"
+   ],
+   [
+    "4 hours"
+   ]
+  ]
+ },
+ {
+  "category": "multi_part",
+  "kind": "ambiguous",
+  "user": "analyst@northwind.test",
+  "question": "how many days of annual leave do I get",
+  "expect_docs": [
+   "Leave Policy India",
+   "Leave Policy United Kingdom",
+   "Leave Policy Singapore"
+  ],
+  "must_contain_groups": [
+   [
+    "24 days"
+   ],
+   [
+    "25 days"
+   ],
+   [
+    "18 days"
+   ]
+  ]
+ },
+ {
+  "category": "multi_part",
+  "kind": "ambiguous",
+  "user": "analyst@northwind.test",
+  "question": "what is the carry forward limit for leave",
+  "expect_docs": [
+   "Leave Policy India",
+   "Leave Policy United Kingdom",
+   "Leave Policy Singapore"
+  ],
+  "must_contain_groups": [
+   [
+    "10 unused days"
+   ],
+   [
+    "5 unused days"
+   ],
+   [
+    "7 unused days"
+   ]
+  ]
+ },
+ {
+  "category": "multi_part",
+  "kind": "conflict",
+  "user": "manager@northwind.test",
+  "question": "how soon must I declare a conflict of interest",
+  "expect_docs": [
+   "Code of Conduct",
+   "Conflicts of Interest Procedure"
+  ],
+  "must_contain_groups": [
+   [
+    "7 calendar days"
+   ],
+   [
+    "5 working days"
+   ]
+  ]
+ },
+ {
+  "category": "restricted",
+  "kind": "restricted",
+  "user": "analyst@northwind.test",
+  "question": "how big is the bonus pool for the company",
+  "forbidden": [
+   "15 percent",
+   "40 crore"
+  ]
+ },
+ {
+  "category": "restricted",
+  "kind": "restricted",
+  "user": "analyst@northwind.test",
+  "question": "which department has the highest attrition and what is the rate",
+  "forbidden": [
+   "19.8"
+  ]
+ },
+ {
+  "category": "restricted",
+  "kind": "restricted",
+  "user": "analyst@northwind.test",
+  "question": "what are the top operational risks and who owns the cloud risk",
+  "forbidden": [
+   "concentration",
+   "chief technology officer"
+  ]
+ },
+ {
+  "category": "restricted",
+  "kind": "restricted",
+  "user": "analyst@northwind.test",
+  "question": "what is the target bonus at grade G5",
+  "forbidden": [
+   "30 percent"
+  ]
+ },
+ {
+  "category": "restricted",
+  "kind": "restricted",
+  "user": "analyst@northwind.test",
+  "question": "how often does the board risk committee meet and what is the quorum",
+  "forbidden": [
+   "quorum is 3"
+  ]
+ },
+ {
+  "category": "restricted",
+  "kind": "restricted",
+  "user": "manager@northwind.test",
+  "question": "what is the deferred share of bonus for grade G5",
+  "forbidden": [
+   "40 percent"
+  ]
+ },
+ {
+  "category": "unsupported",
+  "kind": "not-in-documents",
+  "user": "analyst@northwind.test",
+  "question": "what is the dress code for client meetings",
+  "forbidden": []
+ },
+ {
+  "category": "unsupported",
+  "kind": "not-in-documents",
+  "user": "analyst@northwind.test",
+  "question": "how many stock options do new joiners get and when do they vest",
+  "forbidden": []
+ },
+ {
+  "category": "unsupported",
+  "kind": "not-in-documents",
+  "user": "analyst@northwind.test",
+  "question": "is there a parking allowance at the Pune office",
+  "forbidden": []
+ },
+ {
+  "category": "unsupported",
+  "kind": "not-in-documents",
+  "user": "analyst@northwind.test",
+  "question": "what is the relocation allowance when moving cities",
+  "forbidden": []
+ },
+ {
+  "category": "unsupported",
+  "kind": "not-in-documents",
+  "user": "analyst@northwind.test",
+  "question": "what is the policy on sabbaticals",
+  "forbidden": []
+ },
+ {
+  "category": "unsupported",
+  "kind": "not-in-documents",
+  "user": "analyst@northwind.test",
+  "question": "how much is the learning and development budget per employee",
+  "forbidden": []
+ },
+ {
+  "category": "off_topic",
+  "kind": "off-topic",
+  "user": "analyst@northwind.test",
+  "question": "who won the cricket match yesterday",
+  "forbidden": []
+ }
+]

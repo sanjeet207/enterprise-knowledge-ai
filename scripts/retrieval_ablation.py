@@ -1,6 +1,8 @@
 """Which part of the search actually helps? Same questions, same access rules, one change at a time.
 
 Usage: python -m scripts.retrieval_ablation       (database needed; no answer model, no server; about two minutes)
+       python -m scripts.retrieval_ablation --hard  the same variants on the Northwind corpus (load it first: python -m scripts.hardcorp_seed);
+                                                    adds a table by question kind and writes evaluation/RETRIEVAL_ABLATION_HARD.md
 
 Variants (all use the production access filter; they differ only in how passages are ranked):
   vector only        meaning search alone
@@ -22,6 +24,9 @@ from pathlib import Path
 
 KS = (1, 3, 5, 10)
 SETS = [("86-question set", "tests/eval_set.json"), ("27-question set", "evaluation/independent_set.json")]
+HARD_SETS = [("Northwind hard corpus", "evaluation/hardcorp_set.json")]
+REPORT, DATA = "evaluation/RETRIEVAL_ABLATION.md", "evaluation/retrieval_ablation.json"
+HARD_REPORT, HARD_DATA = "evaluation/RETRIEVAL_ABLATION_HARD.md", "evaluation/retrieval_ablation_hard.json"
 
 
 def rank_of(title, hits):
@@ -63,6 +68,10 @@ def compare(base, other):
 
 
 def main():
+    import sys
+    hard = "--hard" in sys.argv
+    sets = HARD_SETS if hard else SETS
+    report, data = (HARD_REPORT, HARD_DATA) if hard else (REPORT, DATA)
     from app import config
     from app.services import reranker, users
     from app.services.vector_store import VectorStoreService
@@ -79,7 +88,7 @@ def main():
 
     stores = {"vector": VectorOnly(), "keyword": KeywordOnly(), "hybrid": VectorStoreService()}
     cases, owners = [], {}
-    for label, path in SETS:
+    for label, path in sets:
         for c in json.loads(Path(path).read_text()):
             if c["category"] == "answerable":
                 cases.append((label, c))
@@ -114,6 +123,7 @@ def main():
         run(warm_user, warm_q)
 
     ranks = {name: {} for name in variants}
+    kinds = {}
     millis = {name: {} for name in variants}
     for label, c in cases:
         user = owners[c["user"]]
@@ -122,14 +132,15 @@ def main():
             hits = run(user, c["question"])
             millis[name].setdefault(label, []).append((time.perf_counter() - start) * 1000)
             ranks[name].setdefault(label, []).append(rank_of(c["expect_doc"], hits))
+        kinds.setdefault(label, []).append(c.get("kind", ""))
 
-    groups = [(label, label) for label, _ in SETS] + [("both sets together", None)]
+    groups = [(label, label) for label, _ in sets] + ([("both sets together", None)] if len(sets) > 1 else [])
     lines = ["# Retrieval ablation", "",
              f"Embedding: {config.EMBEDDING_PROVIDER} / {config.EMBEDDING_MODEL}. One right document per question; recall@k means "
              "the right document is within the first k passages. Latency is the whole retrieval step (query embedding, SQL, rerank).", ""]
     results = {}
     for title, label in groups:
-        keys = [label] if label else [lab for lab, _ in SETS]
+        keys = [label] if label else [lab for lab, _ in sets]
         n = sum(len(ranks["vector only"][k]) for k in keys)
         lines += [f"## {title} ({n} answerable questions)", "",
                   "| Variant | Recall@1 | Recall@3 | Recall@5 | Recall@10 | MRR | NDCG@10 | p50 ms | p95 ms | Not found |",
@@ -149,16 +160,27 @@ def main():
             b, w, same = compare(base_ranks, [r for k in keys for r in ranks[name][k]])
             lines.append(f"- {name}: {b} better, {w} worse, {same} same")
         lines.append("")
+        if hard:
+            kind_list = [k for key in keys for k in kinds[key]]
+            lines += ["By kind of question (recall@1 / recall@5; each cell is the number of questions of that kind):", "",
+                      "| Kind | n | " + " | ".join(variants) + " |", "|---|---|" + "---|" * len(variants)]
+            for kind in sorted(set(kind_list)):
+                cells = []
+                for name in variants:
+                    rs = [r for key in keys for r, k in zip(ranks[name][key], kinds[key]) if k == kind]
+                    cells.append(f"{sum(1 for r in rs if r == 1)}/{sum(1 for r in rs if r and r <= 5)}")
+                lines.append(f"| {kind} | {kind_list.count(kind)} | " + " | ".join(cells) + " |")
+            lines.append("")
     lines += ["## How to read this", "",
               "- With about fifty questions, a difference of one or two questions is noise. Look for gaps that hold in both sets and "
               "across several columns.",
               "- Parent-child retrieval (search small chunks, hand the model the whole section) is not a ranking choice and is not "
               "compared here. Query rewriting needs a model and is measured separately (see `evaluation/refiner_experiment`).",
               "- Depth: the recall@1, 3, 5 and 10 columns are the top-K sweep. The application keeps 5 passages after reranking.", ""]
-    Path("evaluation/RETRIEVAL_ABLATION.md").write_text("\n".join(lines))
-    Path("evaluation/retrieval_ablation.json").write_text(json.dumps(results, indent=2))
+    Path(report).write_text("\n".join(lines))
+    Path(data).write_text(json.dumps(results, indent=2))
     print("\n".join(lines))
-    print("Report: evaluation/RETRIEVAL_ABLATION.md")
+    print("Report: " + report)
 
 
 if __name__ == "__main__":
