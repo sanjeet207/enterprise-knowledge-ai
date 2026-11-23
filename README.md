@@ -225,7 +225,7 @@ After the fixes the 86-question suite was run again on the final code: 100% in e
 
 ### A third, harder set
 
-A set of 45 harder questions (`evaluation/hard_set.json`: paraphrases, typos, figures to compare with a threshold, restricted and unanswerable questions) was written by the same AI assistant, so it is also not independent. On the current defaults the 25 answerable questions score 80% to 88% across runs (21/25 on the default, 22/25 with the refiner on), with 0 access leaks and 100% on refusing restricted, off-topic and injection questions and on the no-invented-facts guard. The misses are mostly right answers that the checks reject (for example, "Can I work on customer records from my personal Google Drive" is rejected because the checks do not treat Google Drive as personal cloud storage), plus one question that flips between answered and no-answer from run to run. They are reported as they are, not tuned away. Reports: `evaluation/HARD_*_REPORT.md`, `evaluation/FIX*_REPORT.md`.
+A set of 45 harder questions (`evaluation/hard_set.json`: paraphrases, typos, figures to compare with a threshold, restricted and unanswerable questions) was written by the same AI assistant, so it is also not independent. The 25 answerable questions scored 80% to 88% across earlier runs; the latest run, with the refiner always on, scored 22/25 (88%), with 0 access leaks and 100% on refusing restricted, off-topic and injection questions and on the no-invented-facts guard. The misses are mostly right answers that the checks reject (for example, "Can I work on customer records from my personal Google Drive" is rejected because the checks do not treat Google Drive as personal cloud storage), plus one question that flips between answered and no-answer from run to run. They are reported as they are, not tuned away. Reports: `evaluation/HARD_*_REPORT.md`, `evaluation/FIX*_REPORT.md`.
 
 ### Scale test
 
@@ -300,7 +300,7 @@ Try the same question as different users: for example *"What is the indicative v
 ### Tests and checks
 
 ```bash
-python -m pytest -q tests             # 344 unit tests, no database or model needed
+python -m pytest -q tests             # 350 unit tests, no database or model needed
 python -m scripts.verify_access       # 160 access-control checks (needs the database)
 python -m scripts.check_validator     # planted-error check for the validator (needs Ollama)
 python -m scripts.smoke_test          # end-to-end check of every path against the running server (needs Ollama)
@@ -339,8 +339,8 @@ app/
 scripts/         quickstart, init_db, seed_demo, verify_access, smoke_test, check_validator, check_inspector,
                  security_probe, evaluate, evaluate_research, import_questions, worker, migrations, purge_retention
 tests/           unit tests, the 86-question evaluation set and the research task set
-docs/            SECURITY_REVIEW, SSO, TRACING
-evaluation/      reports from the evaluation runs, the question brief for an independent question writer
+docs/            THREAT_MODEL, SECURITY_REVIEW, TECHNICAL_AUDIT, SSO, TRACING, DEPLOY_AZURE, INTERVIEW_NOTES, LEARN_THE_PROJECT
+evaluation/      reports from the evaluation runs, FAILURE_ANALYSIS.md, the question brief for an independent question writer
 ```
 
 ## Roadmap

@@ -25,8 +25,9 @@ jobs:
           cache-dependency-path: requirements.txt
       # The unit tests import these packages, so torch and the models are not needed here.
       # numpy is used by the embedder and flashrank by the reranker (the tests only load their code, not the models).
+      # fastapi, pydantic, bcrypt, PyJWT, pgvector and python-multipart are needed because some tests import app.main.
       - name: Install test dependencies
-        run: pip install pytest httpx==0.28.1 "psycopg[binary]==3.3.6" python-dotenv==1.0.1 numpy==2.5.4 FlashRank==0.2.9
+        run: pip install pytest httpx==0.28.1 "psycopg[binary]==3.3.6" python-dotenv==1.0.1 numpy==2.5.4 FlashRank==0.2.9 fastapi==0.111.0 starlette==0.37.2 pydantic==2.7.1 bcrypt==5.0.0 PyJWT==2.15.1 pgvector==0.5.1 python-multipart==0.0.32
       - name: Run unit tests
         run: python -m pytest -q tests
 
