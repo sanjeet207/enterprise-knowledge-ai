@@ -99,6 +99,9 @@ def main() -> int:
                 record("M4a", "Before: a team member finds the deal memo", has(search(director_titan, tq), TITAN))
                 conv = c.post("/chat/query", headers=director_titan, json={"query": "What is the Project Titan valuation?"}).json()
                 conv_id = conv.get("conversation_id")
+                before = c.get(f"/chat/conversations/{conv_id}", headers=director_titan) if conv_id else None
+                record("M5a", "Before: the saved conversation shows the answer and its source to the team member",
+                       before is not None and before.status_code == 200 and has(before, TITAN) and "redacted" not in before.text)
                 removed = c.delete(f"/admin/teams/{titan_team['id']}/members/{dt_id}", headers=admin)
                 restore.append(lambda: c.post(f"/admin/teams/{titan_team['id']}/members", headers=admin, json={"user_id": dt_id}))
                 record("M4", "Removed from the team mid-session: the SAME token no longer finds the memo",
@@ -106,10 +109,9 @@ def main() -> int:
                 again = c.post("/chat/query", headers=director_titan, json={"query": "What is the Project Titan valuation?"}).json()
                 record("M4b", "...nor in a new chat answer", TITAN not in json.dumps(again.get("sources", [])), again.get("outcome", ""))
                 old = c.get(f"/chat/conversations/{conv_id}", headers=director_titan) if conv_id else None
-                if old is not None and old.status_code == 200:
-                    note("M5", "Old conversation after losing access", "still shows the restricted source title" if has(old, TITAN) else "no restricted source title shown")
-                else:
-                    note("M5", "Old conversation after losing access", "no conversation to inspect")
+                record("M5", "Old conversation after losing access: restricted answer and source title are hidden",
+                       old is not None and old.status_code == 200 and not has(old, TITAN) and "redacted" in old.text,
+                       "answer replaced by a notice" if old is not None and "redacted" in old.text else "still readable")
                 if conv_id:
                     c.delete(f"/chat/conversations/{conv_id}", headers=director_titan)
 
@@ -152,6 +154,13 @@ def main() -> int:
                 record("M13", "A research report by an analyst cites no restricted document",
                        TITAN not in cited and COMP not in cited and TITAN not in body and COMP not in body,
                        f"{len(report.get('sources', []))} sources cited")
+                ctrl = c.post("/research", headers=analyst, json={"request": "Summarise the annual leave rules and the travel reimbursement rules for employees."})
+                if ctrl.status_code == 200:
+                    n = len(ctrl.json().get("sources", []))
+                    record("M13a", "Control: on an allowed topic the same assistant does cite documents (so M13 is not passing by citing nothing)", n > 0, f"{n} sources cited")
+                    c.delete(f"/research/{ctrl.json().get('id')}", headers=analyst)
+                else:
+                    record("M13a", "Control: on an allowed topic the same assistant does cite documents", False, f"status {ctrl.status_code}")
                 rid = rr.json().get("id")
                 record("M14", "Another person cannot read that report, nor another company",
                        c.get(f"/research/{rid}", headers=manager).status_code == 404 and c.get(f"/research/{rid}", headers=globex).status_code == 404)

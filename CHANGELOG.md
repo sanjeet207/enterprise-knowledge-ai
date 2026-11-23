@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Saved conversations now respect access taken away later (security matrix finding M5). When a conversation is loaded or
+  exported, an answer built on a document the person can no longer open is replaced by a notice and its sources are
+  emptied. New answers store the document id with each source; older ones are matched by title and hidden if unsure.
+  Matrix M5a and M5 are now pass/fail checks. Saved research reports are not covered yet.
+
 ### Added
 - Single sign-on can let the company directory decide access: Entra groups map to reading levels and the administrator flag on every sign-in (`OIDC_GROUP_LEVELS`, `OIDC_ADMIN_GROUP`), with optional account creation on first sign-in (`OIDC_AUTO_PROVISION`). No mapped group means no sign-in; an incomplete group list (overage) fails closed. See docs/SSO.md.
 

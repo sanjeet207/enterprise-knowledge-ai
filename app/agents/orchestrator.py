@@ -410,6 +410,7 @@ async def answer_question(user, query: str, top_k: int, retriever, on_step=None)
     answer = strip_invalid_citations(answer, len(passages))
     sources = [
         {"number": n, "title": reranked[n - 1]["metadata"].get("title"),
+         "document_id": reranked[n - 1].get("document_id"),
          "score": round(reranked[n - 1]["rerank_score"], 4)}
         for n in cited
     ]

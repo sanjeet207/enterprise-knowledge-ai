@@ -5,7 +5,7 @@ Each row is an attack, what must happen, and the check that proves it. Three kin
 - **Unit test**: `pytest tests/` (no server needed).
 - **Probe**: `python -m scripts.security_probe` (live server; tokens, other companies, uploads, planted instructions).
 - **Matrix run**: `python -m scripts.security_matrix --report evaluation/SECURITY_MATRIX_RESULTS.md` (live server; access changed
-  while a person is signed in, restricted titles, the research assistant, attempts to widen access). Row ids M1 to M14.
+  while a person is signed in, restricted titles, the research assistant, attempts to widen access). Row ids M1 to M14, plus the controls M1a, M4a, M5a and M13a, which prove a check is not passing trivially.
 
 The results of the latest matrix run are written to `evaluation/SECURITY_MATRIX_RESULTS.md`. A row that failed or surprised us
 is written down there and in "Findings" below, not hidden.
@@ -18,7 +18,7 @@ is written down there and in "Findings" below, not hidden.
 | 4 | Read, continue, rate or delete someone else's conversation | 404 | Probe "Other people" |
 | 5 | Keep reading a restricted document after the person lost access | The next request already refuses (access is read from the database on every request, not from the token) | Matrix M1 (level lowered), M3 (account switched off), M4 (team membership removed) |
 | 6 | A pending request for access is treated as access | It is only a record; nothing is widened until an administrator changes the person's level or team | Matrix M2; `tests/test_access_requests.py` |
-| 7 | Old chat history shows restricted material after access was lost | Observed, not yet enforced (see Findings) | Matrix M5 |
+| 7 | Old chat history shows restricted material after access was lost | On loading, an answer built on a document the person can no longer open is replaced by a notice and its sources are emptied; their own questions stay (see Findings) | Matrix M5a, M5; `tests/test_conversation_access.py` |
 | 8 | Restricted titles or metadata leak through lists, search or errors | None shown | Matrix M6 (no list for analysts), M7 (managers see only their own uploads), M8, M9 |
 | 9 | A document contains instructions aimed at the AI | Treated as data: refused at upload, held for review, or ignored | Probe "Instructions planted in documents"; `test_security_hardening.py`; `check_inspector.py` |
 | 10 | Delete a document without the right | Denied, and the document is still there | Probe (analyst, other company); matrix M10 |
@@ -39,13 +39,17 @@ is written down there and in "Findings" below, not hidden.
 
 ## Findings
 
-First live run: 16 of 17 checks passed, one observation, one failure that turned out to be a mistake in the check.
+First live run: 16 of 17 checks passed, one observation (M5), one failure that turned out to be a mistake in the check (M13). After the M5 fix and the added controls, the latest run passes 20 of 20.
 
-- **M5, old conversations after access is lost (observation, open):** conversations are saved with the answer and the source
-  titles shown at the time. A person removed from the Project Titan team could no longer search or ask for the memo (M4,
-  M4b pass), but their earlier conversation still showed its title. Many firms accept this (the person already read it);
-  others require removal. It is a policy choice, so the application records the behaviour and does not hide it yet.
-  What would close it: on loading a conversation, drop sources the person can no longer access.
+- **M5, old conversations after access is lost (found, fixed):** conversations were saved with the answer and source
+  titles shown at the time. A person removed from the Project Titan team could no longer search or ask for the memo
+  (M4, M4b pass), but their earlier conversation still showed its title and the answer text built from it. Policy now:
+  when a conversation is loaded, each cited document is checked against the person's current access (company,
+  published, level, team, read from the database). If any cited document is no longer open to them, that answer is
+  replaced by a notice and its sources are emptied. Their own questions, refusals and answers built only on documents
+  they can still open are unchanged. The check applies to the chat screen and to the "export my data" download.
+  Messages saved before this change carry only a title, so they are matched by title; if it cannot be matched they are
+  hidden (fail closed). Not covered: saved research reports (see below) and the audit log, which holds titles but no text.
 - **M13, research report (false alarm, check fixed):** the first run failed because the check searched the whole report for
   restricted titles, and the report repeats the request, which contained the words "executive compensation framework". The
   check now looks only at the documents the report cites and the text it wrote, not at the request. Lesson kept here
