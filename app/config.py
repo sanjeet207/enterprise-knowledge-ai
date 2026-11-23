@@ -147,3 +147,7 @@ API_DOCS_ENABLED = os.getenv("API_DOCS_ENABLED", "true").lower() in ("1", "true"
 
 # A reviewer model reads each upload for instructions aimed at the assistant (indirect prompt injection).
 INSPECT_UPLOADS = os.getenv("INSPECT_UPLOADS", "true").lower() in ("1", "true", "yes")
+
+# Deployment mode. "production" makes the server refuse to start while demo accounts exist, unless ALLOW_DEMO_DATA=1.
+APP_ENV = os.getenv("APP_ENV", "development").strip().lower()
+ALLOW_DEMO_DATA = os.getenv("ALLOW_DEMO_DATA", "false").lower() in ("1", "true", "yes")

@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app import config, observability, tracing
 from app.routers import access, admin, documents, retrieval, auth, chat, audit, me, research, sso
-from app.services import metrics, worker
+from app.services import metrics, startup_guard, worker
 
 STATIC_DIR = Path(__file__).parent / "static"
 
@@ -33,6 +33,7 @@ def _warm_up_models() -> None:
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Start the upload worker with the server and stop it cleanly on shutdown."""
+    startup_guard.check_database(config.DATABASE_URL, config.APP_ENV, config.ALLOW_DEMO_DATA)
     tracing.setup()
     if config.WARM_UP_MODELS:
         _warm_up_models()
