@@ -354,7 +354,7 @@ app/
 scripts/         quickstart, init_db, seed_demo, verify_access, smoke_test, check_validator, check_inspector,
                  security_probe, evaluate, evaluate_research, import_questions, worker, migrations, purge_retention
 tests/           unit tests, the 86-question evaluation set and the research task set
-docs/            THREAT_MODEL, SECURITY_REVIEW, TECHNICAL_AUDIT, SSO, TRACING, DEPLOY_AZURE, INTERVIEW_NOTES, LEARN_THE_PROJECT
+docs/            ARCHITECTURE, OPERATIONS, THREAT_MODEL, SECURITY_REVIEW, TECHNICAL_AUDIT, SSO, TRACING, DEPLOY_AZURE, INTERVIEW_NOTES, LEARN_THE_PROJECT
 evaluation/      reports from the evaluation runs, FAILURE_ANALYSIS.md, the question brief for an independent question writer
 ```
 

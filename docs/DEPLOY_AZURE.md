@@ -27,7 +27,7 @@ so keep any public test to a handful of questions; when the limit is hit the app
 | Piece | Azure service | Notes |
 |---|---|---|
 | Image | Azure Container Registry (Basic) | models are baked into the image |
-| API | Container Apps, one replica | rate limiter and lockout are per process, so never more than one |
+| API | Container Apps, one replica | the per-person rate limiter is in memory, so never more than one (sign-in lockout is in the database) |
 | Database | PostgreSQL 16 Flexible Server, Burstable B1ms | `vector` must be allow-listed before the app starts |
 | Secrets | Container Apps secrets | `JWT_SECRET`, `DATABASE_URL`, model API key |
 | Sign-in | Microsoft Entra app registration | see [SSO.md](SSO.md); tested after the app is up |
