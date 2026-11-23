@@ -269,3 +269,4 @@ ul.reqs { list-style: none; margin: 0; padding: 0; }
 .live li.now::before { animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .live li.now::before { animation: none; } }
+.audit-head .actions { display: flex; gap: 8px; flex-wrap: wrap; }

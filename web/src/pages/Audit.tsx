@@ -35,10 +35,26 @@ export default function Audit() {
   }, [])
   useLoad(load)
 
+  async function exportCsv() {
+    const res = await api('/audit/export.csv?days=30')
+    if (!res.ok) { setMessage('Could not export the audit log.'); return }
+    const url = URL.createObjectURL(await res.blob())
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'audit-last-30-days.csv'
+    document.body.append(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="page">
       <PageHead title="Audit log" hint="Every question, who asked it, how it ended and which agents ran. Select a row to see the pipeline timeline.">
-        <button type="button" onClick={() => void load()}>Refresh</button>
+        <span className="actions">
+          <button type="button" onClick={() => void exportCsv()}>Download CSV (30 days)</button>
+          <button type="button" onClick={() => void load()}>Refresh</button>
+        </span>
       </PageHead>
       {message && <p className="muted gap">{message}</p>}
       {rows.length > 0 && (
