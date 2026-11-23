@@ -33,6 +33,8 @@ PASSWORD_LOGIN_ENABLED = os.getenv("PASSWORD_LOGIN_ENABLED", "true").lower() in 
 METRICS_TOKEN = os.getenv("METRICS_TOKEN", "")
 # Audit rows and saved conversations older than this are removed by scripts/purge_retention.py.
 RETENTION_DAYS = int(os.getenv("RETENTION_DAYS", "365"))
+# Accounts whose activity is test traffic, left out of the Administration statistics (still kept in the audit log).
+INSIGHTS_EXCLUDE_PREFIXES = tuple(p.strip().lower() for p in os.getenv("INSIGHTS_EXCLUDE_PREFIXES", "lockout.,eval.,loadtest.").split(",") if p.strip())
 
 # Questions one person may ask per minute (protects the model and the budget).
 CHAT_RATE_PER_MINUTE = int(os.getenv("CHAT_RATE_PER_MINUTE", "20"))

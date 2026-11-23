@@ -6,6 +6,7 @@ import psycopg
 from psycopg.errors import UniqueViolation
 from psycopg.types.json import Jsonb
 
+from app import config
 from app.config import DATABASE_URL
 from app.security import hash_password
 from app.services.users import User
@@ -185,30 +186,39 @@ def update_user(tenant_id: str, user_id: str, changes: Dict[str, Any]) -> bool:
 
 
 # ---------- insights (counts and unanswered questions, never who asked) ----------
+def exclusion_patterns() -> List[str]:
+    """LIKE patterns for test accounts. A prefix is matched at the start of the email only."""
+    return [p.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%" for p in config.INSIGHTS_EXCLUDE_PREFIXES]
+
+
 def insights(tenant_id: str, days: int = 30) -> Dict[str, Any]:
+    skip = exclusion_patterns()
     with _connect() as conn:
         outcomes = conn.execute(
             "SELECT outcome, COUNT(*) FROM audit_log WHERE tenant_id = %s AND created_at > now() - make_interval(days => %s) "
-            "GROUP BY outcome", (tenant_id, days)).fetchall()
+            "AND NOT lower(user_email) LIKE ANY(%s) GROUP BY outcome", (tenant_id, days, skip)).fetchall()
         latency = conn.execute(
             "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY latency_ms) FROM audit_log "
-            "WHERE tenant_id = %s AND outcome = 'answered' AND created_at > now() - make_interval(days => %s)",
-            (tenant_id, days)).fetchone()[0]
+            "WHERE tenant_id = %s AND outcome = 'answered' AND created_at > now() - make_interval(days => %s) "
+            "AND NOT lower(user_email) LIKE ANY(%s)",
+            (tenant_id, days, skip)).fetchone()[0]
         daily = conn.execute(
             "SELECT created_at::date, COUNT(*) FROM audit_log WHERE tenant_id = %s "
-            "AND created_at > now() - make_interval(days => %s) GROUP BY 1 ORDER BY 1", (tenant_id, days)).fetchall()
+            "AND created_at > now() - make_interval(days => %s) AND NOT lower(user_email) LIKE ANY(%s) GROUP BY 1 ORDER BY 1", (tenant_id, days, skip)).fetchall()
         gaps = conn.execute(
             "SELECT lower(query), COUNT(*) FROM audit_log WHERE tenant_id = %s AND outcome = 'no_answer' "
-            "AND created_at > now() - make_interval(days => %s) GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 10",
-            (tenant_id, days)).fetchall()
+            "AND created_at > now() - make_interval(days => %s) AND NOT lower(user_email) LIKE ANY(%s) GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 10",
+            (tenant_id, days, skip)).fetchall()
         votes = dict(conn.execute(
             "SELECT m.rating, COUNT(*) FROM chat_messages m JOIN conversations c ON c.id = m.conversation_id "
             "WHERE c.tenant_id = %s AND m.rating IS NOT NULL AND m.rated_at > now() - make_interval(days => %s) "
-            "GROUP BY m.rating", (tenant_id, days)).fetchall())
+            "AND c.user_id NOT IN (SELECT id FROM users WHERE lower(email) LIKE ANY(%s)) "
+            "GROUP BY m.rating", (tenant_id, days, skip)).fetchall())
         unhelpful = conn.execute(
             "SELECT lower(m.question), COUNT(*) FROM chat_messages m JOIN conversations c ON c.id = m.conversation_id "
             "WHERE c.tenant_id = %s AND m.rating = -1 AND m.rated_at > now() - make_interval(days => %s) "
-            "GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 10", (tenant_id, days)).fetchall()
+            "AND c.user_id NOT IN (SELECT id FROM users WHERE lower(email) LIKE ANY(%s)) "
+            "GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT 10", (tenant_id, days, skip)).fetchall()
         overdue = conn.execute(
             "SELECT COUNT(DISTINCT document_id) FROM parent_chunks WHERE tenant_id = %s "
             "AND metadata->>'review_by' IS NOT NULL AND metadata->>'review_by' < to_char(current_date, 'YYYY-MM-DD')",
