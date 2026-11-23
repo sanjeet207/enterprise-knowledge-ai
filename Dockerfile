@@ -32,6 +32,10 @@ COPY app ./app
 COPY --from=web /app/static ./app/static
 COPY scripts ./scripts
 
+# Source files keep the host's file modes when copied (a 600 file would be unreadable to the user below),
+# so make everything readable regardless of where the image is built.
+RUN chmod -R a+rX /srv/app /srv/scripts
+
 # Run as a normal user, not root.
 RUN useradd --system --no-create-home appuser
 USER appuser
