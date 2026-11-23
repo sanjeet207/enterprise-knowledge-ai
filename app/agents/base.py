@@ -2,6 +2,7 @@
 import re
 import time
 from dataclasses import dataclass, field
+from typing import Callable, Optional
 
 from app import tracing
 from app.services.answer_check import annotate_number_words
@@ -13,10 +14,16 @@ MAX_PASSAGE_CHARS = 2000
 class Trace:
     """What each agent did, in order. Stored in the audit log."""
     steps: list = field(default_factory=list)
+    listener: Optional[Callable[[str, int], None]] = None  # told the step name and time only, never the detail text
 
     def add(self, agent: str, started: float, detail: str = "") -> None:
-        self.steps.append({"agent": agent, "ms": int((time.perf_counter() - started) * 1000),
-                           "detail": (detail or "")[:400]})
+        ms = int((time.perf_counter() - started) * 1000)
+        self.steps.append({"agent": agent, "ms": ms, "detail": (detail or "")[:400]})
+        if self.listener:
+            try:
+                self.listener(agent, ms)
+            except Exception:  # progress reporting must never break an answer
+                pass
         tracing.record_step(agent, started)
 
 

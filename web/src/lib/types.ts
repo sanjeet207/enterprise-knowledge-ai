@@ -18,6 +18,7 @@ export interface ChatMessage {
   text: string
   reply?: ChatReply
   pending?: boolean
+  steps?: string[]
 }
 
 export const LEVELS: Record<number, string> = { 1: 'Analyst', 2: 'Manager', 3: 'Director', 4: 'Partner' }

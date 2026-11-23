@@ -91,9 +91,9 @@ async def off_topic(question: str, trace: Trace) -> bool:
     return route != "company"
 
 
-async def answer_question(user, query: str, top_k: int, retriever) -> dict:
+async def answer_question(user, query: str, top_k: int, retriever, on_step=None) -> dict:
     started = _now()
-    trace = Trace()
+    trace = Trace(listener=on_step)
     notes: list[str] = []
     question = query
 

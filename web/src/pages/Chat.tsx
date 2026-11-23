@@ -4,6 +4,7 @@ import { LEVELS, type ChatMessage, type ChatReply, type Me, type Source } from '
 import { Tag, Trace } from '../components/Bits'
 import { useLoad } from '../lib/hooks'
 import RequestAccess from '../components/RequestAccess'
+import { stepLabel, streamAnswer } from '../lib/stream'
 
 const SUGGESTIONS = [
   'How many days of annual leave do I get?',
@@ -70,7 +71,18 @@ function Feedback({ messageId, current }: { messageId: string; current?: number 
 
 function Bot({ m, question, onCite }: { m: ChatMessage; question: string; onCite: (key: number, n: number) => void }) {
   const [showTrace, setShowTrace] = useState(false)
-  if (m.pending) return <div className="msg bot thinking" role="status">Searching the documents you are allowed to see…</div>
+  if (m.pending) {
+    const steps = m.steps ?? []
+    return (
+      <div className="msg bot thinking" role="status">
+        {steps.length === 0 ? 'Starting…' : (
+          <ul className="live">
+            {steps.map((s, i) => <li key={i} className={i === steps.length - 1 ? 'now' : 'done'}>{stepLabel(s)}</li>)}
+          </ul>
+        )}
+      </div>
+    )
+  }
   const r = m.reply
   if (!r) return null
   const feedbackOn = r.message_id && ['answered', 'general', 'no_answer'].includes(r.outcome)
@@ -141,11 +153,13 @@ export default function Chat({ me }: { me: Me }) {
     const finish = (reply: ChatReply) =>
       setMessages((prev) => prev.map((m) => (m.key === botKey ? { ...m, pending: false, reply } : m)))
     try {
-      const res = await send('/chat/query', 'POST', { query: q, top_k: 3, conversation_id: convId })
-      if (!res.ok) {
-        finish({ outcome: 'error', answer: failureText(res.status) })
+      const end = await streamAnswer({ query: q, top_k: 3, conversation_id: convId }, {
+        onStep: (agent) => setMessages((prev) => prev.map((m) => (m.key === botKey ? { ...m, steps: [...(m.steps ?? []), agent] } : m))),
+      })
+      if (!end.ok) {
+        finish({ outcome: 'error', answer: end.detail || failureText(end.status) })
       } else {
-        const data = (await res.json()) as ChatReply
+        const data = end.reply
         if (data.conversation_id) setConvId(data.conversation_id)
         finish(data)
         setActiveKey(botKey)

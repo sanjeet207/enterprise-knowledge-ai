@@ -1,7 +1,10 @@
+import asyncio
+import json
 from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.agents import condenser, orchestrator
@@ -34,14 +37,17 @@ class Feedback(BaseModel):
     comment: Optional[str] = Field(default=None, max_length=500)
 
 
-@router.post("/query")
-async def rag_query(payload: ChatRequest, user: User = Depends(get_current_user)):
+def _prepare(payload: ChatRequest, user: User) -> tuple[Optional[str], list]:
+    """Checks that must fail before any answer work starts: rate limit and conversation ownership."""
     if not limiter.allow(user.id):
         raise HTTPException(status_code=429, detail="Too many questions. Please wait a moment.", headers={"Retry-After": "60"})
     conversation_id = str(payload.conversation_id) if payload.conversation_id else None
     if conversation_id and not conversations.owns(user, conversation_id):
         raise HTTPException(status_code=404, detail="Conversation not found")
-    previous = conversations.recent_questions(conversation_id) if conversation_id else []
+    return conversation_id, (conversations.recent_questions(conversation_id) if conversation_id else [])
+
+
+async def _execute(payload: ChatRequest, user: User, conversation_id: Optional[str], previous: list, on_step=None) -> dict:
     question = payload.query
     try:
         if followup.needs_context(question, previous):
@@ -49,7 +55,7 @@ async def rag_query(payload: ChatRequest, user: User = Depends(get_current_user)
                 question = await condenser.run(previous, question)
             except LLMUnavailable:
                 question = payload.query  # the normal pipeline below reports the outage
-        result = await orchestrator.answer_question(user, question, payload.top_k, retriever)
+        result = await orchestrator.answer_question(user, question, payload.top_k, retriever, on_step=on_step)
     except LLMUnavailable:
         raise HTTPException(status_code=503, detail="The answer service is unavailable. Try again shortly.")
     metrics.inc("chat_outcomes_total", outcome=result["outcome"])
@@ -62,6 +68,51 @@ async def rag_query(payload: ChatRequest, user: User = Depends(get_current_user)
         conversation_id, payload.query, result.get("answer") or "", result["outcome"],
         conversations.without_excerpts(result.get("sources")))
     return result
+
+
+@router.post("/query")
+async def rag_query(payload: ChatRequest, user: User = Depends(get_current_user)):
+    conversation_id, previous = _prepare(payload, user)
+    return await _execute(payload, user, conversation_id, previous)
+
+
+def sse(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+@router.post("/stream")
+async def rag_stream(payload: ChatRequest, user: User = Depends(get_current_user)):
+    """Same pipeline and same checks as /chat/query. Progress is sent as each step finishes (step name and time
+    only), and the answer is sent once, after it has been verified. Unverified text is never streamed."""
+    conversation_id, previous = _prepare(payload, user)
+    loop = asyncio.get_running_loop()
+    queue: asyncio.Queue = asyncio.Queue()
+
+    def on_step(agent: str, ms: int) -> None:
+        loop.call_soon_threadsafe(queue.put_nowait, ("step", {"agent": agent, "ms": ms}))
+
+    async def worker() -> None:
+        try:
+            await queue.put(("result", await _execute(payload, user, conversation_id, previous, on_step)))
+        except HTTPException as exc:
+            await queue.put(("error", {"status": exc.status_code, "detail": str(exc.detail)}))
+        except Exception:
+            await queue.put(("error", {"status": 500, "detail": "Something went wrong. Try again."}))
+
+    async def events():
+        task = asyncio.create_task(worker())
+        try:
+            while True:
+                kind, data = await queue.get()
+                yield sse(kind, data)
+                if kind != "step":
+                    break
+        finally:
+            if not task.done():
+                task.cancel()
+
+    return StreamingResponse(events(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @router.get("/conversations")

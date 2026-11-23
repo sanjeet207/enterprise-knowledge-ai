@@ -98,6 +98,7 @@ export default function Admin({ me }: { me: Me }) {
   return (
     <div className="page">
       <PageHead title="Administration" hint="People, engagement teams, usage and the record of every change." />
+      <Note text={msg} ok={ok} />
 
       {insights && (
         <section className="card gap">
@@ -166,7 +167,6 @@ export default function Admin({ me }: { me: Me }) {
           </div>
           <div className="form-actions"><button className="primary" type="submit">Add person</button></div>
         </form>
-        <Note text={msg} ok={ok} />
         <div className="table-wrap">
           <table>
             <thead><tr><th>Email</th><th>Level</th><th>Admin</th><th>Active</th><th>Password</th></tr></thead>
